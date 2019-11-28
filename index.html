@@ -75,22 +75,22 @@
                 <!-- TABS -->
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home</a>
+                        <a class="nav-link active" id="authentication-tab" data-toggle="tab" href="#authentication" role="tab" aria-controls="authentication" aria-selected="true">Authentication</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Profile</a>
+                        <a class="nav-link" id="series-tab" data-toggle="tab" href="#series" role="tab" aria-controls="series" aria-selected="false">Series</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">Contact</a>
+                        <a class="nav-link" id="episodes-tab" data-toggle="tab" href="#episodes" role="tab" aria-controls="episodes" aria-selected="false">Episodes</a>
                     </li>
                 </ul>
                 <!-- / TABS -->
                 
                 <!-- TAB CONTENT -->
                 <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                    <div class="tab-pane fade show active" id="authentication" role="tabpanel" aria-labelledby="authentication-tab">
                         <!-- PLEX LOGIN FORM -->
-                        <div class="row">
+                        <div class="row mt-3">
                             <div class="col">
                                 <div class="form-group">
                                     <label for="plexUrl">Plex URL</label>
@@ -127,9 +127,9 @@
                         </div>
                         <!-- / LIBRARIES TABLE -->
                     </div>
-                    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="tab-pane fade" id="series" role="tabpanel" aria-labelledby="series-tab">
                         <!-- ALPHABET LIBRARY -->
-                        <div class="row mt-5">
+                        <div class="row mt-3">
                             <div class="col text-center">
                                 <div id="alphabetGroup" class="btn-group flex-wrap" role="group" aria-label="TV Library First Letter">
                                     <!-- set class "disabled" for buttons which are not active -->
@@ -184,9 +184,9 @@
                         </div>
                         <!-- / SHOWS TABLE -->
                     </div>
-                    <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                    <div class="tab-pane fade" id="episodes" role="tabpanel" aria-labelledby="episodes-tab">
                         <!-- SEASONS TABLE -->
-                        <div class="row mt-5">
+                        <div class="row mt-3">
                             <div class="col">
                                 <table id="seasonsTable" class="table table-hover">
                                     <thead>
