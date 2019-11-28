@@ -1,0 +1,51 @@
+#libraryTable tbody tr {
+    cursor: pointer;
+}
+
+#tvShowsTable tbody tr {
+    cursor: pointer;
+}
+
+#seasonsTable tbody tr {
+    cursor: pointer;
+}
+
+#episodesTable tbody tr {
+    cursor: pointer;
+}
+
+#audioTable tbody tr {
+    cursor: pointer;
+}
+
+#audioTable tbody tr.table-active:not(.success-transition) {
+    transition: background-color 2s;
+}
+
+#audioTable tbody tr.success-transition {
+    background-color: #c3e6cb;
+}
+
+#subtitleTable tbody tr {
+    cursor: pointer;
+}
+
+#subtitleTable tbody tr.table-active:not(.success-transition) {
+    transition: background-color 2s;
+}
+
+#subtitleTable tbody tr.success-transition {
+    background-color: #c3e6cb;
+}
+
+#episodeOrSeriesBtns label {
+    cursor: pointer;
+}
+
+#episodeOrSeriesBtns label.active {
+    cursor: default;
+}
+
+#progressModalTitle {
+    width: 100%;
+}

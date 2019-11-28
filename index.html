@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>PASTA</title>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" type="text/css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="css/main.css" />
+    <!--<link rel="icon" type="image/png" href="images/favicon.png">-->
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <!-- Custom Scripts -->
+    <script type="text/javascript" src="js/main.js"></script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+        <div class="container">
+            <a class="navbar-brand" href="#"><h3>PASTA<small class="text-muted ml-2">Plex Audio and Subtitle Track Automation</small></h3></a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Home
+                            <span class="sr-only">(current)</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Modal -->
+    <div class="modal fade" id="progressModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="progressModalTitle"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="modalBodyText" class="modal-body">
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="container">
+        <div class="card border-0 shadow my-5">
+            <div class="card-body p-5">
+                <!-- PLEX LOGIN FORM -->
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="plexUrl">Plex URL</label>
+                            <input type="email" class="form-control" id="plexUrl" aria-describedby="emailHelp" placeholder="http://192.168.0.1:32400">
+                            <small id="emailHelp" class="form-text text-muted">This must be a local server, or a server addressable by IP.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="plexToken">Plex Token</label>
+                            <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token">
+                            <small id="emailHelp" class="form-text text-muted">
+                                <a target="_blank" href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">You can learn more here.</a>
+                            </small>
+                        </div>
+                        <button class="btn btn-secondary" onclick="connectToPlex()">Connect to Plex</button>
+                    </div>
+                </div>
+                <!-- / PLEX LOGIN FORM -->
+
+                <!-- LIBRARIES TABLE -->
+                <div class="row mt-5">
+                    <div class="col">
+                        <table id="libraryTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">UID</th>
+                                    <th scope="col">Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- / LIBRARIES TABLE -->
+
+                <!-- ALPHABET LIBRARY -->
+                <div class="row mt-5">
+                    <div class="col text-center">
+                        <div id="alphabetGroup" class="btn-group flex-wrap" role="group" aria-label="TV Library First Letter">
+                            <!-- set class "disabled" for buttons which are not active -->
+                            <button id="btnHash" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">#</button>
+                            <button id="btnA" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">A</button>
+                            <button id="btnB" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">B</button>
+                            <button id="btnC" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">C</button>
+                            <button id="btnD" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">D</button>
+                            <button id="btnE" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">E</button>
+                            <button id="btnF" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">F</button>
+                            <button id="btnG" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">G</button>
+                            <button id="btnH" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">H</button>
+                            <button id="btnI" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">I</button>
+                            <button id="btnJ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">J</button>
+                            <button id="btnK" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">K</button>
+                            <button id="btnL" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">L</button>
+                            <button id="btnM" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">M</button>
+                            <button id="btnN" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">N</button>
+                            <button id="btnO" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">O</button>
+                            <button id="btnP" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">P</button>
+                            <button id="btnQ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Q</button>
+                            <button id="btnR" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">R</button>
+                            <button id="btnS" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">S</button>
+                            <button id="btnT" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">T</button>
+                            <button id="btnU" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">U</button>
+                            <button id="btnV" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">V</button>
+                            <button id="btnW" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">W</button>
+                            <button id="btnX" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">X</button>
+                            <button id="btnY" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Y</button>
+                            <button id="btnZ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Z</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- / ALPHABET LIBRARY -->
+
+                <!-- SHOWS TABLE -->
+                <div class="row mt-5">
+                    <div class="col">
+                        <table id="tvShowsTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">UID</th>
+                                    <th scope="col">Title</th>
+                                    <th scope="col">Year</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- / SHOWS TABLE -->
+
+                <!-- SEASONS TABLE -->
+                <div class="row mt-5">
+                    <div class="col">
+                        <table id="seasonsTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">UID</th>
+                                    <th scope="col">Title</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- / SHOWS TABLE -->
+
+                <!-- EPISODES TABLE -->
+                <div class="row mt-5">
+                    <div class="col">
+                        <table id="episodesTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">UID</th>
+                                    <th scope="col">Title</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- / EPISODES TABLE -->
+
+                <!-- SWITCH TOGGLE -->
+                <div class="row mt-5">
+                    <div class="col text-center">
+                        <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-secondary active">
+                                <input type="radio" name="episodeOrSeries" id="singleEpisode" autocomplete="off" checked> Single Episode
+                            </label>
+                            <label class="btn btn-secondary">
+                                <input type="radio" name="episodeOrSeries" id="entireSeries" autocomplete="off"> Entire Series
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <!-- / SWITCH TOGGLE -->
+
+                <!-- STREAMS TABLES -->
+                <div class="row mt-5">
+                    <div class="col">
+                        <table id="audioTable" class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">UID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Title</th>
+                                    <th scope="col">Language</th>
+                                    <th scope="col">Code</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col">
+                        <table id="subtitleTable" class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">UID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Title</th>
+                                    <th scope="col">Language</th>
+                                    <th scope="col">Code</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- / STREAMS TABLES -->
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
