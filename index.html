@@ -84,193 +84,197 @@
                         <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">Contact</a>
                     </li>
                 </ul>
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">...</div>
-                    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">...</div>
-                    <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">...</div>
-                </div>
+                <!-- / TABS -->
                 
-                <!-- PLEX LOGIN FORM -->
-                <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <label for="plexUrl">Plex URL</label>
-                            <input type="email" class="form-control" id="plexUrl" aria-describedby="emailHelp" placeholder="http://192.168.0.1:32400">
-                            <small id="emailHelp" class="form-text text-muted">This must be a local server, or a server addressable by IP.</small>
+                <!-- TAB CONTENT -->
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                        <!-- PLEX LOGIN FORM -->
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="plexUrl">Plex URL</label>
+                                    <input type="email" class="form-control" id="plexUrl" aria-describedby="emailHelp" placeholder="http://192.168.0.1:32400">
+                                    <small id="emailHelp" class="form-text text-muted">This must be a local server, or a server addressable by IP.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="plexToken">Plex Token</label>
+                                    <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token">
+                                    <small id="emailHelp" class="form-text text-muted">
+                                        <a target="_blank" href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">You can learn more here.</a>
+                                    </small>
+                                </div>
+                                <button class="btn btn-secondary" onclick="connectToPlex()">Connect to Plex</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="plexToken">Plex Token</label>
-                            <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token">
-                            <small id="emailHelp" class="form-text text-muted">
-                                <a target="_blank" href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">You can learn more here.</a>
-                            </small>
+                        <!-- / PLEX LOGIN FORM -->
+
+                        <!-- LIBRARIES TABLE -->
+                        <div class="row mt-5">
+                            <div class="col">
+                                <table id="libraryTable" class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">UID</th>
+                                            <th scope="col">Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <button class="btn btn-secondary" onclick="connectToPlex()">Connect to Plex</button>
+                        <!-- / LIBRARIES TABLE -->
                     </div>
-                </div>
-                <!-- / PLEX LOGIN FORM -->
-
-                <!-- LIBRARIES TABLE -->
-                <div class="row mt-5">
-                    <div class="col">
-                        <table id="libraryTable" class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th scope="col">UID</th>
-                                    <th scope="col">Name</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- / LIBRARIES TABLE -->
-
-                <!-- ALPHABET LIBRARY -->
-                <div class="row mt-5">
-                    <div class="col text-center">
-                        <div id="alphabetGroup" class="btn-group flex-wrap" role="group" aria-label="TV Library First Letter">
-                            <!-- set class "disabled" for buttons which are not active -->
-                            <button id="btnHash" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">#</button>
-                            <button id="btnA" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">A</button>
-                            <button id="btnB" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">B</button>
-                            <button id="btnC" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">C</button>
-                            <button id="btnD" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">D</button>
-                            <button id="btnE" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">E</button>
-                            <button id="btnF" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">F</button>
-                            <button id="btnG" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">G</button>
-                            <button id="btnH" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">H</button>
-                            <button id="btnI" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">I</button>
-                            <button id="btnJ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">J</button>
-                            <button id="btnK" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">K</button>
-                            <button id="btnL" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">L</button>
-                            <button id="btnM" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">M</button>
-                            <button id="btnN" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">N</button>
-                            <button id="btnO" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">O</button>
-                            <button id="btnP" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">P</button>
-                            <button id="btnQ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Q</button>
-                            <button id="btnR" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">R</button>
-                            <button id="btnS" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">S</button>
-                            <button id="btnT" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">T</button>
-                            <button id="btnU" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">U</button>
-                            <button id="btnV" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">V</button>
-                            <button id="btnW" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">W</button>
-                            <button id="btnX" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">X</button>
-                            <button id="btnY" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Y</button>
-                            <button id="btnZ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Z</button>
+                    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                        <!-- ALPHABET LIBRARY -->
+                        <div class="row mt-5">
+                            <div class="col text-center">
+                                <div id="alphabetGroup" class="btn-group flex-wrap" role="group" aria-label="TV Library First Letter">
+                                    <!-- set class "disabled" for buttons which are not active -->
+                                    <button id="btnHash" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">#</button>
+                                    <button id="btnA" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">A</button>
+                                    <button id="btnB" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">B</button>
+                                    <button id="btnC" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">C</button>
+                                    <button id="btnD" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">D</button>
+                                    <button id="btnE" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">E</button>
+                                    <button id="btnF" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">F</button>
+                                    <button id="btnG" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">G</button>
+                                    <button id="btnH" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">H</button>
+                                    <button id="btnI" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">I</button>
+                                    <button id="btnJ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">J</button>
+                                    <button id="btnK" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">K</button>
+                                    <button id="btnL" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">L</button>
+                                    <button id="btnM" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">M</button>
+                                    <button id="btnN" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">N</button>
+                                    <button id="btnO" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">O</button>
+                                    <button id="btnP" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">P</button>
+                                    <button id="btnQ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Q</button>
+                                    <button id="btnR" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">R</button>
+                                    <button id="btnS" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">S</button>
+                                    <button id="btnT" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">T</button>
+                                    <button id="btnU" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">U</button>
+                                    <button id="btnV" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">V</button>
+                                    <button id="btnW" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">W</button>
+                                    <button id="btnX" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">X</button>
+                                    <button id="btnY" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Y</button>
+                                    <button id="btnZ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Z</button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <!-- / ALPHABET LIBRARY -->
+                        <!-- / ALPHABET LIBRARY -->
 
-                <!-- SHOWS TABLE -->
-                <div class="row mt-5">
-                    <div class="col">
-                        <table id="tvShowsTable" class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th scope="col">UID</th>
-                                    <th scope="col">Title</th>
-                                    <th scope="col">Year</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- / SHOWS TABLE -->
+                        <!-- SHOWS TABLE -->
+                        <div class="row mt-5">
+                            <div class="col">
+                                <table id="tvShowsTable" class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">UID</th>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Year</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
 
-                <!-- SEASONS TABLE -->
-                <div class="row mt-5">
-                    <div class="col">
-                        <table id="seasonsTable" class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th scope="col">UID</th>
-                                    <th scope="col">Title</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- / SHOWS TABLE -->
-
-                <!-- EPISODES TABLE -->
-                <div class="row mt-5">
-                    <div class="col">
-                        <table id="episodesTable" class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th scope="col">UID</th>
-                                    <th scope="col">Title</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- / EPISODES TABLE -->
-
-                <!-- SWITCH TOGGLE -->
-                <div class="row mt-5">
-                    <div class="col text-center">
-                        <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
-                            <label class="btn btn-secondary active">
-                                <input type="radio" name="episodeOrSeries" id="singleEpisode" autocomplete="off" checked> Single Episode
-                            </label>
-                            <label class="btn btn-secondary">
-                                <input type="radio" name="episodeOrSeries" id="entireSeries" autocomplete="off"> Entire Series
-                            </label>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+                        <!-- / SHOWS TABLE -->
                     </div>
-                </div>
-                <!-- / SWITCH TOGGLE -->
+                    <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                        <!-- SEASONS TABLE -->
+                        <div class="row mt-5">
+                            <div class="col">
+                                <table id="seasonsTable" class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">UID</th>
+                                            <th scope="col">Title</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
 
-                <!-- STREAMS TABLES -->
-                <div class="row mt-5">
-                    <div class="col">
-                        <table id="audioTable" class="table table-hover table-sm">
-                            <thead>
-                                <tr>
-                                    <th scope="col">UID</th>
-                                    <th scope="col">Name</th>
-                                    <th scope="col">Title</th>
-                                    <th scope="col">Language</th>
-                                    <th scope="col">Code</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="col">
-                        <table id="subtitleTable" class="table table-hover table-sm">
-                            <thead>
-                                <tr>
-                                    <th scope="col">UID</th>
-                                    <th scope="col">Name</th>
-                                    <th scope="col">Title</th>
-                                    <th scope="col">Language</th>
-                                    <th scope="col">Code</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                
-                            </tbody>
-                        </table>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- / SHOWS TABLE -->
+
+                        <!-- EPISODES TABLE -->
+                        <div class="row mt-5">
+                            <div class="col">
+                                <table id="episodesTable" class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">UID</th>
+                                            <th scope="col">Title</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- / EPISODES TABLE -->
+
+                        <!-- SWITCH TOGGLE -->
+                        <div class="row mt-5">
+                            <div class="col text-center">
+                                <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-secondary active">
+                                        <input type="radio" name="episodeOrSeries" id="singleEpisode" autocomplete="off" checked> Single Episode
+                                    </label>
+                                    <label class="btn btn-secondary">
+                                        <input type="radio" name="episodeOrSeries" id="entireSeries" autocomplete="off"> Entire Series
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- / SWITCH TOGGLE -->
+
+                        <!-- STREAMS TABLES -->
+                        <div class="row mt-5">
+                            <div class="col">
+                                <table id="audioTable" class="table table-hover table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">UID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Language</th>
+                                            <th scope="col">Code</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col">
+                                <table id="subtitleTable" class="table table-hover table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">UID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Language</th>
+                                            <th scope="col">Code</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- / STREAMS TABLES -->
                     </div>
                 </div>
-                <!-- / STREAMS TABLES -->
+                <!-- / TAB CONTENT -->
             </div>
         </div>
     </div>
