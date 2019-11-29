@@ -9,41 +9,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" type="text/css"
-        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
-
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="css/main.css" />
+    
     <!--<link rel="icon" type="image/png" href="images/favicon.png">-->
 
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-        crossorigin="anonymous"></script>
-    <script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <!-- Custom Scripts -->
     <script type="text/javascript" src="js/main.js"></script>
 </head>
 
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+    <nav class="navbar navbar-expand-lg navbar-dark static-top">
         <div class="container">
             <a class="navbar-brand" href="#"><h3>PASTA<small class="text-muted ml-2">Plex Audio and Subtitle Track Automation</small></h3></a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
-                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarResponsive">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="#">Home
-                            <span class="sr-only">(current)</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
         </div>
     </nav>
 
@@ -94,25 +77,35 @@
                             <div class="col">
                                 <div class="form-group">
                                     <label for="plexUrl">Plex URL</label>
-                                    <input type="email" class="form-control" id="plexUrl" aria-describedby="emailHelp" placeholder="http://192.168.0.1:32400">
-                                    <small id="emailHelp" class="form-text text-muted">This must be a local server, or a server addressable by IP.</small>
+                                    <input type="email" class="form-control" id="plexUrl" placeholder="e.g. http://192.168.0.1:32400">
+                                    <small class="form-text text-muted">This must be a local server, or a server publicly addressable.</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="plexToken">Plex Token</label>
                                     <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token">
-                                    <small id="emailHelp" class="form-text text-muted">
-                                        <a target="_blank" href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">You can learn more here.</a>
+                                    <small class="form-text text-muted">
+                                        <a target="_blank" href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">Find out how to get your X-Plex-token here.</a>
                                     </small>
                                 </div>
-                                <button class="btn btn-secondary" onclick="connectToPlex()">Connect to Plex</button>
+                                <button id="btnConnectToPlex" class="btn btn-secondary" onclick="connectToPlex()" disabled>Connect to Plex</button>
                             </div>
                         </div>
                         <!-- / PLEX LOGIN FORM -->
 
+                        <!-- PLEX AUTHENTICATION WARNING -->
+                        <div class="row">
+                            <div class="col" id="authWarningText">
+                                
+                            </div>
+                        </div>
+                        <!-- / PLEX AUTHENTICATION WARNING -->
+
                         <!-- LIBRARIES TABLE -->
-                        <div class="row mt-5">
+                        <div class="row mt-4">
                             <div class="col">
-                                <table id="libraryTable" class="table table-hover">
+                                <h3>Plex Libraries</h3>
+                                <small>Choose <strong>only</strong> TV Shows. This will not work for Movies.</small>
+                                <table id="libraryTable" class="table table-hover mt-3">
                                     <thead>
                                         <tr>
                                             <th scope="col">UID</th>
@@ -166,9 +159,10 @@
                         <!-- / ALPHABET LIBRARY -->
 
                         <!-- SHOWS TABLE -->
-                        <div class="row mt-5">
+                        <div class="row mt-4">
                             <div class="col">
-                                <table id="tvShowsTable" class="table table-hover">
+                                <h3>TV Series</h3>
+                                <table id="tvShowsTable" class="table table-hover mt-3">
                                     <thead>
                                         <tr>
                                             <th scope="col">UID</th>
@@ -188,7 +182,8 @@
                         <!-- SEASONS TABLE -->
                         <div class="row mt-3">
                             <div class="col">
-                                <table id="seasonsTable" class="table table-hover">
+                                <h3>Seasons</h3>
+                                <table id="seasonsTable" class="table table-hover mt-3">
                                     <thead>
                                         <tr>
                                             <th scope="col">UID</th>
@@ -204,9 +199,10 @@
                         <!-- / SHOWS TABLE -->
 
                         <!-- EPISODES TABLE -->
-                        <div class="row mt-5">
+                        <div class="row mt-4">
                             <div class="col">
-                                <table id="episodesTable" class="table table-hover">
+                                <h3>Episodes</h3>
+                                <table id="episodesTable" class="table table-hover mt-3">
                                     <thead>
                                         <tr>
                                             <th scope="col">UID</th>
@@ -222,7 +218,7 @@
                         <!-- / EPISODES TABLE -->
 
                         <!-- SWITCH TOGGLE -->
-                        <div class="row mt-5">
+                        <div class="row mt-4">
                             <div class="col text-center">
                                 <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
                                     <label class="btn btn-secondary active">
@@ -237,9 +233,10 @@
                         <!-- / SWITCH TOGGLE -->
 
                         <!-- STREAMS TABLES -->
-                        <div class="row mt-5">
+                        <div class="row mt-4">
                             <div class="col">
-                                <table id="audioTable" class="table table-hover table-sm">
+                                <h3>Audio Tracks</h3>
+                                <table id="audioTable" class="table table-hover table-sm mt-3">
                                     <thead>
                                         <tr>
                                             <th scope="col">UID</th>
@@ -255,7 +252,8 @@
                                 </table>
                             </div>
                             <div class="col">
-                                <table id="subtitleTable" class="table table-hover table-sm">
+                                <h3>Subtitle Tracks</h3>
+                                <table id="subtitleTable" class="table table-hover table-sm mt-3">
                                     <thead>
                                         <tr>
                                             <th scope="col">UID</th>

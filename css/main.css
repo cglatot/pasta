@@ -1,3 +1,53 @@
+/*==========================
+        DEFAULTS
+==========================*/
+body {
+    background: rgb(51,51,51);
+    background: linear-gradient(90deg, rgba(51,51,51,1) 0%, rgba(17,17,17,1) 50%, rgba(51,51,51,1) 100%);
+}
+
+nav {
+    background: rgb(0,0,0);
+}
+
+h1, h2, h3 {
+    color: #cc7b19;
+}
+
+.card {
+    background-color: rgba(30,30,30,80);
+}
+
+small {
+    color: rgb(190,190,190);
+}
+
+table, td, tr {
+    color: rgb(240,240,240);
+}
+
+/*==========================
+        BUTTONS
+==========================*/
+#episodeOrSeriesBtns label {
+    cursor: pointer;
+}
+
+#episodeOrSeriesBtns label.active {
+    cursor: default;
+}
+
+/*==========================
+        MODALS
+==========================*/
+#progressModalTitle {
+    width: 100%;
+}
+
+/*==========================
+        TABLES
+==========================*/
+
 #libraryTable tbody tr {
     cursor: pointer;
 }
@@ -36,16 +86,4 @@
 
 #subtitleTable tbody tr.success-transition {
     background-color: #c3e6cb;
-}
-
-#episodeOrSeriesBtns label {
-    cursor: pointer;
-}
-
-#episodeOrSeriesBtns label.active {
-    cursor: default;
-}
-
-#progressModalTitle {
-    width: 100%;
 }

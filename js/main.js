@@ -6,6 +6,50 @@ var seasonsList = []; // Stores the Ids for all seasons of the most recently cli
 var seasonId = ""; // Store the Id of the most recently clicked season
 var episodeId = ""; // Stores the Id of the most recently clicked episode
 
+$(document).ready(() => {
+    // Validation values to enable the Connect to Plex Button
+    let validUrl = false;
+    let validToken = false;
+
+    // Validation listeners on the Plex URL Input
+    $('#plexUrl').on("input", () => {
+        if ($('#plexUrl').val() != "") {
+            $('#plexUrl').removeClass("is-invalid").addClass("is-valid");
+            validUrl = true;
+        }
+        else {
+            $('#plexUrl').removeClass("is-valid").addClass("is-invalid");
+            validUrl = false;
+        }
+        // Check if we can enable the Connect to Plex button
+        if (validUrl && validToken) {
+            $("#btnConnectToPlex").prop("disabled", false);
+        }
+        else {
+            $("#btnConnectToPlex").prop("disabled", true);
+        }
+    });
+
+    // Validation listeners on the Plex Token Input
+    $('#plexToken').on("input", () => {
+        if ($('#plexToken').val() != "") {
+            $('#plexToken').removeClass("is-invalid").addClass("is-valid");
+            validToken = true;
+        }
+        else {
+            $('#plexToken').removeClass("is-valid").addClass("is-invalid");
+            validToken = false;
+        }
+        // Check if we can enable the Connect to Plex button
+        if (validUrl && validToken) {
+            $("#btnConnectToPlex").prop("disabled", false);
+        }
+        else {
+            $("#btnConnectToPlex").prop("disabled", true);
+        }
+    });
+});
+
 function connectToPlex() {
     plexUrl = $("#plexUrl").val();
     plexToken = $("#plexToken").val();
@@ -17,10 +61,35 @@ function connectToPlex() {
             "X-Plex-Token": plexToken,
             "Accept": "application/json"
         },
-        "success": (data) => displayLibraries(data),
+        "success": (data) => {
+            $("#authWarningText").empty();
+            displayLibraries(data)
+        },
         "error": (data) => {
-            console.log("ERROR L22");
-            console.log(data);
+            if (data.status == 401) {
+                console.log("Unauthorized");
+                $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> Unauthorized (401) - Please check that your X-Plex-Token is correct, and you are trying to connect to the correct Plex server.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+            }
+            else {
+                console.log("Unkown error, most likely bad URL / IP");
+                $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> Unkown Error (0) - Please verify the URL and try again.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+            }
+            $("#libraryTable tbody").empty();
+            $("#tvShowsTable tbody").empty();
+            $("#seasonsTable tbody").empty();
+            $("#episodesTable tbody").empty();
+            $("#audioTable tbody").empty();
+            $("#subtitleTable tbody").empty();
         }
     });
 }
@@ -29,6 +98,7 @@ function displayLibraries(data) {
     const libraries = data.MediaContainer.Directory;
     // console.log(libraries);
 
+    $("#libraryTable tbody").empty();
     $("#tvShowsTable tbody").empty();
     $("#seasonsTable tbody").empty();
     $("#episodesTable tbody").empty();
@@ -55,9 +125,10 @@ function getAlphabet(uid, row) {
         "success": (data) => {
             libraryNumber = uid;
             displayAlphabet(data, row);
+            $('#series-tab').tab('show');
         },
         "error": (data) => {
-            console.log("ERROR L60");
+            console.log("ERROR L131");
             console.log(data);
         }
     });
@@ -104,7 +175,7 @@ function getLibraryByLetter(element) {
         },
         "success": (data) => displayTitles(data),
         "error": (data) => {
-            console.log("ERROR L107");
+            console.log("ERROR L178");
             console.log(data);
         }
     });
@@ -138,10 +209,26 @@ function getTitleInfo(uid, row) {
             "X-Plex-Token": plexToken,
             "Accept": "application/json"
         },
-        "success": (data) => showTitleInfo(data, row),
+        "success": (data) => {
+            showTitleInfo(data, row);
+            $('#episodes-tab').tab('show');
+        },
         "error": (data) => {
             console.log("ERROR L143");
             console.log(data);
+            if (data.status == 400) {
+                // This is a "bad request" - this usually means a Movie was selected
+                $('#progressModal #progressModalTitle').empty();
+                $('#progressModal #progressModalTitle').text(`Invalid TV Show`);
+                $('#progressModal #modalBodyText').empty();
+                $('#progressModal #modalBodyText').append(`<div class="alert alert-warning" role="alert">
+                        <div class="d-flex align-items-center">
+                            This does not appear to be a valid TV Series, or this TV Series does not have any seasons associated with it.<br>
+                            Please choose a valid TV Series; update the TV Series to have at least 1 Season; or go back and choose the proper library for TV Series.
+                        </div>
+                    </div>`);
+                $('#progressModal').modal();
+            }
         }
     });
 }
