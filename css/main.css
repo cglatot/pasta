@@ -172,6 +172,14 @@ table, td, tr {
     border-bottom: 2px solid #aaa;
 }
 
+.table-active>td, .table-active>th {
+    background-color: transparent;
+}
+
+.table-active {
+    background-color: rgba(192, 118, 0.8,.20);
+}
+
 #libraryTable tbody tr {
     cursor: pointer;
 }
