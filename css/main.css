@@ -57,6 +57,11 @@ label {
 
 .modal-content {
     background-color: rgba(40,40,40,1);
+    color: rgb(240,240,240);
+}
+
+.modal-content .modal-body strong {
+    color: #e5a00d;
 }
 
 .modal-content .close {
@@ -136,6 +141,10 @@ label {
     border-color: #c87f0a;
 }
 
+.btn-secondary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(243,156,18,.25);
+}
+
 .btn-secondary:not(:disabled):not(.disabled):active {
     color: #fff;
     background-color: #c87f0a;
@@ -156,11 +165,74 @@ label {
     cursor: default;
 }
 
+#alphabetGroup .btn-outline-dark {
+    color: rgb(240,240,240);
+    background-color: #444;
+    border-color: #444;
+}
+
+#alphabetGroup .btn-outline-dark:hover {
+    color: rgb(240,240,240);
+    background-color: #333;
+    border-color: #2c2c2c;
+}
+
+#alphabetGroup .btn-outline-dark.disabled, #alphabetGroup .btn-outline-dark:disabled {
+    color: rgb(240,240,240);
+    background-color: #444;
+    border-color: #444;
+    opacity: 0.45;
+}
+
+#alphabetGroup .btn-dark {
+    color: rgb(240,240,240);
+    background-color: #222;
+    border-color: #222;
+}
+
+#alphabetGroup .btn-dark:hover {
+    color: rgb(240,240,240);
+    background-color: #2c2c2c;
+    border-color: #252525;
+}
+
+#alphabetGroup .btn-dark.focus, #alphabetGroup .btn-dark:focus {
+    box-shadow: 0 0 0 0.2rem rgba(82,82,82,.5);
+}
+
+#episodeOrSeriesBtns .btn-secondary {
+    color: rgb(240,240,240);
+    background-color: #444;
+    border-color: #444;
+}
+
+#episodeOrSeriesBtns .btn-secondary:hover {
+    color: rgb(240,240,240);
+    background-color: #333;
+    border-color: #2c2c2c;
+}
+
+#episodeOrSeriesBtns .btn-secondary.active {
+    color: #fff;
+    background-color: #F39C12;
+    border-color: #F39C12;
+}
+
+#episodeOrSeriesBtns .btn-secondary.active.focus {
+    box-shadow: 0 0 0 0.2rem rgba(243,156,18,.25);
+}
+
+#episodeOrSeriesBtns .btn-secondary.active:hover {
+    color: #fff;
+    background-color: #d4860b;
+    border-color: #c87f0a;
+}
+
 /*==========================
         TABLES
 ==========================*/
 
-table, td, tr {
+table, td, tr, th {
     color: rgb(240,240,240);
 }
 
@@ -174,10 +246,6 @@ table, td, tr {
 
 .table-active>td, .table-active>th {
     background-color: transparent;
-}
-
-.table-active {
-    background-color: rgba(192, 118, 0.8,.20);
 }
 
 #libraryTable tbody tr {
@@ -200,22 +268,36 @@ table, td, tr {
     cursor: pointer;
 }
 
-#audioTable tbody tr.table-active:not(.success-transition) {
+/*#audioTable tbody tr.table-active:not(.success-transition) {
     transition: background-color 2s;
 }
 
 #audioTable tbody tr.success-transition {
     background-color: #c3e6cb;
-}
+}*/
 
 #subtitleTable tbody tr {
     cursor: pointer;
 }
 
-#subtitleTable tbody tr.table-active:not(.success-transition) {
+/*#subtitleTable tbody tr.table-active:not(.success-transition) {
     transition: background-color 2s;
 }
 
 #subtitleTable tbody tr.success-transition {
     background-color: #c3e6cb;
+}*/
+
+.table-active {
+    background-color: rgba(192, 118, 0.8,.20);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,.1);
+    transition: none;
+}
+
+.table-hover .table-active:hover {
+    background-color: rgba(192, 118, 0.8,.4);
+    transition: none;
 }

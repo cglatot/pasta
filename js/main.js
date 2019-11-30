@@ -221,7 +221,7 @@ function getTitleInfo(uid, row) {
                 $('#progressModal #progressModalTitle').empty();
                 $('#progressModal #progressModalTitle').text(`Invalid TV Show`);
                 $('#progressModal #modalBodyText').empty();
-                $('#progressModal #modalBodyText').append(`<div class="alert alert-warning" role="alert">
+                $('#progressModal #modalBodyText').append(`<div class="alert alert-warning mb-0" role="alert">
                         <div class="d-flex align-items-center">
                             This does not appear to be a valid TV Series, or this TV Series does not have any seasons associated with it.<br>
                             Please choose a valid TV Series; update the TV Series to have at least 1 Season; or go back and choose the proper library for TV Series.
