@@ -268,25 +268,9 @@ table, td, tr, th {
     cursor: pointer;
 }
 
-/*#audioTable tbody tr.table-active:not(.success-transition) {
-    transition: background-color 2s;
-}
-
-#audioTable tbody tr.success-transition {
-    background-color: #c3e6cb;
-}*/
-
 #subtitleTable tbody tr {
     cursor: pointer;
 }
-
-/*#subtitleTable tbody tr.table-active:not(.success-transition) {
-    transition: background-color 2s;
-}
-
-#subtitleTable tbody tr.success-transition {
-    background-color: #c3e6cb;
-}*/
 
 .table-active {
     background-color: rgba(192, 118, 0.8,.20);
@@ -300,4 +284,20 @@ table, td, tr, th {
 .table-hover .table-active:hover {
     background-color: rgba(192, 118, 0.8,.4);
     transition: none;
+}
+
+@keyframes successFadeOut {
+    0%   { background-color: rgba(0,188,140,0.4); }
+    15%  { background-color: rgba(0,188,140,0.4); }
+    100% { background-color: rgba(192, 118, 0.8,.20); }
+}
+
+#audioTable tbody tr.success-transition {
+    color: #fff;
+    animation: successFadeOut 1.5s ease-out;
+}
+
+#subtitleTable tbody tr.success-transition {
+    color: #fff;
+    animation: successFadeOut 1.5s ease-out;
 }

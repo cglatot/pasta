@@ -360,11 +360,11 @@ async function setAudioStream(partsId, streamId, row) {
             },
             "success": (data) => {
                 //console.log("success");
-                $(row).siblings().removeClass("table-active").removeClass("table-success");
+                $(row).siblings().removeClass("table-active");
                 $(row).addClass("table-active").addClass("success-transition");
-                setTimeout(function() {
+                setTimeout(() => {
                     $(row).removeClass('success-transition');
-                }, 100);
+                }, 1500);
             },
             "error": (data) => {
                 console.log("ERROR L283");
@@ -526,11 +526,11 @@ async function setSubtitleStream(partsId, streamId, row) {
             },
             "success": (data) => {
                 //console.log("success");
-                $(row).siblings().removeClass("table-active").removeClass("table-success");
+                $(row).siblings().removeClass("table-active");
                 $(row).addClass("table-active").addClass("success-transition");
-                setTimeout(function() {
+                setTimeout(() => {
                     $(row).removeClass('success-transition');
-                }, 100);
+                }, 1500);
             },
             "error": (data) => {
                 console.log("ERROR L449");
