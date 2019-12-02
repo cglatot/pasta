@@ -2,6 +2,15 @@
 <html lang="en">
 
 <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-153789706-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'UA-153789706-1');
+    </script>
+
     <title>PASTA | Plex Audio and Subtitle Track Automator</title>
 
     <!-- Required meta tags -->
@@ -9,15 +18,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="css/main.css" />
-    
+
     <!--<link rel="icon" type="image/png" href="images/favicon.png">-->
 
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
     <!-- Custom Scripts -->
     <script type="text/javascript" src="js/main.js"></script>
 </head>
@@ -26,12 +41,15 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark static-top">
         <div class="container">
-            <a class="navbar-brand" href="javascript:window.location.reload()"><h2>PASTA<small class="ml-2">Plex Audio and Subtitle Track Automation</small></h2></a>
+            <a class="navbar-brand" href="javascript:window.location.reload()">
+                <h2>PASTA<small class="ml-2">Plex Audio and Subtitle Track Automation</small></h2>
+            </a>
         </div>
     </nav>
 
     <!-- Modal -->
-    <div class="modal fade" id="progressModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal fade" id="progressModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -41,7 +59,7 @@
                     </button>
                 </div>
                 <div id="modalBodyText" class="modal-body">
-                    
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -54,40 +72,49 @@
     <div class="container">
         <div class="card border-0 shadow my-3 my-md-5">
             <div class="card-body p-3 p-md-5">
-                
+
                 <!-- TABS -->
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="authentication-tab" data-toggle="tab" href="#authentication" role="tab" aria-controls="authentication" aria-selected="true">Authentication</a>
+                        <a class="nav-link active" id="authentication-tab" data-toggle="tab" href="#authentication"
+                            role="tab" aria-controls="authentication" aria-selected="true">Authentication</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="series-tab" data-toggle="tab" href="#series" role="tab" aria-controls="series" aria-selected="false">Series</a>
+                        <a class="nav-link" id="series-tab" data-toggle="tab" href="#series" role="tab"
+                            aria-controls="series" aria-selected="false">Series</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="episodes-tab" data-toggle="tab" href="#episodes" role="tab" aria-controls="episodes" aria-selected="false">Episodes</a>
+                        <a class="nav-link" id="episodes-tab" data-toggle="tab" href="#episodes" role="tab"
+                            aria-controls="episodes" aria-selected="false">Episodes</a>
                     </li>
                 </ul>
                 <!-- / TABS -->
-                
+
                 <!-- TAB CONTENT -->
                 <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="authentication" role="tabpanel" aria-labelledby="authentication-tab">
+                    <div class="tab-pane fade show active" id="authentication" role="tabpanel"
+                        aria-labelledby="authentication-tab">
                         <!-- PLEX LOGIN FORM -->
                         <div class="row mt-3">
                             <div class="col">
                                 <div class="form-group">
                                     <label for="plexUrl">Plex URL</label>
-                                    <input type="email" class="form-control" id="plexUrl" placeholder="e.g. http://192.168.0.1:32400">
-                                    <small class="form-text text-muted">This must be a local server, or a server publicly addressable.</small>
+                                    <input type="email" class="form-control" id="plexUrl"
+                                        placeholder="e.g. http://192.168.0.1:32400">
+                                    <small class="form-text text-muted">This must be a local server, or a server
+                                        publicly addressable.</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="plexToken">Plex Token</label>
                                     <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token">
                                     <small class="form-text text-muted">
-                                        <a target="_blank" href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">Find out how to get your X-Plex-token here.</a>
+                                        <a target="_blank"
+                                            href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">Find
+                                            out how to get your X-Plex-token here.</a>
                                     </small>
                                 </div>
-                                <button id="btnConnectToPlex" class="btn btn-secondary" onclick="connectToPlex()" disabled>Connect to Plex</button>
+                                <button id="btnConnectToPlex" class="btn btn-secondary" onclick="connectToPlex()"
+                                    disabled>Connect to Plex</button>
                             </div>
                         </div>
                         <!-- / PLEX LOGIN FORM -->
@@ -95,7 +122,7 @@
                         <!-- PLEX AUTHENTICATION WARNING -->
                         <div class="row">
                             <div class="col" id="authWarningText">
-                                
+
                             </div>
                         </div>
                         <!-- / PLEX AUTHENTICATION WARNING -->
@@ -125,35 +152,63 @@
                         <!-- ALPHABET LIBRARY -->
                         <div class="row mt-3">
                             <div class="col text-center">
-                                <div id="alphabetGroup" class="btn-group flex-wrap" role="group" aria-label="TV Library First Letter">
+                                <div id="alphabetGroup" class="btn-group flex-wrap" role="group"
+                                    aria-label="TV Library First Letter">
                                     <!-- set class "disabled" for buttons which are not active -->
-                                    <button id="btnHash" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">#</button>
-                                    <button id="btnA" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">A</button>
-                                    <button id="btnB" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">B</button>
-                                    <button id="btnC" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">C</button>
-                                    <button id="btnD" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">D</button>
-                                    <button id="btnE" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">E</button>
-                                    <button id="btnF" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">F</button>
-                                    <button id="btnG" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">G</button>
-                                    <button id="btnH" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">H</button>
-                                    <button id="btnI" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">I</button>
-                                    <button id="btnJ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">J</button>
-                                    <button id="btnK" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">K</button>
-                                    <button id="btnL" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">L</button>
-                                    <button id="btnM" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">M</button>
-                                    <button id="btnN" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">N</button>
-                                    <button id="btnO" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">O</button>
-                                    <button id="btnP" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">P</button>
-                                    <button id="btnQ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Q</button>
-                                    <button id="btnR" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">R</button>
-                                    <button id="btnS" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">S</button>
-                                    <button id="btnT" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">T</button>
-                                    <button id="btnU" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">U</button>
-                                    <button id="btnV" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">V</button>
-                                    <button id="btnW" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">W</button>
-                                    <button id="btnX" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">X</button>
-                                    <button id="btnY" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Y</button>
-                                    <button id="btnZ" disabled type="button" class="btn btn-outline-dark" onclick="getLibraryByLetter(this)">Z</button>
+                                    <button id="btnHash" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">#</button>
+                                    <button id="btnA" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">A</button>
+                                    <button id="btnB" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">B</button>
+                                    <button id="btnC" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">C</button>
+                                    <button id="btnD" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">D</button>
+                                    <button id="btnE" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">E</button>
+                                    <button id="btnF" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">F</button>
+                                    <button id="btnG" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">G</button>
+                                    <button id="btnH" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">H</button>
+                                    <button id="btnI" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">I</button>
+                                    <button id="btnJ" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">J</button>
+                                    <button id="btnK" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">K</button>
+                                    <button id="btnL" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">L</button>
+                                    <button id="btnM" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">M</button>
+                                    <button id="btnN" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">N</button>
+                                    <button id="btnO" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">O</button>
+                                    <button id="btnP" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">P</button>
+                                    <button id="btnQ" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">Q</button>
+                                    <button id="btnR" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">R</button>
+                                    <button id="btnS" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">S</button>
+                                    <button id="btnT" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">T</button>
+                                    <button id="btnU" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">U</button>
+                                    <button id="btnV" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">V</button>
+                                    <button id="btnW" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">W</button>
+                                    <button id="btnX" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">X</button>
+                                    <button id="btnY" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">Y</button>
+                                    <button id="btnZ" disabled type="button" class="btn btn-outline-dark"
+                                        onclick="getLibraryByLetter(this)">Z</button>
                                 </div>
                             </div>
                         </div>
@@ -226,10 +281,12 @@
                             <div class="col text-center">
                                 <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
                                     <label class="btn btn-secondary active">
-                                        <input type="radio" name="episodeOrSeries" id="singleEpisode" autocomplete="off" checked> Single Episode
+                                        <input type="radio" name="episodeOrSeries" id="singleEpisode" autocomplete="off"
+                                            checked> Single Episode
                                     </label>
                                     <label class="btn btn-secondary">
-                                        <input type="radio" name="episodeOrSeries" id="entireSeries" autocomplete="off"> Entire Series
+                                        <input type="radio" name="episodeOrSeries" id="entireSeries" autocomplete="off">
+                                        Entire Series
                                     </label>
                                 </div>
                             </div>
@@ -251,7 +308,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-    
+
                                         </tbody>
                                     </table>
                                 </div>
