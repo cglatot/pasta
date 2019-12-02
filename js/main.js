@@ -375,7 +375,7 @@ async function setAudioStream(partsId, streamId, row) {
                 $(row).addClass("table-active").addClass("success-transition");
                 setTimeout(() => {
                     $(row).removeClass('success-transition');
-                }, 1500);
+                }, 1750);
             },
             "error": (data) => {
                 console.log("ERROR L283");
@@ -441,7 +441,8 @@ async function setAudioStream(partsId, streamId, row) {
             let potentialMatches = [];
             let selectedTrack = {
                 "matchId": "",
-                "matchLevel": 0
+                "matchLevel": 0,
+                "matchName": ""
             };
             let bestMatch;
 
@@ -453,11 +454,13 @@ async function setAudioStream(partsId, streamId, row) {
                         if (episodeStreams[j].selected == true) {
                             selectedTrack.matchId = episodeStreams[j].id;
                             selectedTrack.matchLevel = 6;
+                            selectedTrack.matchName = episodeStreams[j].displayTitle;
                         }
                         else {
                             potentialMatches.push({
                                 "matchId": episodeStreams[j].id,
-                                "matchLevel": 6
+                                "matchLevel": 6,
+                                "matchName": episodeStreams[j].displayTitle
                             });
                         }
                     }
@@ -466,11 +469,13 @@ async function setAudioStream(partsId, streamId, row) {
                         if (episodeStreams[j].selected == true) {
                             selectedTrack.matchId = episodeStreams[j].id;
                             selectedTrack.matchLevel = 5;
+                            selectedTrack.matchName = episodeStreams[j].displayTitle;
                         }
                         else {
                             potentialMatches.push({
                                 "matchId": episodeStreams[j].id,
-                                "matchLevel": 5
+                                "matchLevel": 5,
+                                "matchName": episodeStreams[j].displayTitle
                             });
                         }
                     }
@@ -479,11 +484,13 @@ async function setAudioStream(partsId, streamId, row) {
                         if (episodeStreams[j].selected == true) {
                             selectedTrack.matchId = episodeStreams[j].id;
                             selectedTrack.matchLevel = 4;
+                            selectedTrack.matchName = episodeStreams[j].displayTitle;
                         }
                         else {
                             potentialMatches.push({
                                 "matchId": episodeStreams[j].id,
-                                "matchLevel": 4
+                                "matchLevel": 4,
+                                "matchName": episodeStreams[j].displayTitle
                             });
                         }
                     }
@@ -492,11 +499,13 @@ async function setAudioStream(partsId, streamId, row) {
                         if (episodeStreams[j].selected == true) {
                             selectedTrack.matchId = episodeStreams[j].id;
                             selectedTrack.matchLevel = 3;
+                            selectedTrack.matchName = episodeStreams[j].displayTitle;
                         }
                         else {
                             potentialMatches.push({
                                 "matchId": episodeStreams[j].id,
-                                "matchLevel": 3
+                                "matchLevel": 3,
+                                "matchName": episodeStreams[j].displayTitle
                             });
                         }
                     }
@@ -505,11 +514,13 @@ async function setAudioStream(partsId, streamId, row) {
                         if (episodeStreams[j].selected == true) {
                             selectedTrack.matchId = episodeStreams[j].id;
                             selectedTrack.matchLevel = 2;
+                            selectedTrack.matchName = episodeStreams[j].displayTitle;
                         }
                         else {
                             potentialMatches.push({
                                 "matchId": episodeStreams[j].id,
-                                "matchLevel": 2
+                                "matchLevel": 2,
+                                "matchName": episodeStreams[j].displayTitle
                             });
                         }
                     }
@@ -518,11 +529,13 @@ async function setAudioStream(partsId, streamId, row) {
                         if (episodeStreams[j].selected == true) {
                             selectedTrack.matchId = episodeStreams[j].id;
                             selectedTrack.matchLevel = 1;
+                            selectedTrack.matchName = episodeStreams[j].displayTitle;
                         }
                         else {
                             potentialMatches.push({
                                 "matchId": episodeStreams[j].id,
-                                "matchLevel": 1
+                                "matchLevel": 1,
+                                "matchName": episodeStreams[j].displayTitle
                             });
                         }
                     }
@@ -563,7 +576,7 @@ async function setAudioStream(partsId, streamId, row) {
                     },
                     "success": (data) => {
                         //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} updated with Audio Track: ${newStreamId} because of a match on ${matchType}`);
-                        $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchId}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
+                        $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
                         $(row).siblings().removeClass("table-active");
                         $(row).addClass("table-active");
                     },
@@ -608,7 +621,7 @@ async function setSubtitleStream(partsId, streamId, row) {
                 $(row).addClass("table-active").addClass("success-transition");
                 setTimeout(() => {
                     $(row).removeClass('success-transition');
-                }, 1500);
+                }, 1750);
             },
             "error": (data) => {
                 console.log("ERROR L449");
@@ -676,7 +689,8 @@ async function setSubtitleStream(partsId, streamId, row) {
                 let potentialMatches = [];
                 let selectedTrack = {
                     "matchId": "",
-                    "matchLevel": 0
+                    "matchLevel": 0,
+                    "matchName": ""
                 };
                 let bestMatch;
 
@@ -688,11 +702,13 @@ async function setSubtitleStream(partsId, streamId, row) {
                             if (episodeStreams[j].selected == true) {
                                 selectedTrack.matchId = episodeStreams[j].id;
                                 selectedTrack.matchLevel = 6;
+                                selectedTrack.matchName = episodeStreams[j].displayTitle;
                             }
                             else {
                                 potentialMatches.push({
                                     "matchId": episodeStreams[j].id,
-                                    "matchLevel": 6
+                                    "matchLevel": 6,
+                                    "matchName": episodeStreams[j].displayTitle
                                 });
                             }
                         }
@@ -701,11 +717,13 @@ async function setSubtitleStream(partsId, streamId, row) {
                             if (episodeStreams[j].selected == true) {
                                 selectedTrack.matchId = episodeStreams[j].id;
                                 selectedTrack.matchLevel = 5;
+                                selectedTrack.matchName = episodeStreams[j].displayTitle;
                             }
                             else {
                                 potentialMatches.push({
                                     "matchId": episodeStreams[j].id,
-                                    "matchLevel": 5
+                                    "matchLevel": 5,
+                                    "matchName": episodeStreams[j].displayTitle
                                 });
                             }
                         }
@@ -714,11 +732,13 @@ async function setSubtitleStream(partsId, streamId, row) {
                             if (episodeStreams[j].selected == true) {
                                 selectedTrack.matchId = episodeStreams[j].id;
                                 selectedTrack.matchLevel = 4;
+                                selectedTrack.matchName = episodeStreams[j].displayTitle;
                             }
                             else {
                                 potentialMatches.push({
                                     "matchId": episodeStreams[j].id,
-                                    "matchLevel": 4
+                                    "matchLevel": 4,
+                                    "matchName": episodeStreams[j].displayTitle
                                 });
                             }
                         }
@@ -727,11 +747,13 @@ async function setSubtitleStream(partsId, streamId, row) {
                             if (episodeStreams[j].selected == true) {
                                 selectedTrack.matchId = episodeStreams[j].id;
                                 selectedTrack.matchLevel = 3;
+                                selectedTrack.matchName = episodeStreams[j].displayTitle;
                             }
                             else {
                                 potentialMatches.push({
                                     "matchId": episodeStreams[j].id,
-                                    "matchLevel": 3
+                                    "matchLevel": 3,
+                                    "matchName": episodeStreams[j].displayTitle
                                 });
                             }
                         }
@@ -740,11 +762,13 @@ async function setSubtitleStream(partsId, streamId, row) {
                             if (episodeStreams[j].selected == true) {
                                 selectedTrack.matchId = episodeStreams[j].id;
                                 selectedTrack.matchLevel = 2;
+                                selectedTrack.matchName = episodeStreams[j].displayTitle;
                             }
                             else {
                                 potentialMatches.push({
                                     "matchId": episodeStreams[j].id,
-                                    "matchLevel": 2
+                                    "matchLevel": 2,
+                                    "matchName": episodeStreams[j].displayTitle
                                 });
                             }
                         }
@@ -753,11 +777,13 @@ async function setSubtitleStream(partsId, streamId, row) {
                             if (episodeStreams[j].selected == true) {
                                 selectedTrack.matchId = episodeStreams[j].id;
                                 selectedTrack.matchLevel = 1;
+                                selectedTrack.matchName = episodeStreams[j].displayTitle;
                             }
                             else {
                                 potentialMatches.push({
                                     "matchId": episodeStreams[j].id,
-                                    "matchLevel": 1
+                                    "matchLevel": 1,
+                                    "matchName": episodeStreams[j].displayTitle
                                 });
                             }
                         }
@@ -798,7 +824,7 @@ async function setSubtitleStream(partsId, streamId, row) {
                         },
                         "success": (data) => {
                             //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} updated with Subtitle Track: ${currentMatch.matchId} because of a match on ${matchType}`);
-                            $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchId}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
+                            $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
                             $(row).siblings().removeClass("table-active");
                             $(row).addClass("table-active");
                         },

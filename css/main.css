@@ -304,12 +304,12 @@ table, td, tr, th {
 
 #audioTable tbody tr.success-transition {
     color: #fff;
-    animation: successFadeOut 1.5s ease-out;
+    animation: successFadeOut 1.75s ease-out;
 }
 
 #subtitleTable tbody tr.success-transition {
     color: #fff;
-    animation: successFadeOut 1.5s ease-out;
+    animation: successFadeOut 1.75s ease-out;
 }
 
 /*==========================
@@ -327,22 +327,12 @@ table, td, tr, th {
     }
 }
 
-/* Small devices (portrait tablets and large phones, 600px and up) */
-@media only screen and (min-width: 600px) {
+@media only screen and (max-width: 1199px) {
+    .btn-group>.btn:not(:last-child):not(.dropdown-toggle) {
+        border-bottom-left-radius: 0;
+    }
 
-}
-
-/* Medium devices (landscape tablets, 768px and up) */
-@media only screen and (min-width: 768px) {
-
-}
-
-/* Large devices (laptops/desktops, 992px and up) */
-@media only screen and (min-width: 992px) {
-
-}
-
-/* Extra large devices (large laptops and desktops, 1200px and up) */
-@media only screen and (min-width: 1200px) {
-
+    .btn-group>.btn:not(:first-child) {
+        border-top-right-radius: 0;
+    }
 }
