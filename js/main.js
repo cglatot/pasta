@@ -51,8 +51,12 @@ $(document).ready(() => {
 });
 
 function connectToPlex() {
-    plexUrl = $("#plexUrl").val();
-    plexToken = $("#plexToken").val();
+    plexUrl = $("#plexUrl").val().trim();
+    plexToken = $("#plexToken").val().trim();
+
+    if (plexUrl.toLowerCase().indexOf("http") < 0) {
+        plexUrl = `http://${plexUrl}`
+    }
 
     $.ajax({
         "url": `${plexUrl}/library/sections/`,

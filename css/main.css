@@ -23,6 +23,14 @@ small {
     color: rgb(190,190,190);
 }
 
+nav .navbar-brand {
+    margin-right: 0;
+}
+
+nav h2 {
+    margin-bottom: 0;
+}
+
 nav small {
     color: rgb(190,190,190);
     font-size: 0.7em;
