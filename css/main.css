@@ -175,6 +175,10 @@ label {
     cursor: default;
 }
 
+#alphabetGroup button {
+    margin-left: 0;
+}
+
 #alphabetGroup .btn-outline-dark {
     color: rgb(240,240,240);
     background-color: #444;
