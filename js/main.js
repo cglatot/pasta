@@ -322,6 +322,9 @@ function showEpisodeInfo(data, row) {
     $("#audioTable tbody").empty();
     $("#subtitleTable tbody").empty();
 
+    // We need to keep track if any subtitles are selected - if not, then we need to make the subtitle row table-active
+    let subtitlesChosen = false;
+
     for (let i = 0; i < streams.length; i++) {
         if (streams[i].streamType == 2) {
             let rowHTML = `<tr ${streams[i].selected ? "class='table-active'" : ""} onclick="setAudioStream(${partId}, ${streams[i].id}, this)">
@@ -334,6 +337,7 @@ function showEpisodeInfo(data, row) {
             $("#audioTable tbody").append(rowHTML);
         }
         else if (streams[i].streamType == 3) {
+            if (streams[i].selected) subtitlesChosen = true;
             let rowHTML = `<tr ${streams[i].selected ? "class='table-active'" : ""} onclick="setSubtitleStream(${partId}, ${streams[i].id}, this)">
                         <th class="uid" scope="row">${streams[i].id}</th>
                         <td class="name">${streams[i].displayTitle}</td>
@@ -344,6 +348,16 @@ function showEpisodeInfo(data, row) {
             $("#subtitleTable tbody").append(rowHTML);
         }
     }
+
+    // Append the "No Subtitles" row to the top of the tracks table
+    let noSubsRow = `<tr ${subtitlesChosen ? "" : "class='table-active'"} onclick="setSubtitleStream(${partId}, 0, this)">
+                        <th class="uid" scope="row">0</th>
+                        <td class="name">No Subtitles</td>
+                        <td class="title">--</td>
+                        <td class="language">--</td>
+                        <td class="code">--</td>
+                    </tr>`;
+    $("#subtitleTable tbody").prepend(noSubsRow);
 }
 
 async function setAudioStream(partsId, streamId, row) {
@@ -657,127 +671,154 @@ async function setSubtitleStream(partsId, streamId, row) {
             //console.log(episodePartId);
             //console.log(episodeStreams);
 
-            // Loop through each subtitle stream and check for any matches using the searchTitle, searchName, searchLanguage, searchCode
-            let hasMatch = false;
-            let matchType = "";
-            let potentialMatches = [];
-            let selectedTrack = {
-                "matchId": "",
-                "matchLevel": 0
-            };
-            let bestMatch;
+            // If streamId = 0 then we are unsetting the subtitles. Otherwise we need to find the best matches for each episode
+            if (streamId != 0) {
+                // Loop through each subtitle stream and check for any matches using the searchTitle, searchName, searchLanguage, searchCode
+                let hasMatch = false;
+                let matchType = "";
+                let potentialMatches = [];
+                let selectedTrack = {
+                    "matchId": "",
+                    "matchLevel": 0
+                };
+                let bestMatch;
 
-            for (let j = 0; j < episodeStreams.length; j++) {
-                // Subtitle streams are streamType 3, so we only care about that
-                if (episodeStreams[j].streamType == "3") {
-                    // If EVERYTHING is a match, even if they are "undefined" then select it
-                    if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].language == searchLanguage) && (episodeStreams[j].languageCode == searchCode)) {
-                        if (episodeStreams[j].selected == true) {
-                            selectedTrack.matchId = episodeStreams[j].id;
-                            selectedTrack.matchLevel = 6;
+                for (let j = 0; j < episodeStreams.length; j++) {
+                    // Subtitle streams are streamType 3, so we only care about that
+                    if (episodeStreams[j].streamType == "3") {
+                        // If EVERYTHING is a match, even if they are "undefined" then select it
+                        if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].language == searchLanguage) && (episodeStreams[j].languageCode == searchCode)) {
+                            if (episodeStreams[j].selected == true) {
+                                selectedTrack.matchId = episodeStreams[j].id;
+                                selectedTrack.matchLevel = 6;
+                            }
+                            else {
+                                potentialMatches.push({
+                                    "matchId": episodeStreams[j].id,
+                                    "matchLevel": 6
+                                });
+                            }
                         }
-                        else {
-                            potentialMatches.push({
-                                "matchId": episodeStreams[j].id,
-                                "matchLevel": 6
-                            });
+                        // If the displayTitle and title are the same, we have an instant match (also rule out any undefined matches)
+                        else if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].title != "undefined") && (episodeStreams[j].displayTitle != "undefined")) {
+                            if (episodeStreams[j].selected == true) {
+                                selectedTrack.matchId = episodeStreams[j].id;
+                                selectedTrack.matchLevel = 5;
+                            }
+                            else {
+                                potentialMatches.push({
+                                    "matchId": episodeStreams[j].id,
+                                    "matchLevel": 5
+                                });
+                            }
                         }
-                    }
-                    // If the displayTitle and title are the same, we have an instant match (also rule out any undefined matches)
-                    else if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].title != "undefined") && (episodeStreams[j].displayTitle != "undefined")) {
-                        if (episodeStreams[j].selected == true) {
-                            selectedTrack.matchId = episodeStreams[j].id;
-                            selectedTrack.matchLevel = 5;
+                        // If the titles are the same (rule out undefined match)
+                        else if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].title != "undefined")) {
+                            if (episodeStreams[j].selected == true) {
+                                selectedTrack.matchId = episodeStreams[j].id;
+                                selectedTrack.matchLevel = 4;
+                            }
+                            else {
+                                potentialMatches.push({
+                                    "matchId": episodeStreams[j].id,
+                                    "matchLevel": 4
+                                });
+                            }
                         }
-                        else {
-                            potentialMatches.push({
-                                "matchId": episodeStreams[j].id,
-                                "matchLevel": 5
-                            });
+                        // If the names are the same (rule out undefined match)
+                        else if ((episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].displayTitle != "undefined")) {
+                            if (episodeStreams[j].selected == true) {
+                                selectedTrack.matchId = episodeStreams[j].id;
+                                selectedTrack.matchLevel = 3;
+                            }
+                            else {
+                                potentialMatches.push({
+                                    "matchId": episodeStreams[j].id,
+                                    "matchLevel": 3
+                                });
+                            }
                         }
-                    }
-                    // If the titles are the same (rule out undefined match)
-                    else if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].title != "undefined")) {
-                        if (episodeStreams[j].selected == true) {
-                            selectedTrack.matchId = episodeStreams[j].id;
-                            selectedTrack.matchLevel = 4;
+                        // If the languages are the same (rule out undefined match)
+                        else if ((episodeStreams[j].language == searchLanguage) && (episodeStreams[j].language != "undefined")) {
+                            if (episodeStreams[j].selected == true) {
+                                selectedTrack.matchId = episodeStreams[j].id;
+                                selectedTrack.matchLevel = 2;
+                            }
+                            else {
+                                potentialMatches.push({
+                                    "matchId": episodeStreams[j].id,
+                                    "matchLevel": 2
+                                });
+                            }
                         }
-                        else {
-                            potentialMatches.push({
-                                "matchId": episodeStreams[j].id,
-                                "matchLevel": 4
-                            });
-                        }
-                    }
-                    // If the names are the same (rule out undefined match)
-                    else if ((episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].displayTitle != "undefined")) {
-                        if (episodeStreams[j].selected == true) {
-                            selectedTrack.matchId = episodeStreams[j].id;
-                            selectedTrack.matchLevel = 3;
-                        }
-                        else {
-                            potentialMatches.push({
-                                "matchId": episodeStreams[j].id,
-                                "matchLevel": 3
-                            });
-                        }
-                    }
-                    // If the languages are the same (rule out undefined match)
-                    else if ((episodeStreams[j].language == searchLanguage) && (episodeStreams[j].language != "undefined")) {
-                        if (episodeStreams[j].selected == true) {
-                            selectedTrack.matchId = episodeStreams[j].id;
-                            selectedTrack.matchLevel = 2;
-                        }
-                        else {
-                            potentialMatches.push({
-                                "matchId": episodeStreams[j].id,
-                                "matchLevel": 2
-                            });
-                        }
-                    }
-                    // If the language codes are the same (rule out undefined match)
-                    else if ((episodeStreams[j].languageCode == searchCode) && (episodeStreams[j].languageCode != "undefined")) {
-                        if (episodeStreams[j].selected == true) {
-                            selectedTrack.matchId = episodeStreams[j].id;
-                            selectedTrack.matchLevel = 1;
-                        }
-                        else {
-                            potentialMatches.push({
-                                "matchId": episodeStreams[j].id,
-                                "matchLevel": 1
-                            });
+                        // If the language codes are the same (rule out undefined match)
+                        else if ((episodeStreams[j].languageCode == searchCode) && (episodeStreams[j].languageCode != "undefined")) {
+                            if (episodeStreams[j].selected == true) {
+                                selectedTrack.matchId = episodeStreams[j].id;
+                                selectedTrack.matchLevel = 1;
+                            }
+                            else {
+                                potentialMatches.push({
+                                    "matchId": episodeStreams[j].id,
+                                    "matchLevel": 1
+                                });
+                            }
                         }
                     }
                 }
-            }
 
-            // If there are no potential matches, then return hasMatch = false so we can skip sending unnecessary commands to plex
-            if (potentialMatches.length == 0) {
-                hasMatch = false;
-            }
-            else {
-                // If there are potential matches - get the highest matchLevel (most accurate) and compare it to the currently selected track
-                bestMatch = potentialMatches.reduce((p, c) => p.matchLevel > c.matchLevel ? p : c);
-                if (bestMatch.matchLevel > selectedTrack.matchLevel) {
-                    // By default selectedTrack.matchLevel = 0, so even if there is no selected track, this comparison will work
-                    hasMatch = true;
-                    if (bestMatch.matchLevel == 6) matchType = "Everything";
-                    else if (bestMatch.matchLevel == 5) matchType = "Name and Title";
-                    else if (bestMatch.matchLevel == 4) matchType = "Title";
-                    else if (bestMatch.matchLevel == 3) matchType = "Name";
-                    else if (bestMatch.matchLevel == 2) matchType = "Language";
-                    else if (bestMatch.matchLevel == 1) matchType = "Language Code";
-                }
-                else {
+                // If there are no potential matches, then return hasMatch = false so we can skip sending unnecessary commands to plex
+                if (potentialMatches.length == 0) {
                     hasMatch = false;
                 }
-            }
+                else {
+                    // If there are potential matches - get the highest matchLevel (most accurate) and compare it to the currently selected track
+                    bestMatch = potentialMatches.reduce((p, c) => p.matchLevel > c.matchLevel ? p : c);
+                    if (bestMatch.matchLevel > selectedTrack.matchLevel) {
+                        // By default selectedTrack.matchLevel = 0, so even if there is no selected track, this comparison will work
+                        hasMatch = true;
+                        if (bestMatch.matchLevel == 6) matchType = "Everything";
+                        else if (bestMatch.matchLevel == 5) matchType = "Name and Title";
+                        else if (bestMatch.matchLevel == 4) matchType = "Title";
+                        else if (bestMatch.matchLevel == 3) matchType = "Name";
+                        else if (bestMatch.matchLevel == 2) matchType = "Language";
+                        else if (bestMatch.matchLevel == 1) matchType = "Language Code";
+                    }
+                    else {
+                        hasMatch = false;
+                    }
+                }
 
-            if (hasMatch) {
-                // There is a match, so update the subtitle track using the currentMatch.matchId and episodePartId
-                //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has a match on the type: ${matchType}, and will set the new Subtitle Track to: ${currentMatch.matchId}`);
+                if (hasMatch) {
+                    // There is a match, so update the subtitle track using the currentMatch.matchId and episodePartId
+                    //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has a match on the type: ${matchType}, and will set the new Subtitle Track to: ${currentMatch.matchId}`);
+                    matchPromises.push(await $.ajax({
+                        "url": `${plexUrl}/library/parts/${episodePartId}?subtitleStreamID=${bestMatch.matchId}&allParts=1`,
+                        "method": "POST",
+                        "headers": {
+                            "X-Plex-Token": plexToken,
+                            "Accept": "application/json"
+                        },
+                        "success": (data) => {
+                            //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} updated with Subtitle Track: ${currentMatch.matchId} because of a match on ${matchType}`);
+                            $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchId}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
+                            $(row).siblings().removeClass("table-active");
+                            $(row).addClass("table-active");
+                        },
+                        "error": (data) => {
+                            console.log("ERROR L572");
+                            console.log(data);
+                        }
+                    }));
+                }
+                else {
+                    //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has no match, or there is only 1 subtitle track`);
+                }
+            }
+            else {
+                // streamId = 0, which means we just want to set the subtitleStreamID = 0 for every episode
                 matchPromises.push(await $.ajax({
-                    "url": `${plexUrl}/library/parts/${episodePartId}?subtitleStreamID=${bestMatch.matchId}&allParts=1`,
+                    "url": `${plexUrl}/library/parts/${episodePartId}?subtitleStreamID=0&allParts=1`,
                     "method": "POST",
                     "headers": {
                         "X-Plex-Token": plexToken,
@@ -785,18 +826,15 @@ async function setSubtitleStream(partsId, streamId, row) {
                     },
                     "success": (data) => {
                         //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} updated with Subtitle Track: ${currentMatch.matchId} because of a match on ${matchType}`);
-                        $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchId}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
+                        $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> has had the subtitles <strong>deselected</strong></span><br />`);
                         $(row).siblings().removeClass("table-active");
                         $(row).addClass("table-active");
                     },
                     "error": (data) => {
-                        console.log("ERROR L572");
+                        console.log("ERROR L834");
                         console.log(data);
                     }
                 }));
-            }
-            else {
-                //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has no match, or there is only 1 subtitle track`);
             }
         }
 
