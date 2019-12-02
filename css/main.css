@@ -23,8 +23,10 @@ small {
     color: rgb(190,190,190);
 }
 
-nav h3 small.text-muted {
+nav small {
     color: rgb(190,190,190);
+    font-size: 0.7em;
+    font-variant: small-caps;
 }
 
 a {
@@ -300,4 +302,39 @@ table, td, tr, th {
 #subtitleTable tbody tr.success-transition {
     color: #fff;
     animation: successFadeOut 1.5s ease-out;
+}
+
+/*==========================
+        MEDIA QUERIES
+==========================*/
+
+/* Extra small devices (phones, 600px and down) */
+@media only screen and (max-width: 600px) {
+    nav small {
+        display: none;
+    }
+
+    .navbar .container {
+        justify-content: center;
+    }
+}
+
+/* Small devices (portrait tablets and large phones, 600px and up) */
+@media only screen and (min-width: 600px) {
+
+}
+
+/* Medium devices (landscape tablets, 768px and up) */
+@media only screen and (min-width: 768px) {
+
+}
+
+/* Large devices (laptops/desktops, 992px and up) */
+@media only screen and (min-width: 992px) {
+
+}
+
+/* Extra large devices (large laptops and desktops, 1200px and up) */
+@media only screen and (min-width: 1200px) {
+
 }

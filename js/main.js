@@ -107,7 +107,6 @@ function displayLibraries(data) {
 
     for (let i = 0; i < libraries.length; i++) {
         let rowHTML = `<tr onclick="getAlphabet(${libraries[i].key}, this)">
-                        <th scope="row">${libraries[i].key}</th>
                         <td>${libraries[i].title}</td>
                     </tr>`;
         $("#libraryTable tbody").append(rowHTML);
@@ -192,7 +191,6 @@ function displayTitles(titles) {
 
     for (let i = 0; i < tvShows.length; i++) {
         let rowHTML = `<tr onclick="getTitleInfo(${tvShows[i].ratingKey}, this)">
-                        <th scope="row">${tvShows[i].ratingKey}</th>
                         <td>${tvShows[i].title}</td>
                         <td>${tvShows[i].year}</td>
                     </tr>`;
@@ -249,7 +247,6 @@ function showTitleInfo(data, row) {
     for (let i = 0; i < seasons.length; i++) {
         seasonsList.push(seasons[i].ratingKey);
         let rowHTML = `<tr onclick="getSeasonInfo(${seasons[i].ratingKey}, this)">
-                        <th scope="row">${seasons[i].ratingKey}</th>
                         <td>${seasons[i].title}</td>
                     </tr>`;
         $("#seasonsTable tbody").append(rowHTML);
@@ -286,7 +283,6 @@ function showSeasonInfo(data, row) {
 
     for (let i = 0; i < episodes.length; i++) {
         let rowHTML = `<tr onclick="getEpisodeInfo(${episodes[i].ratingKey}, this)">
-                        <th scope="row">${episodes[i].ratingKey}</th>
                         <td>${episodes[i].title}</td>
                     </tr>`;
         $("#episodesTable tbody").append(rowHTML);
@@ -328,7 +324,6 @@ function showEpisodeInfo(data, row) {
     for (let i = 0; i < streams.length; i++) {
         if (streams[i].streamType == 2) {
             let rowHTML = `<tr ${streams[i].selected ? "class='table-active'" : ""} onclick="setAudioStream(${partId}, ${streams[i].id}, this)">
-                        <th class="uid" scope="row">${streams[i].id}</th>
                         <td class="name">${streams[i].displayTitle}</td>
                         <td class="title">${streams[i].title}</td>
                         <td class="language">${streams[i].language}</td>
@@ -339,7 +334,6 @@ function showEpisodeInfo(data, row) {
         else if (streams[i].streamType == 3) {
             if (streams[i].selected) subtitlesChosen = true;
             let rowHTML = `<tr ${streams[i].selected ? "class='table-active'" : ""} onclick="setSubtitleStream(${partId}, ${streams[i].id}, this)">
-                        <th class="uid" scope="row">${streams[i].id}</th>
                         <td class="name">${streams[i].displayTitle}</td>
                         <td class="title">${streams[i].title}</td>
                         <td class="language">${streams[i].language}</td>
@@ -351,7 +345,6 @@ function showEpisodeInfo(data, row) {
 
     // Append the "No Subtitles" row to the top of the tracks table
     let noSubsRow = `<tr ${subtitlesChosen ? "" : "class='table-active'"} onclick="setSubtitleStream(${partId}, 0, this)">
-                        <th class="uid" scope="row">0</th>
                         <td class="name">No Subtitles</td>
                         <td class="title">--</td>
                         <td class="language">--</td>
