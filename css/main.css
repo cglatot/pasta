@@ -332,11 +332,11 @@ table, td, tr, th {
 }
 
 @media only screen and (max-width: 1199px) {
-    #alphabetGroup .btn-group>.btn:not(:last-child):not(.dropdown-toggle) {
+    #alphabetGroup.btn-group .btn:not(:last-child):not(.dropdown-toggle) {
         border-bottom-left-radius: 0;
     }
 
-    #alphabetGroup .btn-group>.btn:not(:first-child) {
+    #alphabetGroup.btn-group .btn:not(:first-child) {
         border-top-right-radius: 0;
     }
 }
