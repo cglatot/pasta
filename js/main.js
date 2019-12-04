@@ -79,6 +79,16 @@ function connectToPlex() {
                         </button>
                     </div>`);
             }
+            else if ((location.protocol == 'https:') && (plexUrl.indexOf('http:') > -1)) {
+                console.log("Trying to use http over a https site");
+                $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> Error - You are trying to access a http server via the site in https. Please access your server via https, or load this site \
+                        over https by <a href="http://www.pastatool.com">clicking here</a>.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+            }
             else {
                 console.log("Unkown error, most likely bad URL / IP");
                 $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
