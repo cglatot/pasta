@@ -13,6 +13,10 @@
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="css/main.css" />
 
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css"
+        integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" crossorigin="anonymous" />
+
     <!--<link rel="icon" type="image/png" href="images/favicon.png">-->
 
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -24,6 +28,11 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
+
+    <!-- Font Awesome JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js"
+        integrity="sha256-qM7QTJSlvtPSxVRjVWNM2OfTAz/3k5ovHOKmKXuYMO4=" crossorigin="anonymous"></script>
+
     <!-- Custom Scripts -->
     <script type="text/javascript" src="js/main.js"></script>
 </head>
@@ -35,6 +44,7 @@
             <a class="navbar-brand" href="javascript:window.location.reload()">
                 <h2>PASTA<small class="ml-2">Plex Audio and Subtitle Track Automation</small></h2>
             </a>
+            <i class="far fa-question-circle" style="color: #e5a00d; font-size: 1.5em"></i>
         </div>
     </nav>
 
@@ -88,16 +98,24 @@
                         <!-- PLEX LOGIN FORM -->
                         <div class="row mt-3">
                             <div class="col">
+                                <div id="insecureWarning" class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                                    <strong>Warning:</strong> You have loaded this page over <strong>http</strong>, which means that this may not be very secure, especially if you are using public or untrusted networks.
+                                    <br>If you can only access your Plex server via http, then please continue with caution.
+                                    <br>However, if you can access your Plex server via <strong>https</strong>, then I recommend reloading this site over https by <a href="https://www.pastatool.com">clicking here</a>.
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
                                 <div class="form-group">
                                     <label for="plexUrl">Plex URL</label>
                                     <input type="email" class="form-control" id="plexUrl"
-                                        placeholder="e.g. http://192.168.0.1:32400">
+                                        placeholder="e.g. http://192.168.0.1:32400" autocomplete="on">
                                     <small class="form-text text-muted">This must be a local server, or a server
                                         publicly addressable.</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="plexToken">Plex Token</label>
-                                    <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token">
+                                    <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token" autocomplete="on">
                                     <small class="form-text text-muted">
                                         <a target="_blank"
                                             href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">Find

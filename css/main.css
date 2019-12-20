@@ -57,6 +57,10 @@ label {
     color: rgb(240,240,240);
 }
 
+#insecureWarning {
+    display: none;
+}
+
 /*==========================
         MODALS
 ==========================*/
