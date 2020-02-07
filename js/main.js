@@ -87,6 +87,8 @@ $(document).ready(() => {
         PASTA - I still have plenty of ideas for how I can add more to it, as well as fix any bugs that crop up. Feel free to log any issues / feature 
         requests on the Github as well.</p>
         <p><a href="https://github.com/cglatot/pasta" target="_blank">https://github.com/cglatot/pasta</a></p>
+        <h3>Cookie Policy</h3>
+        <p>The site uses some minor cookies to help improve your experience. Third-party cookies are not used on this site. By continuing to use this site, you agree to the use of cookies.</p>
         `);
     $('#progressModal').modal();
 });
