@@ -23,12 +23,11 @@ small {
     color: rgb(190,190,190);
 }
 
-nav .navbar-brand {
-    margin-right: 0;
-}
-
-nav h2 {
-    margin-bottom: 0;
+nav .titleImage {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 3em;
 }
 
 nav small {
@@ -328,10 +327,6 @@ table, td, tr, th {
 @media only screen and (max-width: 600px) {
     nav small {
         display: none;
-    }
-
-    .navbar .container {
-        justify-content: center;
     }
 }
 
