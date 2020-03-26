@@ -12,7 +12,12 @@ $(document).ready(() => {
 
     // Check if the page was loaded locally or over http and warn them about the value of https
     if ((location.protocol == "http:") || (location.protocol == "file:")) {
-        $("#insecureWarning").show();
+        if (localStorage.showHttpAlert == 'false') {
+
+        }
+        else {
+            $("#insecureWarning").show();
+        }
     }
 
     // Validation values to enable the Connect to Plex Button
@@ -79,8 +84,14 @@ function forgetDetails() {
     });
 }
 
+function hideAlertForever() {
+    $("#insecureWarning").hide();
+    localStorage.showHttpAlert = 'false';
+}
+
 function connectToPlex() {
-    plexUrl = $("#plexUrl").val().trim();
+    plexUrl = $("#plexUrl").val().trim().replace(/\/+$/, '');
+    console.log(plexUrl);
     plexToken = $("#plexToken").val().trim();
 
     if (plexUrl.toLowerCase().indexOf("http") < 0) {
@@ -117,7 +128,7 @@ function connectToPlex() {
                 console.log("Trying to use http over a https site");
                 $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
                         <strong>Warning:</strong> Error - You are trying to access a http server via the site in https. Please access your server via https, or load this site \
-                        over https by <a href="http://www.pastatool.com">clicking here</a>.
+                        over http by <a href="http://www.pastatool.com">clicking here</a>.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>

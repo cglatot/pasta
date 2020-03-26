@@ -185,13 +185,14 @@
                                     <strong>Warning:</strong> You have loaded this page over <strong>http</strong>, which means that this may not be secure, especially if you are using public or untrusted networks.
                                     <br>If you can only access your Plex server via http, then please continue with caution.
                                     <br>However, if you can access your Plex server via <strong>https</strong>, then I recommend reloading this site over https by <strong><a href="https://www.pastatool.com">clicking here</a></strong>.
+                                    <br><a href="javascript:void(0)" onclick="hideAlertForever()">Never show this warning again</a>
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                         <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
                                 <div class="form-group">
                                     <label for="plexUrl">Plex URL</label>
-                                    <input type="email" class="form-control" id="plexUrl"
+                                    <input type="text" class="form-control" id="plexUrl"
                                         placeholder="e.g. http://192.168.0.1:32400" autocomplete="on">
                                     <small class="form-text text-muted">This must be a local server, or a server
                                         publicly addressable.</small>
@@ -231,7 +232,7 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3>Plex Libraries</h3>
-                                <small>Choose <strong>only</strong> TV Shows. This will not work for Movies.</small>
+                                <small>Choose <strong>only</strong> episodic content (TV Shows, Anime, etc). This does not work for Movies.</small>
                                 <div class="table-responsive">
                                     <table id="libraryTable" class="table table-hover mt-3">
                                         <thead>
