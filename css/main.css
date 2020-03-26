@@ -3,8 +3,14 @@
 ==========================*/
 
 body {
-    background: rgb(51,51,51);
-    background: linear-gradient(90deg, rgba(19,19,19,1) 0%, rgb(47, 47, 47) 50%, rgba(19,19,19,1) 100%);
+    background-color: rgb(51,51,51);
+    background-image: radial-gradient(rgba(80, 40, 0, 0.75), black 120%), repeating-linear-gradient(
+        rgba(0,0,0,0.75),
+        rgba(0,0,0,0.75) 2px,
+        transparent 2px,
+        transparent 4px
+    );
+    height: 100vh;
 }
 
 nav {
@@ -16,21 +22,21 @@ h1, h2, h3, h4, h5 {
 }
 
 .card {
-    background-color: rgba(40,40,40,1);
+    background-color: rgba(25,25,25,0.85);
 }
 
 small {
     color: rgb(190,190,190);
 }
 
-nav .titleImage {
+.titleNavBar .titleImage {
     width: auto;
     height: auto;
     max-width: 100%;
     max-height: 3em;
 }
 
-nav small {
+.titleNavBar small {
     color: rgb(190,190,190);
     font-size: 0.7em;
     font-variant: small-caps;
@@ -69,7 +75,7 @@ label {
 }
 
 .modal-content {
-    background-color: rgba(40,40,40,1);
+    background-color: rgba(25,25,25,1);
     color: rgb(240,240,240);
 }
 
@@ -134,8 +140,8 @@ label {
 
 .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
     color: rgb(240,240,240);
-    background-color: rgba(40,40,40,0.85);
-    border-color: #aaa #aaa rgba(40,40,40,1);
+    background-color: rgba(25,25,25,0.85);
+    border-color: #aaa #aaa rgba(25,25,25,0.85);
 }
 
 /*==========================
@@ -324,9 +330,9 @@ table, td, tr, th {
 ==========================*/
 
 /* Extra small devices (phones, 600px and down) */
-@media only screen and (max-width: 600px) {
-    nav small {
-        display: none;
+@media only screen and (max-width: 768px) {
+    .titleNavBar .titleImage {
+        max-height: 2em;
     }
 }
 
