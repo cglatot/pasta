@@ -18,42 +18,58 @@ $(document).ready(() => {
 
     // Validation listeners on the Plex URL Input
     $('#plexUrl').on("input", () => {
-        if ($('#plexUrl').val() != "") {
-            $('#plexUrl').removeClass("is-invalid").addClass("is-valid");
-            validUrl = true;
-        }
-        else {
-            $('#plexUrl').removeClass("is-valid").addClass("is-invalid");
-            validUrl = false;
-        }
-        // Check if we can enable the Connect to Plex button
-        if (validUrl && validToken) {
-            $("#btnConnectToPlex").prop("disabled", false);
-        }
-        else {
-            $("#btnConnectToPlex").prop("disabled", true);
-        }
+        validateEnableConnectBtn('plexUrl');
     });
 
     // Validation listeners on the Plex Token Input
     $('#plexToken').on("input", () => {
+        validateEnableConnectBtn('plexToken');
+    });
+
+    if (localStorage.plexUrl && localStorage.plexUrl !== "") {
+        $('#plexUrl').val(localStorage.plexUrl);
+        validateEnableConnectBtn('plexUrl');
+    }
+    if (localStorage.plexToken && localStorage.plexToken !== "") {
+        $('#plexToken').val(localStorage.plexToken);
+        validateEnableConnectBtn('plexToken');
+    }
+});
+
+function validateEnableConnectBtn(context) {
+    // Apply validation highlighting to URL field
+    if (context == 'plexUrl') {
+        if ($('#plexUrl').val() != "") {
+            $('#plexUrl').removeClass("is-invalid").addClass("is-valid");
+        }
+        else {
+            $('#plexUrl').removeClass("is-valid").addClass("is-invalid");
+        }
+    }
+    else {
+        // Apply validation highlighting to Plex Token field
         if ($('#plexToken').val() != "") {
             $('#plexToken').removeClass("is-invalid").addClass("is-valid");
-            validToken = true;
         }
         else {
             $('#plexToken').removeClass("is-valid").addClass("is-invalid");
-            validToken = false;
         }
-        // Check if we can enable the Connect to Plex button
-        if (validUrl && validToken) {
-            $("#btnConnectToPlex").prop("disabled", false);
-        }
-        else {
-            $("#btnConnectToPlex").prop("disabled", true);
-        }
-    });
-});
+    }
+
+    // Enable or disable the button, depending on field status
+    if (($('#plexUrl').val() != "") && ($('#plexToken').val() != "")) {
+        $("#btnConnectToPlex").prop("disabled", false);
+    }
+    else {
+        $("#btnConnectToPlex").prop("disabled", true);
+    }
+}
+
+function forgetDetails() {
+    localStorage.removeItem('plexUrl');
+    localStorage.removeItem('plexToken');
+    $('#confirmForget').fadeIn(250).delay(750).fadeOut(1250);
+}
 
 function connectToPlex() {
     plexUrl = $("#plexUrl").val().trim();
@@ -61,6 +77,11 @@ function connectToPlex() {
 
     if (plexUrl.toLowerCase().indexOf("http") < 0) {
         plexUrl = `http://${plexUrl}`
+    }
+
+    if ($('#rememberDetails').prop('checked')) {
+        localStorage.plexUrl = plexUrl;
+        localStorage.plexToken = plexToken;
     }
 
     $.ajax({

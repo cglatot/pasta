@@ -130,6 +130,11 @@ label {
     color: #222;
 }
 
+#confirmForget {
+    margin-left: 0.25em;
+    display: none;
+}
+
 /*==========================
         NAV TABS
 ==========================*/
