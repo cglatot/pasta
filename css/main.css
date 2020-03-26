@@ -4,7 +4,7 @@
 
 body {
     background-color: rgb(51,51,51);
-    background-image: radial-gradient(rgba(80, 40, 0, 0.75), black 120%), repeating-linear-gradient(
+    background-image: radial-gradient(rgba(100, 50, 0, 0.75), black 120%), repeating-linear-gradient(
         rgba(0,0,0,0.75),
         rgba(0,0,0,0.75) 2px,
         transparent 2px,
@@ -133,6 +133,14 @@ label {
 #confirmForget {
     margin-left: 0.25em;
     display: none;
+}
+
+/*==========================
+        ALERTS
+==========================*/
+
+.alert-warning a:hover {
+    color: #856404
 }
 
 /*==========================
