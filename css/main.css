@@ -135,6 +135,10 @@ label {
     display: none;
 }
 
+#forgetDivider, #forgetDetailsSection {
+    display: none;
+}
+
 /*==========================
         ALERTS
 ==========================*/

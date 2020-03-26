@@ -200,8 +200,11 @@
                                 </div>
                                 <div class="form-group form-check">
                                     <input type="checkbox" class="form-check-input" id="rememberDetails">
-                                    <label class="form-check-label" for="rememberDetails">Remember my details | </label>
-                                    <small><a href="javascript:void(0)" onclick="forgetDetails()">Forget my details</a><i id="confirmForget" class="fas fa-check" style="color: #28a745; font-size: 1.5em"></i></small>
+                                    <label class="form-check-label" for="rememberDetails">Remember my details<span id="forgetDivider"> | </span></label>
+                                    <small id="forgetDetailsSection">
+                                        <a href="javascript:void(0)" onclick="forgetDetails()">Forget my details</a>
+                                        <i id="confirmForget" class="fas fa-check" style="color: #28a745; font-size: 1.5em"></i>
+                                    </small>
                                 </div>
                                 <button id="btnConnectToPlex" class="btn btn-secondary" onclick="connectToPlex()"
                                     disabled>Connect to Plex</button>

@@ -29,10 +29,12 @@ $(document).ready(() => {
     if (localStorage.plexUrl && localStorage.plexUrl !== "") {
         $('#plexUrl').val(localStorage.plexUrl);
         validateEnableConnectBtn('plexUrl');
+        $('#forgetDivider, #forgetDetailsSection').show();
     }
     if (localStorage.plexToken && localStorage.plexToken !== "") {
         $('#plexToken').val(localStorage.plexToken);
         validateEnableConnectBtn('plexToken');
+        $('#forgetDivider, #forgetDetailsSection').show();
     }
 });
 
@@ -68,7 +70,10 @@ function validateEnableConnectBtn(context) {
 function forgetDetails() {
     localStorage.removeItem('plexUrl');
     localStorage.removeItem('plexToken');
-    $('#confirmForget').fadeIn(250).delay(750).fadeOut(1250);
+    $('#plexUrl, #plexToken').val('').removeClass('is-valid is-invalid');
+    $('#confirmForget').fadeIn(250).delay(750).fadeOut(1250, () => {
+        $('#forgetDivider, #forgetDetailsSection').hide();
+    });
 }
 
 function connectToPlex() {
@@ -77,11 +82,6 @@ function connectToPlex() {
 
     if (plexUrl.toLowerCase().indexOf("http") < 0) {
         plexUrl = `http://${plexUrl}`
-    }
-
-    if ($('#rememberDetails').prop('checked')) {
-        localStorage.plexUrl = plexUrl;
-        localStorage.plexToken = plexToken;
     }
 
     $.ajax({
@@ -93,6 +93,11 @@ function connectToPlex() {
         },
         "success": (data) => {
             $("#authWarningText").empty();
+            if ($('#rememberDetails').prop('checked')) {
+                localStorage.plexUrl = plexUrl;
+                localStorage.plexToken = plexToken;
+                $('#forgetDivider, #forgetDetailsSection').show();
+            }
             displayLibraries(data)
         },
         "error": (data) => {
