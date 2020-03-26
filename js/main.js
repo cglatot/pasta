@@ -135,9 +135,9 @@ function connectToPlex() {
                     </div>`);
             }
             else {
-                console.log("Unkown error, most likely bad URL / IP");
+                console.log("Unknown error, most likely bad URL / IP");
                 $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
-                        <strong>Warning:</strong> Unkown Error (0) - Please verify the URL and try again.
+                        <strong>Warning:</strong> Unknown Error (0) - This is usually caused by a wrong URL. Please verify the URL and try again.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
