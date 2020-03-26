@@ -3,7 +3,7 @@ Audio and Subtitle Track Changer for Plex
 
 ## What is PASTA?
 Do you watch TV Shows with multiple languages and subtitles and wish you could change them for the entire show, rather than needing to do it for *every. single. episode*? 
-Or maybe you aren't sure what the difference is between those 2 <strong>Enlish (SRT)</strong> and <strong>English (SRT)</strong> subtitle files. Then PASTA is for you!
+Or maybe you aren't sure what the difference is between those 2 <strong>English (SRT)</strong> and <strong>English (SRT)</strong> subtitle files. Then PASTA is for you!
 PASTA allows you to connect to your Plex server and view more details about the audio tracks and subtitles, as well as set the tracks and subtitles or entire shows, or single episodes very quickly.
         
 ## How do I use PASTA?
