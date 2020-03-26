@@ -7,6 +7,9 @@ var seasonId = ""; // Store the Id of the most recently clicked season
 var episodeId = ""; // Stores the Id of the most recently clicked episode
 
 $(document).ready(() => {
+    // Enable Tooltips
+    $('#helpAboutIcon, #titleLogo').tooltip();
+
     // Check if the page was loaded locally or over http and warn them about the value of https
     if ((location.protocol == "http:") || (location.protocol == "file:")) {
         $("#insecureWarning").show();

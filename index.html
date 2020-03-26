@@ -48,10 +48,10 @@
     <!-- Navigation -->
     <nav class="titleNavBar navbar navbar-expand-lg navbar-dark static-top">
         <div class="container">
-            <a class="navbar-brand" href="javascript:window.location.reload()">
+            <a id="titleLogo" class="navbar-brand" href="javascript:window.location.reload()" data-toggle="tooltip" data-placement="bottom" title="Home">
                 <img class="titleImage" src="images/Logo_Title_Large.png">
             </a>
-            <a href="javascript:void(0)" onclick="$('#aboutModal').modal();">
+            <a id="helpAboutIcon" href="javascript:void(0)" onclick="$('#aboutModal').modal();" data-toggle="tooltip" data-placement="bottom" title="Help & About">
                 <i class="far fa-question-circle" style="color: #e5a00d; font-size: 1.5em"></i>
             </a>
         </div>
@@ -72,7 +72,7 @@
                     <h3>What is PASTA?</h3>
                     <p>Do you watch TV Shows with multiple languages and subtitles and wish you could change them for the
                         entire show, rather than needing to do it for <em>every. single. episode</em>?
-                        Or maybe you aren't sure what the difference is between those 2 <strong>Enlish (SRT)</strong> and
+                        Or maybe you aren't sure what the difference is between those 2 <strong>English (SRT)</strong> and
                         <strong>English (SRT)</strong> subtitle files. Then PASTA is for you!
                         <br>PASTA allows you to connect to your Plex server and view more details about the audio tracks and
                         subtitles, as well as set the tracks and subtitles
