@@ -3,7 +3,7 @@ Audio and Subtitle Track Changer for Plex
 
 DockerHub Link: https://hub.docker.com/r/cglatot/pasta
 
-Unraid Installation: https://github.com/cglatot/unraid-templates
+Unraid Installation: This is now available on the Commmunity Applications list thanks to https://github.com/selfhosters/unRAID-CA-templates
 
 ## What is PASTA?
 Do you watch TV Shows with multiple languages and subtitles and wish you could change them for the entire show, rather than needing to do it for *every. single. episode*? 
