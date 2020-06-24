@@ -58,7 +58,7 @@ a:hover {
     color: rgb(190,190,190) !important;
 }
 
-label {
+label, p {
     color: rgb(240,240,240);
 }
 
@@ -139,6 +139,19 @@ label {
     display: none;
 }
 
+#url-auth-over-container {
+    display: none;
+}
+
+#authed-pin-container {
+    display: none;
+}
+
+#confirmForgetPin {
+    margin-left: 0.25em;
+    display: none;
+}
+
 /*==========================
         ALERTS
 ==========================*/
@@ -193,11 +206,11 @@ label {
     border-color: #F39C12;
 }
 
-#episodeOrSeriesBtns label {
+#episodeOrSeriesBtns label, #pinOrAuthBtns label {
     cursor: pointer;
 }
 
-#episodeOrSeriesBtns label.active {
+#episodeOrSeriesBtns label.active, #pinOrAuthBtns label.active {
     cursor: default;
 }
 
@@ -240,29 +253,29 @@ label {
     box-shadow: 0 0 0 0.2rem rgba(82,82,82,.5);
 }
 
-#episodeOrSeriesBtns .btn-secondary {
+#episodeOrSeriesBtns .btn-secondary, #pinOrAuthBtns .btn-secondary {
     color: rgb(240,240,240);
     background-color: #444;
     border-color: #444;
 }
 
-#episodeOrSeriesBtns .btn-secondary:hover {
+#episodeOrSeriesBtns .btn-secondary:hover, #pinOrAuthBtns .btn-secondary:hover {
     color: rgb(240,240,240);
     background-color: #333;
     border-color: #2c2c2c;
 }
 
-#episodeOrSeriesBtns .btn-secondary.active {
+#episodeOrSeriesBtns .btn-secondary.active, #pinOrAuthBtns .btn-secondary.active {
     color: #fff;
     background-color: #F39C12;
     border-color: #F39C12;
 }
 
-#episodeOrSeriesBtns .btn-secondary.active.focus {
+#episodeOrSeriesBtns .btn-secondary.active.focus, #pinOrAuthBtns .btn-secondary.active.focus {
     box-shadow: 0 0 0 0.2rem rgba(243,156,18,.25);
 }
 
-#episodeOrSeriesBtns .btn-secondary.active:hover {
+#episodeOrSeriesBtns .btn-secondary.active:hover, #pinOrAuthBtns .btn-secondary.active:hover {
     color: #fff;
     background-color: #d4860b;
     border-color: #c87f0a;
@@ -286,6 +299,10 @@ table, td, tr, th {
 
 .table-active>td, .table-active>th {
     background-color: transparent;
+}
+
+#serverTable tbody tr {
+    cursor: pointer;
 }
 
 #libraryTable tbody tr {
@@ -340,6 +357,10 @@ table, td, tr, th {
 #subtitleTable tbody tr.success-transition {
     color: #fff;
     animation: successFadeOut 1.75s ease-out;
+}
+
+#serverTableContainer {
+    display: none;
 }
 
 /*==========================

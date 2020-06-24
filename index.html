@@ -181,6 +181,7 @@
                         <!-- PLEX LOGIN FORM -->
                         <div class="row mt-3">
                             <div class="col">
+                                <!-- WARNING BOX -->
                                 <div id="insecureWarning" class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
                                     <strong>Warning:</strong> You have loaded this page over <strong>http</strong>, which means that this may not be secure, especially if you are using public or untrusted networks.
                                     <br>If you can only access your Plex server via http, then please continue with caution.
@@ -190,43 +191,104 @@
                                         <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
-                                <div class="form-group">
-                                    <label for="plexUrl">Plex URL</label>
-                                    <input type="text" class="form-control" id="plexUrl"
-                                        placeholder="e.g. http://192.168.0.1:32400" autocomplete="on">
-                                    <small class="form-text text-muted">This must be a local server, or a server
-                                        publicly addressable.</small>
+                                <!-- / WARNING BOX -->
+                                <!-- SWITCH TOGGLE -->
+                                <div class="row mt-4">
+                                    <div class="col text-center">
+                                        <div id="pinOrAuthBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
+                                            <label class="btn btn-secondary active">
+                                                <input type="radio" name="pinOrAuth" value="showPinControls" id="showPinControls" autocomplete="off"
+                                                    checked> PIN Authentication
+                                            </label>
+                                            <label class="btn btn-secondary">
+                                                <input type="radio" name="pinOrAuth" value="showUrlControls" id="showUrlControls" autocomplete="off">
+                                                URL / Token
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="plexToken">Plex Token</label>
-                                    <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token" autocomplete="on">
-                                    <small class="form-text text-muted">
-                                        <a target="_blank"
-                                            href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">Find
-                                            out how to get your X-Plex-token here.</a>
-                                    </small>
+                                <!-- / SWITCH TOGGLE -->
+                                <!-- PIN AUTHENTICATION -->
+                                <div id="pin-auth-over-container" class="mt-4">
+                                    <div id="new-pin-container">
+                                        <p>Please go to <a href="https://www.plex.tv/pin" target="_blank">https://www.plex.tv/pin</a> and enter the following PIN:</p>
+                                        <div class="d-inline-flex flex-row align-items-center">
+                                            <h1 id="pin-code-holder"></h1>
+                                            <div class="spinner-border spinner-border-sm text-warning ml-2" role="status" aria-hidden="true"></div>
+                                        </div>
+                                    </div>
+                                    <div id="authed-pin-container">
+                                        <p>You are authenticated via PIN. 
+                                            <small id="forgetPinDetails">
+                                                <a href="javascript:void(0)" onclick="forgetPinDetails()">Click here to logout.</a>
+                                                <i id="confirmForgetPin" class="fas fa-check" style="color: #28a745; font-size: 1.5em"></i>
+                                            </small>
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="form-group form-check">
-                                    <input type="checkbox" class="form-check-input" id="rememberDetails">
-                                    <label class="form-check-label" for="rememberDetails">Remember my details<span id="forgetDivider"> | </span></label>
-                                    <small id="forgetDetailsSection">
-                                        <a href="javascript:void(0)" onclick="forgetDetails()">Forget my details</a>
-                                        <i id="confirmForget" class="fas fa-check" style="color: #28a745; font-size: 1.5em"></i>
-                                    </small>
+                                <!-- / PIN AUTHENTICATION -->
+                                <!-- URL / TOKEN AUTHENTICATION -->
+                                <div id="url-auth-over-container" class="mt-4">
+                                    <div class="form-group">
+                                        <label for="plexUrl">Plex URL</label>
+                                        <input type="text" class="form-control" id="plexUrl"
+                                            placeholder="e.g. http://192.168.0.1:32400" autocomplete="on">
+                                        <small class="form-text text-muted">This must be a local server, or a server
+                                            publicly addressable.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="plexToken">Plex Token</label>
+                                        <input type="text" class="form-control" id="plexToken" placeholder="X-Plex-Token" autocomplete="on">
+                                        <small class="form-text text-muted">
+                                            <a target="_blank"
+                                                href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">Find
+                                                out how to get your X-Plex-token here.</a>
+                                        </small>
+                                    </div>
+                                    <div class="form-group form-check">
+                                        <input type="checkbox" class="form-check-input" id="rememberDetails">
+                                        <label class="form-check-label" for="rememberDetails">Remember my details<span id="forgetDivider"> | </span></label>
+                                        <small id="forgetDetailsSection">
+                                            <a href="javascript:void(0)" onclick="forgetDetails()">Forget my details</a>
+                                            <i id="confirmForget" class="fas fa-check" style="color: #28a745; font-size: 1.5em"></i>
+                                        </small>
+                                    </div>
+                                    <button id="btnConnectToPlex" class="btn btn-secondary" onclick="connectToPlex()"
+                                        disabled>Connect to Plex</button>
+                                    <!-- PLEX AUTHENTICATION WARNING -->
+                                    <div class="row">
+                                        <div class="col" id="authWarningText">
+
+                                        </div>
+                                    </div>
+                                    <!-- / PLEX AUTHENTICATION WARNING -->
                                 </div>
-                                <button id="btnConnectToPlex" class="btn btn-secondary" onclick="connectToPlex()"
-                                    disabled>Connect to Plex</button>
+                                <!-- / URL / TOKEN AUTHENTICATION -->
                             </div>
                         </div>
                         <!-- / PLEX LOGIN FORM -->
 
-                        <!-- PLEX AUTHENTICATION WARNING -->
-                        <div class="row">
-                            <div class="col" id="authWarningText">
+                        
 
+                        <!-- SERVERS TABLE -->
+                        <div id="serverTableContainer" class="row mt-4">
+                            <div class="col">
+                                <h3>Plex Servers</h3>
+                                <div class="table-responsive">
+                                    <table id="serverTable" class="table table-hover mt-3">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                        <!-- / PLEX AUTHENTICATION WARNING -->
+                        <!-- / SERVERS TABLE -->
 
                         <!-- LIBRARIES TABLE -->
                         <div class="row mt-4">
