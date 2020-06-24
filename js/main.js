@@ -1,5 +1,10 @@
 var plexUrl;
 var plexToken;
+var clientIdentifier; // UID for the device being used
+var plexProduct = "PASTA-cglatot";
+var backOffTimer = 0;
+var serverList = []; // save server information for pin login and multiple servers
+
 var libraryNumber = ""; // The Library ID that was clicked
 var showId = ""; // Stores the Id for the most recently clicked series
 var seasonsList = []; // Stores the Ids for all seasons of the most recently clicked series
@@ -34,17 +39,176 @@ $(document).ready(() => {
         validateEnableConnectBtn('plexToken');
     });
 
-    if (localStorage.plexUrl && localStorage.plexUrl !== "") {
-        $('#plexUrl').val(localStorage.plexUrl);
-        validateEnableConnectBtn('plexUrl');
-        $('#forgetDivider, #forgetDetailsSection').show();
-    }
-    if (localStorage.plexToken && localStorage.plexToken !== "") {
-        $('#plexToken').val(localStorage.plexToken);
-        validateEnableConnectBtn('plexToken');
-        $('#forgetDivider, #forgetDetailsSection').show();
+    // Setup on change listener for toggle buttons
+    $('input[type=radio][name=pinOrAuth]').change(function() {
+        console.log(this);
+        toggleAuthPages(this.value);
+    });
+
+    // Set the clientID, this might get overridden if one is saved to localstorage
+    clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+
+    if (!localStorage.isPinAuth) {
+        // Not using PIN auth, so must be using url / token
+        if (localStorage.plexUrl && localStorage.plexUrl !== "") {
+            plexUrl = localStorage.plexUrl;
+            $('#plexUrl').val(localStorage.plexUrl);
+            validateEnableConnectBtn('plexUrl');
+            $('#forgetDivider, #forgetDetailsSection').show();
+        }
+        if (localStorage.plexToken && localStorage.plexToken !== "") {
+            plexToken = localStorage.plexToken;
+            $('#plexToken').val(localStorage.plexToken);
+            validateEnableConnectBtn('plexToken');
+            $('#forgetDivider, #forgetDetailsSection').show();
+        }
+
+        // Display a PIN code for that authentication as well
+        $.ajax({
+            "url": `https://plex.tv/pins.xml?X-Plex-Product=${plexProduct}&X-Plex-Client-Identifier=${clientIdentifier}`,
+            "method": "POST",
+            "success": (data) => {
+                let pinId = $(data).find('id')[0].innerHTML;
+                let pinCode = $(data).find('code')[0].innerHTML;
+    
+                $('#pin-code-holder').html(pinCode);
+                backOffTimer = Date.now();
+                listenForValidPincode(pinId);
+            },
+            "error": (data) => {
+                console.log("ERROR L59");
+                console.log(data);
+            }
+        });
+    } else {
+        $('#new-pin-container').hide();
+        $('#authed-pin-container').show();
+        // We are using Pin Auth
+        clientIdentifier = localStorage.clientIdentifier;
+        plexToken = localStorage.pinAuthToken;
+        getServers();
     }
 });
+
+function toggleAuthPages(value) {
+    if (value == 'showPinControls') {
+        $('#pin-auth-over-container').show();
+        $('#url-auth-over-container').hide();
+    } else {
+        $('#pin-auth-over-container').hide();
+        $('#url-auth-over-container').show();
+
+        if (localStorage.isPinAuth) {
+            $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> You are currently signed in via PIN. Please <a href="javascript:void(0)" onclick="forgetPinDetails()">sign out of PIN</a> before proceeding to connect using a URL / IP address.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+        }
+    }
+}
+
+function listenForValidPincode (pinId) {
+    let currentTime = Date.now();
+    if ((currentTime - backOffTimer)/1000 < 180) {
+        $.ajax({
+            "url": `https://plex.tv/pins/${pinId}?X-Plex-Product=${plexProduct}&X-Plex-Client-Identifier=${clientIdentifier}`,
+            "method": "GET",
+            "success": (data) => {
+                if (data.pin.auth_token != null) {
+                    plexToken = data.pin.auth_token;
+                    // Save to local storage
+                    localStorage.isPinAuth = true;
+                    localStorage.pinAuthToken = plexToken;
+                    localStorage.clientIdentifier = clientIdentifier;
+                    $('#new-pin-container').hide();
+                    $('#authed-pin-container').show();
+                    getServers();
+                } else {
+                    setTimeout(() => {
+                        listenForValidPincode(pinId);
+                    }, 5000);
+                }
+            },
+            "error": (data) => {
+                console.log("ERROR L73");
+                console.log(data);
+                return;
+            }
+        });
+    } else {
+        $('#new-pin-container').html(' <p><i class="far fa-times-circle mr-2" style="color: #e5a00d; font-size: 1.5em; vertical-align: middle;"></i>PIN entry timed out. \
+        Please <a href="javascript:void(0)" onclick="window.location.reload()">refresh the page</a> to get a new PIN.</p>');
+    }
+}
+
+function getServers () {
+    $.ajax({
+        "url": `https://plex.tv/pms/servers.xml?X-Plex-Product=${plexProduct}&X-Plex-Client-Identifier=${clientIdentifier}`,
+        "method": "GET",
+        "headers": {
+            "X-Plex-Token": plexToken
+        },
+        "success": (data) => {
+            let servers = $(data).find('Server');
+            if (servers.length > 1) {
+                displayServers(servers);
+                // Add server info to the list
+                for (let i = 0; i < servers.length; i++) {
+                    serverList.push({
+                        name: $(servers[i]).attr("name"),
+                        accessToken: $(servers[i]).attr("accessToken"),
+                        address: $(servers[i]).attr("address"),
+                        port: $(servers[i]).attr("port")
+                    });
+                }
+            } else {
+                plexToken = $(servers[0]).attr("accessToken");
+                plexUrl = `http://${$(servers[0]).attr("address")}:${$(servers[0]).attr("port")}`;
+                connectToPlex();
+            }
+        },
+        "error": (data) => {
+            console.log("ERROR L59");
+            console.log(data);
+        }
+    });
+}
+
+function displayServers(servers) {
+    $("#serverTable tbody").empty();
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    for (let i = 0; i < servers.length; i++) {
+        let rowHTML = `<tr onclick="chooseServer(${i}, this)">
+                        <td>${$(servers[i]).attr("name")}</td>
+                    </tr>`;
+        $("#serverTable tbody").append(rowHTML);
+    }
+    $("#serverTableContainer").show();
+}
+
+function chooseServer(number, row) {
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    $(row).siblings().removeClass("table-active");
+    $(row).addClass("table-active");
+
+    plexToken = serverList[number].accessToken;
+    plexUrl = `http://${serverList[number].address}:${serverList[number].port}`;
+    connectToPlex();
+}
 
 function validateEnableConnectBtn(context) {
     // Apply validation highlighting to URL field
@@ -84,15 +248,21 @@ function forgetDetails() {
     });
 }
 
+function forgetPinDetails() {
+    localStorage.removeItem('isPinAuth');
+    localStorage.removeItem('pinAuthToken');
+    localStorage.removeItem('clientIdentifier');
+    window.location.reload();
+}
+
 function hideAlertForever() {
     $("#insecureWarning").hide();
     localStorage.showHttpAlert = 'false';
 }
 
 function connectToPlex() {
-    plexUrl = $("#plexUrl").val().trim().replace(/\/+$/, '');
-    console.log(plexUrl);
-    plexToken = $("#plexToken").val().trim();
+    plexUrl = plexUrl || $("#plexUrl").val().trim().replace(/\/+$/, '');
+    plexToken = plexToken || $("#plexToken").val().trim();
 
     if (plexUrl.toLowerCase().indexOf("http") < 0) {
         plexUrl = `http://${plexUrl}`
@@ -112,7 +282,7 @@ function connectToPlex() {
                 localStorage.plexToken = plexToken;
                 $('#forgetDivider, #forgetDetailsSection').show();
             }
-            displayLibraries(data)
+            displayLibraries(data);
         },
         "error": (data) => {
             if (data.status == 401) {
