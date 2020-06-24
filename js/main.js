@@ -15,6 +15,9 @@ $(document).ready(() => {
     // Enable Tooltips
     $('#helpAboutIcon, #titleLogo').tooltip();
 
+    // Enable history tracking for tabs
+    $('a[data-toggle="tab"]').historyTabs();
+
     // Check if the page was loaded locally or over http and warn them about the value of https
     if ((location.protocol == "http:") || (location.protocol == "file:")) {
         if (localStorage.showHttpAlert == 'false') {
@@ -24,10 +27,6 @@ $(document).ready(() => {
             $("#insecureWarning").show();
         }
     }
-
-    // Validation values to enable the Connect to Plex Button
-    let validUrl = false;
-    let validToken = false;
 
     // Validation listeners on the Plex URL Input
     $('#plexUrl').on("input", () => {
