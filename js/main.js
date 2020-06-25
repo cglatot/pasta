@@ -643,8 +643,18 @@ async function setAudioStream(partsId, streamId, row) {
             }
         }
 
+        // Set the progress bar to have a certain length
+        maxProgress = episodeList.length;
+        $('#progressBar').attr('aria-valuemax', maxProgress);
         // We have the episodes in episodeList, now we need to go through each one and see what streams are available
         for (let i = 0; i < episodeList.length; i++) {
+            // Update the progressbar
+            currentProgress++;
+            const calculatedWidth = (currentProgress / maxProgress) * 100;
+            console.log(calculatedWidth);
+            $('#progressBar').width(`${calculatedWidth}%`);
+            $('#progressBar').attr('aria-valuenow', currentProgress);
+
             let episodeData = await $.ajax({
                 "url": `${plexUrl}/library/metadata/${episodeList[i]}`,
                 "method": "GET",
@@ -799,9 +809,11 @@ async function setAudioStream(partsId, streamId, row) {
             }
         }
 
-        // Update the progress bar
+        // Reset the progress bar and modal text
+        $("#modalBodyText #modalTitleText").text("Updating matches... Please do not close this tab or refresh until the process is complete.");
         maxProgress = promiseConstructors.length;
         $('#progressBar').attr('aria-valuemax', maxProgress);
+        $('#progressBar').attr('aria-valuenow', 0);
 
         function futurePromise(data) {
             return axios({
@@ -834,7 +846,7 @@ async function setAudioStream(partsId, streamId, row) {
         try {
             Promise.allSettled(matchPromises).then(() => {
                 $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
-                $("#modalBodyText #modalTitleText").text("Processing Complete!");
+                $("#modalBodyText #modalTitleText").text("Processing Complete! You can now close this popup.");
                 $('#modalBodyText #progressBarContainer').hide();
             });
         }
@@ -879,9 +891,9 @@ async function setSubtitleStream(partsId, streamId, row) {
         $('#progressModal #modalBodyText').empty();
         $('#progressModal #modalBodyText').append(`<div class="alert alert-warning" role="alert">
                 <div class="d-flex align-items-center">
-                    <span id="modalTitleText">Please do not close this tab or refresh until the process is complete</span>
+                    <span id="modalTitleText">Processing Episodes... Please do not close this tab or refresh until the process is complete.</span>
             </div>
-            <div class="progress" id="progressBarContainer">
+            <div class="progress mt-2" id="progressBarContainer">
                 <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>`);
@@ -910,8 +922,18 @@ async function setSubtitleStream(partsId, streamId, row) {
             }
         }
 
+        // Set the progress bar to have a certain length
+        maxProgress = episodeList.length;
+        $('#progressBar').attr('aria-valuemax', maxProgress);
         // We have the episodes in episodeList, now we need to go through each one and see what streams are available
         for (let i = 0; i < episodeList.length; i++) {
+            // Update the progressbar
+            currentProgress++;
+            const calculatedWidth = (currentProgress / maxProgress) * 100;
+            console.log(calculatedWidth);
+            $('#progressBar').width(`${calculatedWidth}%`);
+            $('#progressBar').attr('aria-valuenow', currentProgress);
+
             let episodeData = await $.ajax({
                 "url": `${plexUrl}/library/metadata/${episodeList[i]}`,
                 "method": "GET",
@@ -1076,9 +1098,11 @@ async function setSubtitleStream(partsId, streamId, row) {
             }
         }
 
-        // Update the progress bar
+        // Reset the progress bar and modal text
+        $("#modalBodyText #modalTitleText").text("Updating matches... Please do not close this tab or refresh until the process is complete.");
         maxProgress = promiseConstructors.length;
         $('#progressBar').attr('aria-valuemax', maxProgress);
+        $('#progressBar').attr('aria-valuenow', 0);
 
         function futurePromise(data) {
             return axios({
@@ -1104,6 +1128,7 @@ async function setSubtitleStream(partsId, streamId, row) {
         function handleProgress() {
             currentProgress++;
             const calculatedWidth = (currentProgress / maxProgress) * 100;
+            console.log(calculatedWidth);
             $('#progressBar').width(`${calculatedWidth}%`);
             $('#progressBar').attr('aria-valuenow', currentProgress);
         };
@@ -1111,7 +1136,7 @@ async function setSubtitleStream(partsId, streamId, row) {
         try {
             Promise.allSettled(matchPromises).then(() => {
                 $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
-                $("#modalBodyText #modalTitleText").text("Processing Complete!");
+                $("#modalBodyText #modalTitleText").text("Processing Complete! You can now close this popup.");
                 $('#modalBodyText #progressBarContainer').hide();
             });
         }
