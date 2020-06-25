@@ -12,6 +12,12 @@ var seasonId = ""; // Store the Id of the most recently clicked season
 var episodeId = ""; // Stores the Id of the most recently clicked episode
 
 $(document).ready(() => {
+    // Check if there is a page refresh, if so we want to push the history without the #
+    let navigationType = performance.getEntriesByType("navigation")[0].type;
+    if ((navigationType == 'reload') && (window.location.href.indexOf('#authentication') == -1)) {
+        window.history.pushState('', document.title, window.location.pathname + '#authentication');
+    }
+
     // Enable Tooltips
     $('#helpAboutIcon, #titleLogo').tooltip();
 
@@ -40,7 +46,6 @@ $(document).ready(() => {
 
     // Setup on change listener for toggle buttons
     $('input[type=radio][name=pinOrAuth]').change(function() {
-        console.log(this);
         toggleAuthPages(this.value);
     });
 
@@ -324,7 +329,6 @@ function connectToPlex() {
 
 function displayLibraries(data) {
     const libraries = data.MediaContainer.Directory;
-    // console.log(libraries);
 
     $("#libraryTable tbody").empty();
     $("#tvShowsTable tbody").empty();
@@ -363,7 +367,6 @@ function getAlphabet(uid, row) {
 
 function displayAlphabet(data, row) {
     const availableAlphabet = data.MediaContainer.Directory;
-    // console.log(availableAlphabet);
 
     $("#tvShowsTable tbody").empty();
     $("#seasonsTable tbody").empty();
@@ -388,7 +391,6 @@ function displayAlphabet(data, row) {
 function getLibraryByLetter(element) {
     let letter = $(element).text();
     if (letter == "#") letter = "%23";
-    // console.log("getLibraryByLetter: " + letter);
 
     $(element).siblings().removeClass("btn-dark").addClass("btn-outline-dark");
     $(element).removeClass("btn-outline-dark").addClass("btn-dark");
@@ -410,7 +412,6 @@ function getLibraryByLetter(element) {
 
 function displayTitles(titles) {
     const tvShows = titles.MediaContainer.Metadata;
-    // console.log(tvShows);
     $("#tvShowsTable tbody").empty();
     $("#seasonsTable tbody").empty();
     $("#episodesTable tbody").empty();
@@ -462,7 +463,6 @@ function getTitleInfo(uid, row) {
 function showTitleInfo(data, row) {
     const seasons = data.MediaContainer.Metadata;
     seasonsList.length = 0;
-    // console.log(seasons);
 
     $(row).siblings().removeClass("table-active");
     $(row).addClass("table-active");
@@ -500,7 +500,6 @@ function getSeasonInfo(uid, row) {
 
 function showSeasonInfo(data, row) {
     const episodes = data.MediaContainer.Metadata;
-    // console.log(episodes);
 
     $(row).siblings().removeClass("table-active");
     $(row).addClass("table-active");
@@ -537,8 +536,6 @@ function getEpisodeInfo(uid, row) {
 function showEpisodeInfo(data, row) {
     const streams = data.MediaContainer.Metadata[0].Media[0].Part[0].Stream;
     const partId = data.MediaContainer.Metadata[0].Media[0].Part[0].id;
-    // console.log(partId);
-    // console.log(streams);
 
     $(row).siblings().removeClass("table-active");
     $(row).addClass("table-active");
@@ -583,9 +580,11 @@ function showEpisodeInfo(data, row) {
 
 async function setAudioStream(partsId, streamId, row) {
     let singleEpisode = $("#singleEpisode").prop("checked");
+    // Need these 2 variables and function for progress bar
+    let currentProgress = 0;
+    let maxProgress = 0;
 
     if (singleEpisode) {
-        //console.log("Apply Audio Stream to single episode");
         $.ajax({
             "url": `${plexUrl}/library/parts/${partsId}?audioStreamID=${streamId}&allParts=1`,
             "method": "POST",
@@ -594,7 +593,6 @@ async function setAudioStream(partsId, streamId, row) {
                 "Accept": "application/json"
             },
             "success": (data) => {
-                //console.log("success");
                 $(row).siblings().removeClass("table-active");
                 $(row).addClass("table-active").addClass("success-transition");
                 setTimeout(() => {
@@ -608,7 +606,6 @@ async function setAudioStream(partsId, streamId, row) {
         });
     }
     else {
-        //console.log("Apply Audio Stream to whole series");
         // Show the modal to set progress
         $('#progressModal #progressModalTitle').empty();
         $('#progressModal #progressModalTitle').text(`Processing Audio Changes`);
@@ -616,11 +613,14 @@ async function setAudioStream(partsId, streamId, row) {
         $('#progressModal #modalBodyText').append(`<div class="alert alert-warning" role="alert">
                 <div class="d-flex align-items-center">
                     <span id="modalTitleText">Please do not close this tab or refresh until the process is complete</span>
-                <div class="spinner-border text-warning ml-auto" role="status" aria-hidden="true"></div>
+            </div>
+            <div class="progress" id="progressBarContainer">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>`);
         $('#progressModal').modal();
 
+        let promiseConstructors = []; // This will hold the details that will then be added to the full promises in matchPromises
         let matchPromises = []; // This will store the promises to change the audio for given files. It means we can run in parallel and await them all
         let searchTitle = ($(".title", row).text() == "undefined") ? undefined : $(".title", row).text();
         let searchName = ($(".name", row).text() == "undefined") ? undefined : $(".name", row).text();
@@ -642,7 +642,6 @@ async function setAudioStream(partsId, streamId, row) {
                 episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
             }
         }
-        //console.log(episodeList);
 
         // We have the episodes in episodeList, now we need to go through each one and see what streams are available
         for (let i = 0; i < episodeList.length; i++) {
@@ -654,10 +653,10 @@ async function setAudioStream(partsId, streamId, row) {
                     "Accept": "application/json"
                 }
             });
+            const seasonNumber = episodeData.MediaContainer.Metadata[0].parentIndex;
+            const episodeNumber = episodeData.MediaContainer.Metadata[0].index;
             const episodePartId = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].id;
             const episodeStreams = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].Stream;
-            //console.log(episodePartId);
-            //console.log(episodeStreams);
 
             // Loop through each audio stream and check for any matches using the searchTitle, searchName, searchLanguage, searchCode
             let hasMatch = false;
@@ -790,46 +789,67 @@ async function setAudioStream(partsId, streamId, row) {
 
             if (hasMatch) {
                 // There is a match, so update the audio track using the newStreamId and episodePartId
-                //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has a match on the type: ${matchType}, and will set the new Audio Track to: ${newStreamId}`);
-                matchPromises.push(await $.ajax({
+                promiseConstructors.push({
                     "url": `${plexUrl}/library/parts/${episodePartId}?audioStreamID=${bestMatch.matchId}&allParts=1`,
-                    "method": "POST",
-                    "headers": {
-                        "X-Plex-Token": plexToken,
-                        "Accept": "application/json"
-                    },
-                    "success": (data) => {
-                        //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} updated with Audio Track: ${newStreamId} because of a match on ${matchType}`);
-                        $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
-                        $(row).siblings().removeClass("table-active");
-                        $(row).addClass("table-active");
-                    },
-                    "error": (data) => {
-                        console.log("ERROR L406");
-                        console.log(data);
-                    }
-                }));
+                    "messageAppend": `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`
+                });
             }
             else {
                 //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has no match, or there is only 1 audio track`);
             }
         }
+
+        // Update the progress bar
+        maxProgress = promiseConstructors.length;
+        $('#progressBar').attr('aria-valuemax', maxProgress);
+
+        function futurePromise(data) {
+            return axios({
+                "url": data.url,
+                "method": "POST",
+                "headers": {
+                    "X-Plex-Token": plexToken,
+                    "Accept": "application/json"
+                }
+            }).then((result) => {
+                $('#progressModal #modalBodyText').append(data.messageAppend);
+                $(row).siblings().removeClass("table-active");
+                $(row).addClass("table-active");
+                handleProgress();
+            }).catch((e) => console.log(e));
+        }
+
+        for (let k = 0; k < promiseConstructors.length; k++) {
+            let axiosPromise = futurePromise(promiseConstructors[k]);
+            matchPromises.push(axiosPromise);
+        }
+
+        function handleProgress() {
+            currentProgress++;
+            const calculatedWidth = (currentProgress / maxProgress) * 100;
+            $('#progressBar').width(`${calculatedWidth}%`);
+            $('#progressBar').attr('aria-valuenow', currentProgress);
+        };
+
         try {
-            await Promise.all(matchPromises.map(p => p.catch(e => e)));
+            Promise.allSettled(matchPromises).then(() => {
+                $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
+                $("#modalBodyText #modalTitleText").text("Processing Complete!");
+                $('#modalBodyText #progressBarContainer').hide();
+            });
         }
         catch (e) {
             console.log("ERROR L419");
             console.log(e);
         }
-        //console.log("Completed all Updates");
-        $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
-        $("#modalBodyText #modalTitleText").text("Processing Complete!");
-        $('#modalBodyText .spinner-border').css('visibility','hidden');
     }
 }
 
 async function setSubtitleStream(partsId, streamId, row) {
     let singleEpisode = $("#singleEpisode").prop("checked");
+    // Need these 2 variables and function for progress bar
+    let currentProgress = 0;
+    let maxProgress = 0;
 
     if (singleEpisode) {
         $.ajax({
@@ -840,7 +860,6 @@ async function setSubtitleStream(partsId, streamId, row) {
                 "Accept": "application/json"
             },
             "success": (data) => {
-                //console.log("success");
                 $(row).siblings().removeClass("table-active");
                 $(row).addClass("table-active").addClass("success-transition");
                 setTimeout(() => {
@@ -854,7 +873,6 @@ async function setSubtitleStream(partsId, streamId, row) {
         });
     }
     else {
-        //console.log("Apply Subtitle Stream to whole series");
         // Show the modal to set progress
         $('#progressModal #progressModalTitle').empty();
         $('#progressModal #progressModalTitle').text(`Processing Subtitle Changes`);
@@ -862,11 +880,14 @@ async function setSubtitleStream(partsId, streamId, row) {
         $('#progressModal #modalBodyText').append(`<div class="alert alert-warning" role="alert">
                 <div class="d-flex align-items-center">
                     <span id="modalTitleText">Please do not close this tab or refresh until the process is complete</span>
-                <div class="spinner-border text-warning ml-auto" role="status" aria-hidden="true"></div>
+            </div>
+            <div class="progress" id="progressBarContainer">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>`);
         $('#progressModal').modal();
 
+        let promiseConstructors = []; // This will hold the details that will then be added to the full promises in matchPromises
         let matchPromises = []; // This will store the promises to change the audio for given files. It means we can run in parallel and await them all
         let searchTitle = ($(".title", row).text() == "undefined") ? undefined : $(".title", row).text();
         let searchName = ($(".name", row).text() == "undefined") ? undefined : $(".name", row).text();
@@ -888,7 +909,6 @@ async function setSubtitleStream(partsId, streamId, row) {
                 episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
             }
         }
-        //console.log(episodeList);
 
         // We have the episodes in episodeList, now we need to go through each one and see what streams are available
         for (let i = 0; i < episodeList.length; i++) {
@@ -900,10 +920,10 @@ async function setSubtitleStream(partsId, streamId, row) {
                     "Accept": "application/json"
                 }
             });
+            const seasonNumber = episodeData.MediaContainer.Metadata[0].parentIndex;
+            const episodeNumber = episodeData.MediaContainer.Metadata[0].index;
             const episodePartId = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].id;
             const episodeStreams = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].Stream;
-            //console.log(episodePartId);
-            //console.log(episodeStreams);
 
             // If streamId = 0 then we are unsetting the subtitles. Otherwise we need to find the best matches for each episode
             if (streamId != 0) {
@@ -1038,25 +1058,10 @@ async function setSubtitleStream(partsId, streamId, row) {
 
                 if (hasMatch) {
                     // There is a match, so update the subtitle track using the currentMatch.matchId and episodePartId
-                    //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has a match on the type: ${matchType}, and will set the new Subtitle Track to: ${currentMatch.matchId}`);
-                    matchPromises.push(await $.ajax({
+                    promiseConstructors.push({
                         "url": `${plexUrl}/library/parts/${episodePartId}?subtitleStreamID=${bestMatch.matchId}&allParts=1`,
-                        "method": "POST",
-                        "headers": {
-                            "X-Plex-Token": plexToken,
-                            "Accept": "application/json"
-                        },
-                        "success": (data) => {
-                            //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} updated with Subtitle Track: ${currentMatch.matchId} because of a match on ${matchType}`);
-                            $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`);
-                            $(row).siblings().removeClass("table-active");
-                            $(row).addClass("table-active");
-                        },
-                        "error": (data) => {
-                            console.log("ERROR L572");
-                            console.log(data);
-                        }
-                    }));
+                        "messageAppend": `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`
+                    });
                 }
                 else {
                     //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} has no match, or there is only 1 subtitle track`);
@@ -1064,38 +1069,55 @@ async function setSubtitleStream(partsId, streamId, row) {
             }
             else {
                 // streamId = 0, which means we just want to set the subtitleStreamID = 0 for every episode
-                matchPromises.push(await $.ajax({
+                promiseConstructors.push({
                     "url": `${plexUrl}/library/parts/${episodePartId}?subtitleStreamID=0&allParts=1`,
-                    "method": "POST",
-                    "headers": {
-                        "X-Plex-Token": plexToken,
-                        "Accept": "application/json"
-                    },
-                    "success": (data) => {
-                        //console.log(`Episode: ${episodeData.MediaContainer.Metadata[0].title} updated with Subtitle Track: ${currentMatch.matchId} because of a match on ${matchType}`);
-                        $('#progressModal #modalBodyText').append(`<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> has had the subtitles <strong>deselected</strong></span><br />`);
-                        $(row).siblings().removeClass("table-active");
-                        $(row).addClass("table-active");
-                    },
-                    "error": (data) => {
-                        console.log("ERROR L834");
-                        console.log(data);
-                    }
-                }));
+                    "messageAppend": `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> has had the subtitles <strong>deselected</strong></span><br />`
+                });
             }
         }
 
-        try {
-            await Promise.all(matchPromises.map(p => p.catch(e => e)));
-        }
-        catch (e) {
-            console.log("ERROR 585");
-            console.log(e);
+        // Update the progress bar
+        maxProgress = promiseConstructors.length;
+        $('#progressBar').attr('aria-valuemax', maxProgress);
+
+        function futurePromise(data) {
+            return axios({
+                "url": data.url,
+                "method": "POST",
+                "headers": {
+                    "X-Plex-Token": plexToken,
+                    "Accept": "application/json"
+                }
+            }).then((result) => {
+                $('#progressModal #modalBodyText').append(data.messageAppend);
+                $(row).siblings().removeClass("table-active");
+                $(row).addClass("table-active");
+                handleProgress();
+            }).catch((e) => console.log(e));
+        } 
+
+        for (let k = 0; k < promiseConstructors.length; k++) {
+            let axiosPromise = futurePromise(promiseConstructors[k]);
+            matchPromises.push(axiosPromise);
         }
 
-        //console.log("Completed all Updates");
-        $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
-        $("#modalBodyText #modalTitleText").text("Processing Complete!");
-        $('#modalBodyText .spinner-border').css('visibility','hidden');
+        function handleProgress() {
+            currentProgress++;
+            const calculatedWidth = (currentProgress / maxProgress) * 100;
+            $('#progressBar').width(`${calculatedWidth}%`);
+            $('#progressBar').attr('aria-valuenow', currentProgress);
+        };
+
+        try {
+            Promise.allSettled(matchPromises).then(() => {
+                $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
+                $("#modalBodyText #modalTitleText").text("Processing Complete!");
+                $('#modalBodyText #progressBarContainer').hide();
+            });
+        }
+        catch (e) {
+                console.log("ERROR L419");
+                console.log(e);
+        }
     }
 }

@@ -3,7 +3,6 @@
     $.fn.historyTabs = function() {
         var that = this;
         window.addEventListener('popstate', function(event) {
-            console.log(event);
             if (event.state) {
                 $(that).filter('[href="' + event.state.url + '"]').tab('show');
             } else {
