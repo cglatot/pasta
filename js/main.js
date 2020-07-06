@@ -1,7 +1,14 @@
+// Variables for the Authorised Devices card
+var clientIdentifier; // UID for the device being used
+var plexProduct = "PASTA"; // X-Plex-Product - Application name
+var pastaVersion = "1.2.2"; // X-Plex-Version - Application version
+var pastaPlatform; // X-Plex-Platform - Web Browser
+var pastaPlatformVersion; // X-Plex-Platform-Version - Web Browser version
+var deviceInfo; // X-Plex-Device - Operation system?
+var deviceName; // X-Plex-Device-Name - Main name shown
+// End auth devices card variables
 var plexUrl;
 var plexToken;
-var clientIdentifier; // UID for the device being used
-var plexProduct = "PASTA-cglatot";
 var backOffTimer = 0;
 var serverList = []; // save server information for pin login and multiple servers
 
@@ -33,6 +40,17 @@ $(document).ready(() => {
             $("#insecureWarning").show();
         }
     }
+    // SET THE VARIABLES FOR PLEX PIN AUTH REQUESTS
+    let browserInfo = getBrowser();
+    // Set the clientID, this might get overridden if one is saved to localstorage
+    clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+    // Set the OS
+    deviceInfo = browserInfo.os;
+    // Set the web browser and version
+    pastaPlatform = browserInfo.browser;
+    pastaPlatformVersion = browserInfo.browserVersion;
+    // Set the main display name
+    deviceName = `PASTA (${pastaPlatform})`;
 
     // Validation listeners on the Plex URL Input
     $('#plexUrl').on("input", () => {
@@ -48,9 +66,6 @@ $(document).ready(() => {
     $('input[type=radio][name=pinOrAuth]').change(function() {
         toggleAuthPages(this.value);
     });
-
-    // Set the clientID, this might get overridden if one is saved to localstorage
-    clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
 
     if (!localStorage.isPinAuth) {
         // Not using PIN auth, so must be using url / token
@@ -69,7 +84,16 @@ $(document).ready(() => {
 
         // Display a PIN code for that authentication as well
         $.ajax({
-            "url": `https://plex.tv/pins.xml?X-Plex-Product=${plexProduct}&X-Plex-Client-Identifier=${clientIdentifier}`,
+            "url": `https://plex.tv/pins.xml`,
+            "headers": {
+                "X-Plex-Client-Identifier": clientIdentifier,
+                "X-Plex-Product": plexProduct,
+                "X-Plex-Version": pastaVersion,
+                "X-Plex-Platform": pastaPlatform,
+                "X-Plex-Platform-Version": pastaPlatformVersion,
+                "X-Plex-Device": deviceInfo,
+                "X-Plex-Device-Name": deviceName
+            },
             "method": "POST",
             "success": (data) => {
                 let pinId = $(data).find('id')[0].innerHTML;
@@ -117,7 +141,16 @@ function listenForValidPincode (pinId) {
     let currentTime = Date.now();
     if ((currentTime - backOffTimer)/1000 < 180) {
         $.ajax({
-            "url": `https://plex.tv/pins/${pinId}?X-Plex-Product=${plexProduct}&X-Plex-Client-Identifier=${clientIdentifier}`,
+            "url": `https://plex.tv/pins/${pinId}`,
+            "headers": {
+                "X-Plex-Client-Identifier": clientIdentifier,
+                "X-Plex-Product": plexProduct,
+                "X-Plex-Version": pastaVersion,
+                "X-Plex-Platform": pastaPlatform,
+                "X-Plex-Platform-Version": pastaPlatformVersion,
+                "X-Plex-Device": deviceInfo,
+                "X-Plex-Device-Name": deviceName
+            },
             "method": "GET",
             "success": (data) => {
                 if (data.pin.auth_token != null) {
@@ -149,7 +182,7 @@ function listenForValidPincode (pinId) {
 
 function getServers () {
     $.ajax({
-        "url": `https://plex.tv/pms/servers.xml?X-Plex-Product=${plexProduct}&X-Plex-Client-Identifier=${clientIdentifier}`,
+        "url": `https://plex.tv/pms/servers.xml?X-Plex-Client-Identifier=${clientIdentifier}`,
         "method": "GET",
         "headers": {
             "X-Plex-Token": plexToken
@@ -176,6 +209,15 @@ function getServers () {
         "error": (data) => {
             console.log("ERROR L59");
             console.log(data);
+            if (data.status == 401) {
+                console.log("Unauthorized");
+                $("#pinAuthWarning").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> Unauthorized (401) - It looks like the old PIN code is no longer valid. Please choose the "Click here to logout" above to authorise again.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+            }
         }
     });
 }
@@ -293,6 +335,16 @@ function connectToPlex() {
                 console.log("Unauthorized");
                 $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
                         <strong>Warning:</strong> Unauthorized (401) - Please check that your X-Plex-Token is correct, and you are trying to connect to the correct Plex server.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+            }
+            else if ((location.protocol == 'https:') && (localStorage.isPinAuth) && (plexUrl.indexOf('http:') > -1)) {
+                console.log("Trying to use http over a https site with PIN authentication");
+                $("#pinAuthWarning").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> Error - You are trying to access a http server via the site in https. If you cannot see your libraries below, please load this site \
+                        over http by <a href="http://www.pastatool.com">clicking here</a>.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
