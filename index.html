@@ -50,7 +50,8 @@
     <!-- Custom Scripts -->
     <script type="text/javascript" src="js/main.js"></script>
     <script type="text/javascript" src="js/bootstrap-history-tabs.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" src="js/detect-browser.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
 
 <body>
@@ -291,6 +292,14 @@
                             </div>
                         </div>
                         <!-- / SERVERS TABLE -->
+
+                        <!-- PLEX AUTHENTICATION WARNING -->
+                        <div class="row">
+                            <div class="col" id="pinAuthWarning">
+
+                            </div>
+                        </div>
+                        <!-- / PLEX AUTHENTICATION WARNING -->
 
                         <!-- LIBRARIES TABLE -->
                         <div class="row mt-4">
