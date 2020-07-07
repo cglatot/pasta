@@ -41,16 +41,30 @@ $(document).ready(() => {
         }
     }
     // SET THE VARIABLES FOR PLEX PIN AUTH REQUESTS
-    let browserInfo = getBrowser();
-    // Set the clientID, this might get overridden if one is saved to localstorage
-    clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
-    // Set the OS
-    deviceInfo = browserInfo.os;
-    // Set the web browser and version
-    pastaPlatform = browserInfo.browser;
-    pastaPlatformVersion = browserInfo.browserVersion;
-    // Set the main display name
-    deviceName = `PASTA (${pastaPlatform})`;
+    try {
+        let browserInfo = getBrowser();
+        // Set the clientID, this might get overridden if one is saved to localstorage
+        clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+        // Set the OS
+        deviceInfo = browserInfo.os || "";
+        // Set the web browser and version
+        pastaPlatform = browserInfo.browser || "";
+        pastaPlatformVersion = browserInfo.browserVersion || "";
+        // Set the main display name
+        deviceName = `PASTA (${pastaPlatform})` || "PASTA";
+    } catch (e) {
+        console.log(e);
+        // Fallback values
+        // Set the clientID, this might get overridden if one is saved to localstorage
+        clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+        // Set the OS
+        deviceInfo = "";
+        // Set the web browser and version
+        pastaPlatform = "";
+        pastaPlatformVersion = "";
+        // Set the main display name
+        deviceName = "PASTA";
+    }
 
     // Validation listeners on the Plex URL Input
     $('#plexUrl').on("input", () => {
@@ -104,7 +118,7 @@ $(document).ready(() => {
                 listenForValidPincode(pinId);
             },
             "error": (data) => {
-                console.log("ERROR L59");
+                console.log("ERROR L121");
                 console.log(data);
             }
         });
@@ -169,7 +183,7 @@ function listenForValidPincode (pinId) {
                 }
             },
             "error": (data) => {
-                console.log("ERROR L73");
+                console.log("ERROR L186");
                 console.log(data);
                 return;
             }
@@ -207,7 +221,7 @@ function getServers () {
             }
         },
         "error": (data) => {
-            console.log("ERROR L59");
+            console.log("ERROR L224");
             console.log(data);
             if (data.status == 401) {
                 console.log("Unauthorized");
@@ -411,7 +425,7 @@ function getAlphabet(uid, row) {
             $('#series-tab').tab('show');
         },
         "error": (data) => {
-            console.log("ERROR L131");
+            console.log("ERROR L428");
             console.log(data);
         }
     });
@@ -456,7 +470,7 @@ function getLibraryByLetter(element) {
         },
         "success": (data) => displayTitles(data),
         "error": (data) => {
-            console.log("ERROR L178");
+            console.log("ERROR L473");
             console.log(data);
         }
     });
@@ -493,7 +507,7 @@ function getTitleInfo(uid, row) {
             $('#episodes-tab').tab('show');
         },
         "error": (data) => {
-            console.log("ERROR L143");
+            console.log("ERROR L510");
             console.log(data);
             if (data.status == 400) {
                 // This is a "bad request" - this usually means a Movie was selected
@@ -544,7 +558,7 @@ function getSeasonInfo(uid, row) {
         },
         "success": (data) => showSeasonInfo(data, row),
         "error": (data) => {
-            console.log("ERROR L183");
+            console.log("ERROR L561");
             console.log(data);
         }
     });
@@ -579,7 +593,7 @@ function getEpisodeInfo(uid, row) {
         },
         "success": (data) => showEpisodeInfo(data, row),
         "error": (data) => {
-            console.log("ERROR L220");
+            console.log("ERROR L596");
             console.log(data);
         }
     });
@@ -632,6 +646,7 @@ function showEpisodeInfo(data, row) {
 
 async function setAudioStream(partsId, streamId, row) {
     let singleEpisode = $("#singleEpisode").prop("checked");
+    let singleSeason = $("#singleSeason").prop("checked");
     // Need these 2 variables and function for progress bar
     let currentProgress = 0;
     let maxProgress = 0;
@@ -652,7 +667,7 @@ async function setAudioStream(partsId, streamId, row) {
                 }, 1750);
             },
             "error": (data) => {
-                console.log("ERROR L283");
+                console.log("ERROR L670");
                 console.log(data);
             }
         });
@@ -681,17 +696,33 @@ async function setAudioStream(partsId, streamId, row) {
 
         // We have the Seasons Ids stored in seasonsList, so iterate over them to get all the episodes
         let episodeList = [];
-        for (let i = 0; i < seasonsList.length; i++) {
+        if (singleSeason) {
+            // If the "Single Season" button is selected, we only want to change the current season's episodes
             let seasonEpisodes = await $.ajax({
-                "url": `${plexUrl}/library/metadata/${seasonsList[i]}/children`,
+                "url": `${plexUrl}/library/metadata/${seasonId}/children`,
                 "method": "GET",
                 "headers": {
                     "X-Plex-Token": plexToken,
                     "Accept": "application/json"
                 }
             });
-            for (let j = 0; j < seasonEpisodes.MediaContainer.Metadata.length; j++) {
-                episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
+            for (let k = 0; k < seasonEpisodes.MediaContainer.Metadata.length; k++) {
+                episodeList.push(seasonEpisodes.MediaContainer.Metadata[k].ratingKey);
+            }
+        } else {
+            // Else we want to get all the episodes from every season
+            for (let i = 0; i < seasonsList.length; i++) {
+                let seasonEpisodes = await $.ajax({
+                    "url": `${plexUrl}/library/metadata/${seasonsList[i]}/children`,
+                    "method": "GET",
+                    "headers": {
+                        "X-Plex-Token": plexToken,
+                        "Accept": "application/json"
+                    }
+                });
+                for (let j = 0; j < seasonEpisodes.MediaContainer.Metadata.length; j++) {
+                    episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
+                }
             }
         }
 
@@ -703,7 +734,6 @@ async function setAudioStream(partsId, streamId, row) {
             // Update the progressbar
             currentProgress++;
             const calculatedWidth = (currentProgress / maxProgress) * 100;
-            console.log(calculatedWidth);
             $('#progressBar').width(`${calculatedWidth}%`);
             $('#progressBar').attr('aria-valuenow', currentProgress);
 
@@ -903,7 +933,7 @@ async function setAudioStream(partsId, streamId, row) {
             });
         }
         catch (e) {
-            console.log("ERROR L419");
+            console.log("ERROR L936");
             console.log(e);
         }
     }
@@ -911,6 +941,7 @@ async function setAudioStream(partsId, streamId, row) {
 
 async function setSubtitleStream(partsId, streamId, row) {
     let singleEpisode = $("#singleEpisode").prop("checked");
+    let singleSeason = $("#singleSeason").prop("checked");
     // Need these 2 variables and function for progress bar
     let currentProgress = 0;
     let maxProgress = 0;
@@ -931,7 +962,7 @@ async function setSubtitleStream(partsId, streamId, row) {
                 }, 1750);
             },
             "error": (data) => {
-                console.log("ERROR L449");
+                console.log("ERROR L965");
                 console.log(data);
             }
         });
@@ -960,17 +991,33 @@ async function setSubtitleStream(partsId, streamId, row) {
 
         // We have the Seasons Ids stored in seasonsList, so iterate over them to get all the episodes
         let episodeList = [];
-        for (let i = 0; i < seasonsList.length; i++) {
+        if (singleSeason) {
+            // If the "Single Season" button is selected, we only want to change the current season's episodes
             let seasonEpisodes = await $.ajax({
-                "url": `${plexUrl}/library/metadata/${seasonsList[i]}/children`,
+                "url": `${plexUrl}/library/metadata/${seasonId}/children`,
                 "method": "GET",
                 "headers": {
                     "X-Plex-Token": plexToken,
                     "Accept": "application/json"
                 }
             });
-            for (let j = 0; j < seasonEpisodes.MediaContainer.Metadata.length; j++) {
-                episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
+            for (let k = 0; k < seasonEpisodes.MediaContainer.Metadata.length; k++) {
+                episodeList.push(seasonEpisodes.MediaContainer.Metadata[k].ratingKey);
+            }
+        } else {
+            // Else we want to get all the episodes from every season
+            for (let i = 0; i < seasonsList.length; i++) {
+                let seasonEpisodes = await $.ajax({
+                    "url": `${plexUrl}/library/metadata/${seasonsList[i]}/children`,
+                    "method": "GET",
+                    "headers": {
+                        "X-Plex-Token": plexToken,
+                        "Accept": "application/json"
+                    }
+                });
+                for (let j = 0; j < seasonEpisodes.MediaContainer.Metadata.length; j++) {
+                    episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
+                }
             }
         }
 
@@ -982,7 +1029,6 @@ async function setSubtitleStream(partsId, streamId, row) {
             // Update the progressbar
             currentProgress++;
             const calculatedWidth = (currentProgress / maxProgress) * 100;
-            console.log(calculatedWidth);
             $('#progressBar').width(`${calculatedWidth}%`);
             $('#progressBar').attr('aria-valuenow', currentProgress);
 
@@ -1180,7 +1226,6 @@ async function setSubtitleStream(partsId, streamId, row) {
         function handleProgress() {
             currentProgress++;
             const calculatedWidth = (currentProgress / maxProgress) * 100;
-            console.log(calculatedWidth);
             $('#progressBar').width(`${calculatedWidth}%`);
             $('#progressBar').attr('aria-valuenow', currentProgress);
         };
@@ -1193,7 +1238,7 @@ async function setSubtitleStream(partsId, streamId, row) {
             });
         }
         catch (e) {
-                console.log("ERROR L419");
+                console.log("ERROR L1241");
                 console.log(e);
         }
     }
