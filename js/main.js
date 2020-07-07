@@ -434,8 +434,15 @@ function getAlphabet(uid, row) {
 
 function displayAlphabet(data, row) {
     const availableAlphabet = data.MediaContainer.Directory;
-    libraryType = data.MediaContainer.thumb.indexOf('show') > -1 ? "shows" : "movie";
-    if (libraryType == "shows") {
+    if (data.MediaContainer.thumb.indexOf('show') > -1) { libraryType = "shows"; }
+    else { libraryType = "movie"; }
+
+    if (data.MediaContainer.thumb.indexOf('video') > -1) {
+        // Update the tab names to "Videos" and "Tracks"
+        $('#series-tab').html("Videos");
+        $('#episodes-tab').html("Tracks");
+        $('#libraryTypeTitle').html("Other Videos");
+    } else if (libraryType == "shows") {
         // Update the tab names to "Series" and "Episodes"
         $('#series-tab').html("Series");
         $('#episodes-tab').html("Episodes");
