@@ -41,16 +41,30 @@ $(document).ready(() => {
         }
     }
     // SET THE VARIABLES FOR PLEX PIN AUTH REQUESTS
-    let browserInfo = getBrowser();
-    // Set the clientID, this might get overridden if one is saved to localstorage
-    clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
-    // Set the OS
-    deviceInfo = browserInfo.os;
-    // Set the web browser and version
-    pastaPlatform = browserInfo.browser;
-    pastaPlatformVersion = browserInfo.browserVersion;
-    // Set the main display name
-    deviceName = `PASTA (${pastaPlatform})`;
+    try {
+        let browserInfo = getBrowser();
+        // Set the clientID, this might get overridden if one is saved to localstorage
+        clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+        // Set the OS
+        deviceInfo = browserInfo.os || "";
+        // Set the web browser and version
+        pastaPlatform = browserInfo.browser || "";
+        pastaPlatformVersion = browserInfo.browserVersion || "";
+        // Set the main display name
+        deviceName = `PASTA (${pastaPlatform})` || "PASTA";
+    } catch (e) {
+        console.log(e);
+        // Fallback values
+        // Set the clientID, this might get overridden if one is saved to localstorage
+        clientIdentifier = `PASTA-cglatot-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+        // Set the OS
+        deviceInfo = "";
+        // Set the web browser and version
+        pastaPlatform = "";
+        pastaPlatformVersion = "";
+        // Set the main display name
+        deviceName = "PASTA";
+    }
 
     // Validation listeners on the Plex URL Input
     $('#plexUrl').on("input", () => {
