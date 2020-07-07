@@ -1,7 +1,7 @@
 // Variables for the Authorised Devices card
 var clientIdentifier; // UID for the device being used
 var plexProduct = "PASTA"; // X-Plex-Product - Application name
-var pastaVersion = "1.2.2"; // X-Plex-Version - Application version
+var pastaVersion = "1.4"; // X-Plex-Version - Application version
 var pastaPlatform; // X-Plex-Platform - Web Browser
 var pastaPlatformVersion; // X-Plex-Platform-Version - Web Browser version
 var deviceInfo; // X-Plex-Device - Operation system?
@@ -17,6 +17,7 @@ var showId = ""; // Stores the Id for the most recently clicked series
 var seasonsList = []; // Stores the Ids for all seasons of the most recently clicked series
 var seasonId = ""; // Store the Id of the most recently clicked season
 var episodeId = ""; // Stores the Id of the most recently clicked episode
+var libraryType = "shows"; // Sets whether the library is a show or a movie / other videos
 
 $(document).ready(() => {
     // Check if there is a page refresh, if so we want to push the history without the #
@@ -433,6 +434,18 @@ function getAlphabet(uid, row) {
 
 function displayAlphabet(data, row) {
     const availableAlphabet = data.MediaContainer.Directory;
+    libraryType = data.MediaContainer.thumb.indexOf('show') > -1 ? "shows" : "movie";
+    if (libraryType == "shows") {
+        // Update the tab names to "Series" and "Episodes"
+        $('#series-tab').html("Series");
+        $('#episodes-tab').html("Episodes");
+        $('#libraryTypeTitle').html("TV Series");
+    } else {
+        // Update the tab names to "Movies" and "Tracks"
+        $('#series-tab').html("Movies");
+        $('#episodes-tab').html("Tracks");
+        $('#libraryTypeTitle').html("Movies");
+    }
 
     $("#tvShowsTable tbody").empty();
     $("#seasonsTable tbody").empty();
@@ -495,35 +508,52 @@ function displayTitles(titles) {
 
 function getTitleInfo(uid, row) {
     showId = uid;
-    $.ajax({
-        "url": `${plexUrl}/library/metadata/${uid}/children`,
-        "method": "GET",
-        "headers": {
-            "X-Plex-Token": plexToken,
-            "Accept": "application/json"
-        },
-        "success": (data) => {
-            showTitleInfo(data, row);
-            $('#episodes-tab').tab('show');
-        },
-        "error": (data) => {
-            console.log("ERROR L510");
-            console.log(data);
-            if (data.status == 400) {
-                // This is a "bad request" - this usually means a Movie was selected
-                $('#progressModal #progressModalTitle').empty();
-                $('#progressModal #progressModalTitle').text(`Invalid TV Show`);
-                $('#progressModal #modalBodyText').empty();
-                $('#progressModal #modalBodyText').append(`<div class="alert alert-warning mb-0" role="alert">
-                        <div class="d-flex align-items-center">
-                            This does not appear to be a valid TV Series, or this TV Series does not have any seasons associated with it.<br>
-                            Please choose a valid TV Series; update the TV Series to have at least 1 Season; or go back and choose the proper library for TV Series.
-                        </div>
-                    </div>`);
-                $('#progressModal').modal();
+    if (libraryType == "movie") {
+        getEpisodeInfo(uid, row);
+        // Hide TV shows tables and switches
+        $('#seasonsTableContainer').hide();
+        $('#episodesTableContainer').hide();
+        $('#switchToggleContainer').hide();
+        // Update the name of the Movie in the placeholder
+        $('#movieNamePlaceholder').show();
+        $('#movieNamePlaceholder h2').html(`${$(row).children().first().html()} (${$(row).children().last().html()})`);
+        // Swap to the tab
+        $('#episodes-tab').tab('show');
+    } else {
+        $('#seasonsTableContainer').show();
+        $('#episodesTableContainer').show();
+        $('#switchToggleContainer').show();
+        $('#movieNamePlaceholder').hide();
+        $.ajax({
+            "url": `${plexUrl}/library/metadata/${uid}/children`,
+            "method": "GET",
+            "headers": {
+                "X-Plex-Token": plexToken,
+                "Accept": "application/json"
+            },
+            "success": (data) => {
+                showTitleInfo(data, row);
+                $('#episodes-tab').tab('show');
+            },
+            "error": (data) => {
+                console.log("ERROR L510");
+                console.log(data);
+                if (data.status == 400) {
+                    // This is a "bad request" - this usually means a Movie was selected
+                    $('#progressModal #progressModalTitle').empty();
+                    $('#progressModal #progressModalTitle').text(`Invalid TV Show`);
+                    $('#progressModal #modalBodyText').empty();
+                    $('#progressModal #modalBodyText').append(`<div class="alert alert-warning mb-0" role="alert">
+                            <div class="d-flex align-items-center">
+                                This does not appear to be a valid TV Series, or this TV Series does not have any seasons associated with it.<br>
+                                Please choose a valid TV Series; update the TV Series to have at least 1 Season; or go back and choose the proper library for TV Series.
+                            </div>
+                        </div>`);
+                    $('#progressModal').modal();
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 function showTitleInfo(data, row) {
