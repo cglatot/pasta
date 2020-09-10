@@ -240,6 +240,13 @@ function getServers () {
                     });
                 }
             } else {
+                let addressToUse = "";
+                // Check whether to use local address or public address
+                if ($('#connectViaLocalAddress').prop('checked')) {
+                    addressToUse = $(servers[0]).attr("localAddresses").split(',')[0];
+                } else {
+                    addressToUse = $(servers[0]).attr("address");
+                }
                 plexToken = $(servers[0]).attr("accessToken");
                 plexUrl = `http://${addressToUse}:${$(servers[0]).attr("port")}`;
                 //connectToPlex();
