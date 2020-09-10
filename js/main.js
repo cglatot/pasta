@@ -249,7 +249,7 @@ function getServers () {
                 }
                 plexToken = $(servers[0]).attr("accessToken");
                 plexUrl = `http://${addressToUse}:${$(servers[0]).attr("port")}`;
-                //connectToPlex();
+                connectToPlex();
             }
         },
         "error": (data) => {
