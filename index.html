@@ -62,7 +62,7 @@
             <a id="titleLogo" class="navbar-brand" href="javascript:window.location.reload()" data-toggle="tooltip" data-placement="bottom" title="Home">
                 <img class="titleImage" src="images/Logo_Title_Large.png">
             </a>
-            <a id="helpAboutIcon" href="javascript:void(0)" onclick="$('#aboutModal').modal();" data-toggle="tooltip" data-placement="bottom" title="Help & About">
+            <a id="helpAboutIcon" class="helpButtons" href="javascript:void(0)" onclick="$('#aboutModal').modal();" data-toggle="tooltip" data-placement="bottom" title="Help & About">
                 <i class="far fa-question-circle" style="color: #e5a00d; font-size: 1.5em"></i>
             </a>
         </div>
@@ -223,7 +223,17 @@
                                                 <i id="confirmForgetPin" class="fas fa-check" style="color: #28a745; font-size: 1.5em"></i>
                                             </small>
                                         </p>
+                                        <div class="form-group form-check">
+                                            <input type="checkbox" class="form-check-input" id="connectViaLocalAddress" onchange="useLocalAddress(this)">
+                                            <label class="form-check-label" for="connectViaLocalAddress">Connect using local IP address</label>
+                                            <a id="localAddressButton" class="helpButtons" href="javascript:void(0)" style="margin-left:0.5em" data-toggle="tooltip" data-placement="bottom"
+                                            title="You must be on the same network as the Plex Server.
+                                            Try this if you are having issues loading the libraries.">
+                                                <i class="far fa-question-circle" style="color: #e5a00d; font-size: 1em"></i>
+                                            </a>
+                                        </div>
                                     </div>
+                                    
                                 </div>
                                 <!-- / PIN AUTHENTICATION -->
                                 <!-- URL / TOKEN AUTHENTICATION -->

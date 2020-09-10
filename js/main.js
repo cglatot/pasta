@@ -27,7 +27,7 @@ $(document).ready(() => {
     }
 
     // Enable Tooltips
-    $('#helpAboutIcon, #titleLogo').tooltip();
+    $('.helpButtons, #titleLogo').tooltip();
 
     // Enable history tracking for tabs
     $('a[data-toggle="tab"]').historyTabs();
@@ -81,6 +81,12 @@ $(document).ready(() => {
     $('input[type=radio][name=pinOrAuth]').change(function() {
         toggleAuthPages(this.value);
     });
+
+    if (localStorage.useLocalAddress == "true") {
+        $('#connectViaLocalAddress').prop('checked', true);
+    } else {
+        $('#connectViaLocalAddress').prop('checked', false);
+    }
 
     if (!localStorage.isPinAuth) {
         // Not using PIN auth, so must be using url / token
@@ -195,6 +201,17 @@ function listenForValidPincode (pinId) {
     }
 }
 
+// Called when the "connect using local IP" checkbox is toggled
+// Refreshes the page and updates the variable for whether it should use the local address or not
+function useLocalAddress (checkbox) {
+    if (checkbox.checked) {
+        localStorage.useLocalAddress = "true";
+    } else {
+        localStorage.useLocalAddress = "false";
+    }
+    window.location.reload();
+}
+
 function getServers () {
     $.ajax({
         "url": `https://plex.tv/pms/servers.xml?X-Plex-Client-Identifier=${clientIdentifier}`,
@@ -208,17 +225,24 @@ function getServers () {
                 displayServers(servers);
                 // Add server info to the list
                 for (let i = 0; i < servers.length; i++) {
+                    let addressToUse = "";
+                    // Check whether to use local address or public address
+                    if ($('#connectViaLocalAddress').prop('checked')) {
+                        addressToUse = $(servers[i]).attr("localAddresses").split(',')[0];
+                    } else {
+                        addressToUse = $(servers[i]).attr("address");
+                    }
                     serverList.push({
                         name: $(servers[i]).attr("name"),
                         accessToken: $(servers[i]).attr("accessToken"),
-                        address: $(servers[i]).attr("address"),
+                        address: addressToUse,
                         port: $(servers[i]).attr("port")
                     });
                 }
             } else {
                 plexToken = $(servers[0]).attr("accessToken");
-                plexUrl = `http://${$(servers[0]).attr("address")}:${$(servers[0]).attr("port")}`;
-                connectToPlex();
+                plexUrl = `http://${addressToUse}:${$(servers[0]).attr("port")}`;
+                //connectToPlex();
             }
         },
         "error": (data) => {
@@ -313,6 +337,7 @@ function forgetPinDetails() {
     localStorage.removeItem('isPinAuth');
     localStorage.removeItem('pinAuthToken');
     localStorage.removeItem('clientIdentifier');
+    localStorage.removeItem('useLocalAddress');
     window.location.reload();
 }
 
