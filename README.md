@@ -8,6 +8,7 @@ Unraid Installation: This is now available on the Commmunity Applications list t
 Encountered a bug, or have a feature request? Log it here: https://github.com/cglatot/pasta/issues
 
 Enjoying the tool? Considering adding to my coffee / energy drink fund :)
+
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/cglatot)
 
 ## What is PASTA?
