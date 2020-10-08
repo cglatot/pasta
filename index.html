@@ -196,7 +196,7 @@
                                         <div id="pinOrAuthBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
                                             <label class="btn btn-secondary active">
                                                 <input type="radio" name="pinOrAuth" value="showPinControls" id="showPinControls" autocomplete="off"
-                                                    checked> PIN Authentication
+                                                    checked> Plex Login
                                             </label>
                                             <label class="btn btn-secondary">
                                                 <input type="radio" name="pinOrAuth" value="showUrlControls" id="showUrlControls" autocomplete="off">
@@ -216,14 +216,14 @@
                                     </button>
                                 </div>
                                 <!-- / WARNING BOX -->
-                                <!-- PIN AUTHENTICATION -->
+                                <!-- PLEX AUTHENTICATION -->
                                 <div id="pin-auth-over-container" class="mt-4">
                                     <div id="new-pin-container">
-                                        <p>Please go to <a href="https://www.plex.tv/pin" target="_blank">https://www.plex.tv/pin</a> and enter the following PIN:</p>
-                                        <div class="d-inline-flex flex-row align-items-center">
+                                        <button type="button" class="btn btn-secondary" onclick="authenticateWithPlex()">Login with Plex</button>
+                                        <!--<div class="d-inline-flex flex-row align-items-center">
                                             <h1 id="pin-code-holder"></h1>
                                             <div class="spinner-border spinner-border-sm text-warning ml-2" role="status" aria-hidden="true"></div>
-                                        </div>
+                                        </div>-->
                                     </div>
                                     <div id="authed-pin-container">
                                         <p>You are authenticated via PIN. 
@@ -244,7 +244,7 @@
                                     </div>
                                     
                                 </div>
-                                <!-- / PIN AUTHENTICATION -->
+                                <!-- / PLEX AUTHENTICATION -->
                                 <!-- URL / TOKEN AUTHENTICATION -->
                                 <div id="url-auth-over-container" class="mt-4">
                                     <div class="form-group">
@@ -320,7 +320,6 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3>Plex Libraries</h3>
-                                <small>Choose <strong>only</strong> episodic content (TV Shows, Anime, etc). This does not work for Movies.</small>
                                 <div class="table-responsive">
                                     <table id="libraryTable" class="table table-hover mt-3">
                                         <thead>
