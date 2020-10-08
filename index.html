@@ -74,7 +74,7 @@
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="aboutModalTitle">About & Help</h5>
+                    <h5 class="modal-title" id="aboutModalTitle">Help & About</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -82,8 +82,6 @@
                 <div id="modalBodyText" class="modal-body">
                     <p>Encountered a bug, or have a feature request? Log it here:
                         <a href="https://github.com/cglatot/pasta/issues" target="_blank">https://github.com/cglatot/pasta/issues</a></p>
-                    <p>Enjoying the tool? Considering adding to my coffee / energy drink fund :)
-                    <script type='text/javascript'>kofiwidget2.init('Support Me on Ko-fi', '#F39C12', 'cglatot');kofiwidget2.draw();</script></p>
                     <h3>What is PASTA?</h3>
                     <p>Do you watch TV Shows with multiple languages and subtitles and wish you could change them for the
                         entire show, rather than needing to do it for <em>every. single. episode</em>?
@@ -99,8 +97,7 @@
                     <ul>
                         <li>This works <strong>MUCH</strong> faster if you are on the same network as the Plex Server.</li>
                         <li>If you use Unraid, this is now available in the Community Applications.</li>
-                        <li>You can also run this locally yourself. Just download the source code from github (see the next
-                            section).</li>
+                        <li>You can also run this locally yourself. Just download the source code from github (see link above).</li>
                     </ul>
                     <h3>About PASTA</h3>
                     <p>When I first began developing this for myself, I was calling it <em>Audio Track Automation for Plex</em>,
@@ -122,6 +119,8 @@
                             <h3>Cookie Policy</h3>
                             <p>The site uses some minor technical cookies to help improve your experience (for example, remembering your details if you choose that option).
                                 Third-party cookies are not used on this site. By continuing to use this site, you agree to the use of these functional cookies.</p>
+                            <p><script type='text/javascript'>kofiwidget2.init('Support Me on Ko-fi', '#F39C12', 'cglatot');kofiwidget2.draw();</script></p>
+                            <p>Enjoying the tool? Consider adding to my coffee funds :)</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -207,6 +206,16 @@
                                     </div>
                                 </div>
                                 <!-- / SWITCH TOGGLE -->
+                                <!-- WARNING BOX -->
+                                <div id="loginInfoAlert" class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                                    <strong>Why are you asking me to sign in?</strong> This tool sets the audio and subtitle tracks for Movies and TV Shows with respect to your account only.
+                                    You must login to this tool so that we can view and change these tracks on your behalf.
+                                    <br> If you would like more information, please click on the <strong>Help & About <i class="far fa-question-circle"></i></strong> in the top right of the page.
+                                    <button type="button" id="loginInfoAlertClose" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <!-- / WARNING BOX -->
                                 <!-- PIN AUTHENTICATION -->
                                 <div id="pin-auth-over-container" class="mt-4">
                                     <div id="new-pin-container">

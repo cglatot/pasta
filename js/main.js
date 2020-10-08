@@ -41,6 +41,21 @@ $(document).ready(() => {
             $("#insecureWarning").show();
         }
     }
+
+    // Check if they have permanently dismissed the Login Info alert
+    if (localStorage.showLoginInfoAlert == 'false') {
+        console.log("infoalert is false");
+    }
+    else {
+        $("#loginInfoAlert").show();
+    }
+
+    // Override the close mechanism to not show the loginInfoAlert
+    $("#loginInfoAlertClose").on("click", () => {
+        console.log('Entered the click for close');
+        hideLoginInfoAlertForever();
+    });
+
     // SET THE VARIABLES FOR PLEX PIN AUTH REQUESTS
     try {
         let browserInfo = getBrowser();
@@ -351,6 +366,11 @@ function forgetPinDetails() {
 function hideAlertForever() {
     $("#insecureWarning").hide();
     localStorage.showHttpAlert = 'false';
+}
+
+function hideLoginInfoAlertForever() {
+    $("#loginInfoAlert").hide();
+    localStorage.showLoginInfoAlert = 'false';
 }
 
 function connectToPlex() {

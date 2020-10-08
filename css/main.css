@@ -66,6 +66,10 @@ label, p {
     display: none;
 }
 
+#loginInfoAlert {
+    display: none;
+}
+
 /*==========================
         MODALS
 ==========================*/

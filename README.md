@@ -22,7 +22,7 @@ There are some things I would like to point out, however:
 <ul>
     <li>This works <strong>MUCH</strong> faster if you are on the same network as the Plex Server.</li>
     <li>If you use Unraid, this is now available in the Community Applications.</li>
-    <li>You can also run this locally yourself. Just download the source code from github (see the next section).</li>
+    <li>You can also run this locally yourself. Just download the source code from github.</li>
 </ul>
 
 ## About PASTA
