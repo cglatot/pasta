@@ -371,10 +371,6 @@ table, td, tr, th {
     animation: successFadeOut 1.75s ease-out;
 }
 
-#serverTableContainer {
-    display: none;
-}
-
 /*==========================
         MEDIA QUERIES
 ==========================*/

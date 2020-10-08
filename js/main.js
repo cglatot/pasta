@@ -105,6 +105,61 @@ $(document).ready(() => {
     }
 });
 
+function validateEnableConnectBtn(context) {
+    // Apply validation highlighting to URL field
+    if (context == 'plexUrl') {
+        if ($('#plexUrl').val() != "") {
+            $('#plexUrl').removeClass("is-invalid").addClass("is-valid");
+        }
+        else {
+            $('#plexUrl').removeClass("is-valid").addClass("is-invalid");
+        }
+    }
+    else {
+        // Apply validation highlighting to Plex Token field
+        if ($('#plexToken').val() != "") {
+            $('#plexToken').removeClass("is-invalid").addClass("is-valid");
+        }
+        else {
+            $('#plexToken').removeClass("is-valid").addClass("is-invalid");
+        }
+    }
+
+    // Enable or disable the button, depending on field status
+    if (($('#plexUrl').val() != "") && ($('#plexToken').val() != "")) {
+        $("#btnConnectToPlex").prop("disabled", false);
+    }
+    else {
+        $("#btnConnectToPlex").prop("disabled", true);
+    }
+}
+
+function forgetDetails() {
+    localStorage.removeItem('plexUrl');
+    localStorage.removeItem('plexToken');
+    $('#plexUrl, #plexToken').val('').removeClass('is-valid is-invalid');
+    $('#confirmForget').fadeIn(250).delay(750).fadeOut(1250, () => {
+        $('#forgetDivider, #forgetDetailsSection').hide();
+    });
+}
+
+function forgetPinDetails() {
+    localStorage.removeItem('isPinAuth');
+    localStorage.removeItem('pinAuthToken');
+    localStorage.removeItem('useLocalAddress');
+    window.location.reload();
+}
+
+function hideAlertForever() {
+    $("#insecureWarning").hide();
+    localStorage.showHttpAlert = 'false';
+}
+
+function hideLoginInfoAlertForever() {
+    $("#loginInfoAlert").hide();
+    localStorage.showLoginInfoAlert = 'false';
+}
+
 // Checks if the generated token is valid
 function checkIfAuthTokenIsValid() {
     $.ajax({
@@ -122,22 +177,21 @@ function checkIfAuthTokenIsValid() {
         },
         "method": "GET",
         "success": (data) => {
-            console.log(data);
             plexToken = localStorage.pinAuthToken;
             $('#new-pin-container').hide();
             $('#authed-pin-container').show();
             $('#loggedInAs').text(data.username);
             getServers();
         },
-        "error": (data, statusText, xhr) => {
-            console.log("ERROR L121");
-            console.log(data.status);
+        "error": (data) => {
             if (data.status == 401) {
                 // Auth Token has expired
                 localStorage.removeItem('isPinAuth');
                 localStorage.removeItem('pinAuthToken');
                 localStorage.removeItem('useLocalAddress');
                 $('#new-pin-container').show();
+            } else {
+                console.log("ERROR L121");
             }
         }
     });
@@ -246,43 +300,51 @@ function useLocalAddress (checkbox) {
 }
 
 function getServers () {
+    // Choose whether or not to include https connections
+    let includeHttps = 1;
+    if (location.protocol == 'http:') {
+        includeHttps = 0;
+    }
+    // Get the servers for this user
     $.ajax({
-        "url": `https://plex.tv/pms/servers.xml?X-Plex-Client-Identifier=${clientIdentifier}`,
+        "url": `https://plex.tv/api/v2/resources?includeHttps=${includeHttps}&includeRelay=0`,
         "method": "GET",
         "headers": {
-            "X-Plex-Token": plexToken
+            "X-Plex-Client-Identifier": clientIdentifier,
+            "X-Plex-Token": plexToken,
+            "accept": "application/json"
         },
         "success": (data) => {
-            let servers = $(data).find('Server');
-            if (servers.length > 1) {
-                displayServers(servers);
+            let servers = data.filter(entry => entry.product == "Plex Media Server");
+            if (servers.length > 0) {
                 // Add server info to the list
                 for (let i = 0; i < servers.length; i++) {
-                    let addressToUse = "";
-                    // Check whether to use local address or public address
-                    if ($('#connectViaLocalAddress').prop('checked')) {
-                        addressToUse = $(servers[i]).attr("localAddresses").split(',')[0];
+                    let serverConnections = servers[i].connections;
+
+                    // Filter servers based off the local address checkbox
+                    if (localStorage.useLocalAddress) {
+                        serverConnections = serverConnections.filter(conn => conn.local == true);
                     } else {
-                        addressToUse = $(servers[i]).attr("address");
+                        serverConnections = serverConnections.filter(conn => conn.local == false);
                     }
+
+                    // Filter servers based on http / https site loaded
+                    if (location.protocol == 'http:') {
+                        serverConnections = serverConnections.filter(conn => conn.protocol == "http");
+                    } else {
+                        serverConnections = serverConnections.filter(conn => conn.protocol == "https");
+                    }
+
                     serverList.push({
-                        name: $(servers[i]).attr("name"),
-                        accessToken: $(servers[i]).attr("accessToken"),
-                        address: addressToUse,
-                        port: $(servers[i]).attr("port")
+                        name: servers[i].name,
+                        accessToken: servers[i].accessToken,
+                        connections: serverConnections,
                     });
                 }
+                // Populate the servers in the list of servers
+                displayServers(servers);
             } else {
-                let addressToUse = "";
-                // Check whether to use local address or public address
-                if ($('#connectViaLocalAddress').prop('checked')) {
-                    addressToUse = $(servers[0]).attr("localAddresses").split(',')[0];
-                } else {
-                    addressToUse = $(servers[0]).attr("address");
-                }
-                plexToken = $(servers[0]).attr("accessToken");
-                plexUrl = `http://${addressToUse}:${$(servers[0]).attr("port")}`;
-                connectToPlex();
+                console.log("ERROR L301: There are no results in the list of servers!");
             }
         },
         "error": (data) => {
@@ -312,14 +374,14 @@ function displayServers(servers) {
 
     for (let i = 0; i < servers.length; i++) {
         let rowHTML = `<tr onclick="chooseServer(${i}, this)">
-                        <td>${$(servers[i]).attr("name")}</td>
+                        <td>${servers[i].name}</td>
                     </tr>`;
         $("#serverTable tbody").append(rowHTML);
     }
     $("#serverTableContainer").show();
 }
 
-function chooseServer(number, row) {
+async function chooseServer(number, row) {
     $("#libraryTable tbody").empty();
     $("#tvShowsTable tbody").empty();
     $("#seasonsTable tbody").empty();
@@ -331,63 +393,28 @@ function chooseServer(number, row) {
     $(row).addClass("table-active");
 
     plexToken = serverList[number].accessToken;
-    plexUrl = `http://${serverList[number].address}:${serverList[number].port}`;
-    connectToPlex();
-}
+    let connections = serverList[number].connections;
 
-function validateEnableConnectBtn(context) {
-    // Apply validation highlighting to URL field
-    if (context == 'plexUrl') {
-        if ($('#plexUrl').val() != "") {
-            $('#plexUrl').removeClass("is-invalid").addClass("is-valid");
-        }
-        else {
-            $('#plexUrl').removeClass("is-valid").addClass("is-invalid");
-        }
+    // Loop through the connections to see if we can find one that works
+    for (let i = 0; i < connections.length; i++) {
+        try {
+            let testResult = await $.ajax({
+                "url": `${connections[i].uri}/identity`,
+                "method": "GET",
+                "headers": {
+                    "X-Plex-Token": plexToken,
+                    "Accept": "application/json"
+                }
+            });
+
+            // Check if it is a valid server
+            if (testResult.MediaContainer.machineIdentifier != undefined) {
+                plexUrl = connections[i].uri;
+                connectToPlex();
+                break;
+            }
+        } catch (e) {}
     }
-    else {
-        // Apply validation highlighting to Plex Token field
-        if ($('#plexToken').val() != "") {
-            $('#plexToken').removeClass("is-invalid").addClass("is-valid");
-        }
-        else {
-            $('#plexToken').removeClass("is-valid").addClass("is-invalid");
-        }
-    }
-
-    // Enable or disable the button, depending on field status
-    if (($('#plexUrl').val() != "") && ($('#plexToken').val() != "")) {
-        $("#btnConnectToPlex").prop("disabled", false);
-    }
-    else {
-        $("#btnConnectToPlex").prop("disabled", true);
-    }
-}
-
-function forgetDetails() {
-    localStorage.removeItem('plexUrl');
-    localStorage.removeItem('plexToken');
-    $('#plexUrl, #plexToken').val('').removeClass('is-valid is-invalid');
-    $('#confirmForget').fadeIn(250).delay(750).fadeOut(1250, () => {
-        $('#forgetDivider, #forgetDetailsSection').hide();
-    });
-}
-
-function forgetPinDetails() {
-    localStorage.removeItem('isPinAuth');
-    localStorage.removeItem('pinAuthToken');
-    localStorage.removeItem('useLocalAddress');
-    window.location.reload();
-}
-
-function hideAlertForever() {
-    $("#insecureWarning").hide();
-    localStorage.showHttpAlert = 'false';
-}
-
-function hideLoginInfoAlertForever() {
-    $("#loginInfoAlert").hide();
-    localStorage.showLoginInfoAlert = 'false';
 }
 
 function connectToPlex() {
