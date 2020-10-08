@@ -1,7 +1,7 @@
 // Variables for the Authorised Devices card
 var clientIdentifier; // UID for the device being used
 var plexProduct = "PASTA"; // X-Plex-Product - Application name
-var pastaVersion = "1.5.0"; // X-Plex-Version - Application version
+var pastaVersion = "1.6.0"; // X-Plex-Version - Application version
 var pastaPlatform; // X-Plex-Platform - Web Browser
 var pastaPlatformVersion; // X-Plex-Platform-Version - Web Browser version
 var deviceInfo; // X-Plex-Device - Operation system?
