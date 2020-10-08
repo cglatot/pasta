@@ -179,7 +179,7 @@ function authenticateWithPlex() {
 
 function listenForValidPincode(pinId, clientId, pinCode) {
     let currentTime = Date.now();
-    if ((currentTime - backOffTimer)/1000 < 10) {
+    if ((currentTime - backOffTimer)/1000 < 180) {
         $.ajax({
             "url": `https://plex.tv/api/v2/pins/${pinId}`,
             "headers": {

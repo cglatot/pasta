@@ -218,11 +218,13 @@
                                 <!-- / WARNING BOX -->
                                 <!-- PLEX AUTHENTICATION -->
                                 <div id="pin-auth-over-container" class="row mt-4">
-                                    <div id="new-pin-container" class="col pl-5 pr-5">
-                                        <button id="loginWithPlexBtn" type="button" class="btn btn-secondary btn-lg btn-block" onclick="authenticateWithPlex()">Login with Plex</button>
+                                    <div id="new-pin-container" class="col">
+                                        <div class="pl-5 pr-5">
+                                            <button id="loginWithPlexBtn" type="button" class="btn btn-secondary btn-lg btn-block" onclick="authenticateWithPlex()">Login with Plex</button>
+                                        </div>
                                         <div id="waitOnPinAuth" class="spinner-border spinner-border-lg text-warning" role="status" aria-hidden="true"></div>
                                     </div>
-                                    <div id="authed-pin-container">
+                                    <div id="authed-pin-container" class="col">
                                         <p>You are logged in as: <strong id="loggedInAs"></strong> 
                                             <small id="forgetPinDetails">
                                                 <a href="javascript:void(0)" class="ml-2" onclick="forgetPinDetails()">Click here to logout.</a>
