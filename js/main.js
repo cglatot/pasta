@@ -166,9 +166,9 @@ function authenticateWithPlex() {
 
             $('#waitOnPinAuth').show();
             $('#loginWithPlexBtn').hide();
-            window.open(authAppUrl, 'PlexSignIn', 'width=800,height=730');
+            let popupWindow = window.open(authAppUrl, 'PlexSignIn', 'width=800,height=730');
             backOffTimer = Date.now();
-            listenForValidPincode(data.id, clientIdentifier, data.code);
+            listenForValidPincode(data.id, clientIdentifier, data.code, popupWindow);
         },
         "error": (data) => {
             console.log("ERROR L121");
@@ -177,7 +177,7 @@ function authenticateWithPlex() {
     });
 }
 
-function listenForValidPincode(pinId, clientId, pinCode) {
+function listenForValidPincode(pinId, clientId, pinCode, popWindow) {
     let currentTime = Date.now();
     if ((currentTime - backOffTimer)/1000 < 180) {
         $.ajax({
@@ -196,9 +196,10 @@ function listenForValidPincode(pinId, clientId, pinCode) {
                     localStorage.pinAuthToken = data.authToken;
                     plexToken = data.authToken;
                     checkIfAuthTokenIsValid();
+                    popWindow.close();
                 } else {
                     setTimeout(() => {
-                        listenForValidPincode(pinId, clientId, pinCode);
+                        listenForValidPincode(pinId, clientId, pinCode, popWindow);
                     }, 3000); // Check every 3 seconds
                 }
             },
