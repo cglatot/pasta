@@ -217,18 +217,15 @@
                                 </div>
                                 <!-- / WARNING BOX -->
                                 <!-- PLEX AUTHENTICATION -->
-                                <div id="pin-auth-over-container" class="mt-4">
-                                    <div id="new-pin-container">
-                                        <button type="button" class="btn btn-secondary" onclick="authenticateWithPlex()">Login with Plex</button>
-                                        <!--<div class="d-inline-flex flex-row align-items-center">
-                                            <h1 id="pin-code-holder"></h1>
-                                            <div class="spinner-border spinner-border-sm text-warning ml-2" role="status" aria-hidden="true"></div>
-                                        </div>-->
+                                <div id="pin-auth-over-container" class="row mt-4">
+                                    <div id="new-pin-container" class="col pl-5 pr-5">
+                                        <button id="loginWithPlexBtn" type="button" class="btn btn-secondary btn-lg btn-block" onclick="authenticateWithPlex()">Login with Plex</button>
+                                        <div id="waitOnPinAuth" class="spinner-border spinner-border-lg text-warning" role="status" aria-hidden="true"></div>
                                     </div>
                                     <div id="authed-pin-container">
-                                        <p>You are authenticated via PIN. 
+                                        <p>You are logged in as: <strong id="loggedInAs"></strong> 
                                             <small id="forgetPinDetails">
-                                                <a href="javascript:void(0)" onclick="forgetPinDetails()">Click here to logout.</a>
+                                                <a href="javascript:void(0)" class="ml-2" onclick="forgetPinDetails()">Click here to logout.</a>
                                                 <i id="confirmForgetPin" class="fas fa-check" style="color: #28a745; font-size: 1.5em"></i>
                                             </small>
                                         </p>
@@ -488,7 +485,7 @@
                         <!-- MOVIE NAME -->
                         <div id="movieNamePlaceholder" class="row mt-4">
                             <div class="col">
-                                <h2>Baby Driver</h2>
+                                <h2></h2>
                             </div>
                         </div>
                         <!-- / MOVIE NAME -->

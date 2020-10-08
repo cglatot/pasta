@@ -28,23 +28,19 @@ $(document).ready(() => {
 
     // Enable Tooltips
     $('.helpButtons, #titleLogo').tooltip();
-
     // Enable history tracking for tabs
     $('a[data-toggle="tab"]').historyTabs();
 
     // Check if the page was loaded locally or over http and warn them about the value of https
     if ((location.protocol == "http:") || (location.protocol == "file:")) {
-        if (localStorage.showHttpAlert == 'false') {
-
-        }
+        if (localStorage.showHttpAlert == 'false') {}
         else {
             $("#insecureWarning").show();
         }
     }
 
     // Check if they have permanently dismissed the Login Info alert
-    if (localStorage.showLoginInfoAlert == 'false') {
-    }
+    if (localStorage.showLoginInfoAlert == 'false') {}
     else {
         $("#loginInfoAlert").show();
     }
@@ -84,7 +80,6 @@ $(document).ready(() => {
     $('#plexUrl').on("input", () => {
         validateEnableConnectBtn('plexUrl');
     });
-
     // Validation listeners on the Plex Token Input
     $('#plexToken').on("input", () => {
         validateEnableConnectBtn('plexToken');
@@ -103,114 +98,50 @@ $(document).ready(() => {
     }
 
     // Check if there is a stored Auth Token
-    if (localStorage.authToken) {
-        // Then check if the auth token is valid
-        $.ajax({
-            "url": `https://plex.tv/api/v2/user`,
-            "headers": {
-                "accept": "application/json",
-                "X-Plex-Client-Identifier": clientIdentifier,
-                "X-Plex-Token": localStorage.authToken,
-                "X-Plex-Product": plexProduct,
-                "X-Plex-Version": pastaVersion,
-                "X-Plex-Platform": pastaPlatform,
-                "X-Plex-Platform-Version": pastaPlatformVersion,
-                "X-Plex-Device": deviceInfo,
-                "X-Plex-Device-Name": deviceName
-            },
-            "method": "GET",
-            "success": (data, statusText, xhr) => {
-                console.log(data);
-                console.log(xhr.status);
-                if (xhr.status == 401) {
-                    // Token is no longer valid, show the button to login again
-                } else {
-                    // Auth code is still valid
-                    plexToken = localStorage.pinAuthToken;
-                    getServers();
-                }
-            },
-            "error": (data) => {
-                console.log("ERROR L121");
-                console.log(data);
-            }
-        });
+    if (localStorage.pinAuthToken) {
+        checkIfAuthTokenIsValid();
+    } else {
+        $('#new-pin-container').show();
     }
-    // Else heck if there is a generated PIN ID (This will occur after first using the Login with Plex button)
-    else if ((localStorage.generatedPinId)&&(localStorage.generatedPinCode)&&(localStorage.clientIdentifier)) {
-        // Check for an authToken
-        $.ajax({
-            "url": `https://plex.tv/api/v2/pins/${localStorage.generatedPinId}`,
-            "headers": {
-                "accept": "application/json",
-                "code": localStorage.generatedPinCode,
-                "X-Plex-Client-Identifier": localStorage.clientIdentifier,
-            },
-            "method": "GET",
-            "success": (data) => {
-                console.log(data);
-                localStorage.isPinAuth = true;
-                localStorage.pinAuthToken = data.authToken;
-                plexToken = data.authToken;
-                getServers();
-            },
-            "error": (data) => {
-                console.log("ERROR L121");
-                console.log(data);
-            }
-        });
-    }
-
-    // if (!localStorage.isPinAuth) {
-    //     // Not using PIN auth, so must be using url / token
-    //     if (localStorage.plexUrl && localStorage.plexUrl !== "") {
-    //         plexUrl = localStorage.plexUrl;
-    //         $('#plexUrl').val(localStorage.plexUrl);
-    //         validateEnableConnectBtn('plexUrl');
-    //         $('#forgetDivider, #forgetDetailsSection').show();
-    //     }
-    //     if (localStorage.plexToken && localStorage.plexToken !== "") {
-    //         plexToken = localStorage.plexToken;
-    //         $('#plexToken').val(localStorage.plexToken);
-    //         validateEnableConnectBtn('plexToken');
-    //         $('#forgetDivider, #forgetDetailsSection').show();
-    //     }
-
-    //     // Display a PIN code for that authentication as well
-    //     $.ajax({
-    //         "url": `https://plex.tv/pins.xml`,
-    //         "headers": {
-    //             "X-Plex-Client-Identifier": clientIdentifier,
-    //             "X-Plex-Product": plexProduct,
-    //             "X-Plex-Version": pastaVersion,
-    //             "X-Plex-Platform": pastaPlatform,
-    //             "X-Plex-Platform-Version": pastaPlatformVersion,
-    //             "X-Plex-Device": deviceInfo,
-    //             "X-Plex-Device-Name": deviceName
-    //         },
-    //         "method": "POST",
-    //         "success": (data) => {
-    //             let pinId = $(data).find('id')[0].innerHTML;
-    //             let pinCode = $(data).find('code')[0].innerHTML;
-    
-    //             $('#pin-code-holder').html(pinCode);
-    //             backOffTimer = Date.now();
-    //             listenForValidPincode(pinId);
-    //         },
-    //         "error": (data) => {
-    //             console.log("ERROR L121");
-    //             console.log(data);
-    //         }
-    //     });
-    // } else {
-    //     $('#new-pin-container').hide();
-    //     $('#authed-pin-container').show();
-    //     // We are using Pin Auth
-    //     clientIdentifier = localStorage.clientIdentifier;
-    //     plexToken = localStorage.pinAuthToken;
-    //     getServers();
-    // }
 });
+
+// Checks if the generated token is valid
+function checkIfAuthTokenIsValid() {
+    $.ajax({
+        "url": `https://plex.tv/api/v2/user`,
+        "headers": {
+            "accept": "application/json",
+            "X-Plex-Client-Identifier": clientIdentifier,
+            "X-Plex-Token": localStorage.pinAuthToken,
+            "X-Plex-Product": plexProduct,
+            "X-Plex-Version": pastaVersion,
+            "X-Plex-Platform": pastaPlatform,
+            "X-Plex-Platform-Version": pastaPlatformVersion,
+            "X-Plex-Device": deviceInfo,
+            "X-Plex-Device-Name": deviceName
+        },
+        "method": "GET",
+        "success": (data) => {
+            console.log(data);
+            plexToken = localStorage.pinAuthToken;
+            $('#new-pin-container').hide();
+            $('#authed-pin-container').show();
+            $('#loggedInAs').text(data.username);
+            getServers();
+        },
+        "error": (data, statusText, xhr) => {
+            console.log("ERROR L121");
+            console.log(data.status);
+            if (data.status == 401) {
+                // Auth Token has expired
+                localStorage.removeItem('isPinAuth');
+                localStorage.removeItem('pinAuthToken');
+                localStorage.removeItem('useLocalAddress');
+                $('#new-pin-container').show();
+            }
+        }
+    });
+}
 
 function authenticateWithPlex() {
     // Generate a PIN code to get the URL
@@ -229,15 +160,15 @@ function authenticateWithPlex() {
         },
         "method": "POST",
         "success": (data) => {
-            console.log(data);
-            localStorage.generatedPinId = data.id;
-            localStorage.generatedPinCode = data.code;
-            localStorage.clientIdentifier = clientIdentifier;
-            // const forwardUrl = encodeURIComponent(window.location.href);
+            // For some reason auth doesn't work unless you choose Plex Web as the product id
             let plexProductTemp = encodeURIComponent("Plex Web");
-            let forwardUrl = "https://www.pastatool.com"
-            let authAppUrl = `https://app.plex.tv/auth#?clientID=${clientIdentifier}&code=${data.code}&context%5Bdevice%5D%5Bproduct%5D=${plexProductTemp}&forwardUrl=${forwardUrl}`
-            window.location.href = authAppUrl;
+            let authAppUrl = `https://app.plex.tv/auth#?clientID=${clientIdentifier}&code=${data.code}&context%5Bdevice%5D%5Bproduct%5D=${plexProductTemp}`;
+
+            $('#waitOnPinAuth').show();
+            $('#loginWithPlexBtn').hide();
+            window.open(authAppUrl, 'PlexSignIn', 'width=800,height=730');
+            backOffTimer = Date.now();
+            listenForValidPincode(data.id, clientIdentifier, data.code);
         },
         "error": (data) => {
             console.log("ERROR L121");
@@ -246,6 +177,43 @@ function authenticateWithPlex() {
     });
 }
 
+function listenForValidPincode(pinId, clientId, pinCode) {
+    let currentTime = Date.now();
+    if ((currentTime - backOffTimer)/1000 < 10) {
+        $.ajax({
+            "url": `https://plex.tv/api/v2/pins/${pinId}`,
+            "headers": {
+                "accept": "application/json",
+                "code": pinCode,
+                "X-Plex-Client-Identifier": clientId,
+            },
+            "method": "GET",
+            "success": (data) => {
+                if (data.authToken != null) {
+                    $('#waitOnPinAuth').hide();
+                    localStorage.clientIdentifier = clientIdentifier;
+                    localStorage.isPinAuth = true;
+                    localStorage.pinAuthToken = data.authToken;
+                    plexToken = data.authToken;
+                    checkIfAuthTokenIsValid();
+                } else {
+                    setTimeout(() => {
+                        listenForValidPincode(pinId, clientId, pinCode);
+                    }, 3000); // Check every 3 seconds
+                }
+            },
+            "error": (data) => {
+                console.log("ERROR L121");
+                console.log(data);
+            }
+        });
+    } else {
+        $('#new-pin-container').html(' <p><i class="far fa-times-circle mr-2" style="color: #e5a00d; font-size: 1.5em; vertical-align: middle;"></i>Login timed out. \
+        Please <a href="javascript:void(0)" onclick="window.location.reload()">refresh the page</a> and ensure your popup blocker is disabled.</p>');
+    }
+}
+
+// Toggle between the authentication methods
 function toggleAuthPages(value) {
     if (value == 'showPinControls') {
         $('#pin-auth-over-container').show();
@@ -256,55 +224,12 @@ function toggleAuthPages(value) {
 
         if (localStorage.isPinAuth) {
             $("#authWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
-                        <strong>Warning:</strong> You are currently signed in via PIN. Please <a href="javascript:void(0)" onclick="forgetPinDetails()">sign out of PIN</a> before proceeding to connect using a URL / IP address.
+                        <strong>Warning:</strong> You are currently signed in via Plex. Please <a href="javascript:void(0)" onclick="forgetPinDetails()">sign out of Plex</a> before proceeding to connect using a URL / IP address.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>`);
         }
-    }
-}
-
-function listenForValidPincode (pinId) {
-    let currentTime = Date.now();
-    if ((currentTime - backOffTimer)/1000 < 180) {
-        $.ajax({
-            "url": `https://plex.tv/pins/${pinId}`,
-            "headers": {
-                "X-Plex-Client-Identifier": clientIdentifier,
-                "X-Plex-Product": plexProduct,
-                "X-Plex-Version": pastaVersion,
-                "X-Plex-Platform": pastaPlatform,
-                "X-Plex-Platform-Version": pastaPlatformVersion,
-                "X-Plex-Device": deviceInfo,
-                "X-Plex-Device-Name": deviceName
-            },
-            "method": "GET",
-            "success": (data) => {
-                if (data.pin.auth_token != null) {
-                    plexToken = data.pin.auth_token;
-                    // Save to local storage
-                    localStorage.isPinAuth = true;
-                    localStorage.pinAuthToken = plexToken;
-                    localStorage.clientIdentifier = clientIdentifier;
-                    $('#new-pin-container').hide();
-                    $('#authed-pin-container').show();
-                    getServers();
-                } else {
-                    setTimeout(() => {
-                        listenForValidPincode(pinId);
-                    }, 5000);
-                }
-            },
-            "error": (data) => {
-                console.log("ERROR L186");
-                console.log(data);
-                return;
-            }
-        });
-    } else {
-        $('#new-pin-container').html(' <p><i class="far fa-times-circle mr-2" style="color: #e5a00d; font-size: 1.5em; vertical-align: middle;"></i>PIN entry timed out. \
-        Please <a href="javascript:void(0)" onclick="window.location.reload()">refresh the page</a> to get a new PIN.</p>');
     }
 }
 
@@ -314,7 +239,7 @@ function useLocalAddress (checkbox) {
     if (checkbox.checked) {
         localStorage.useLocalAddress = "true";
     } else {
-        localStorage.useLocalAddress = "false";
+        localStorage.removeItem('useLocalAddress');
     }
     window.location.reload();
 }
@@ -450,7 +375,6 @@ function forgetDetails() {
 function forgetPinDetails() {
     localStorage.removeItem('isPinAuth');
     localStorage.removeItem('pinAuthToken');
-    localStorage.removeItem('clientIdentifier');
     localStorage.removeItem('useLocalAddress');
     window.location.reload();
 }
