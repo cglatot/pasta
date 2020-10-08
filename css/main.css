@@ -70,6 +70,14 @@ label, p {
     display: none;
 }
 
+#new-pin-container {
+    display: none;
+}
+
+#waitOnPinAuth {
+    display: none;
+}
+
 /*==========================
         MODALS
 ==========================*/
