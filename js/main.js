@@ -708,8 +708,9 @@ function showSeasonInfo(data, row) {
     $("#subtitleTable tbody").empty();
 
     for (let i = 0; i < episodes.length; i++) {
+        console.log(episodes[i]);
         let rowHTML = `<tr onclick="getEpisodeInfo(${episodes[i].ratingKey}, this)">
-                        <td>${episodes[i].title}</td>
+                        <td>S${episodes[i].parentIndex}E${episodes[i].index} - ${episodes[i].title}</td>
                     </tr>`;
         $("#episodesTable tbody").append(rowHTML);
     }
