@@ -506,6 +506,10 @@ function displayLibraries(data) {
                     </tr>`;
         $("#libraryTable tbody").append(rowHTML);
     }
+    // Scroll to the table
+    document.querySelector('#libraryTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 function getAlphabet(uid, row) {
@@ -607,6 +611,10 @@ function displayTitles(titles) {
                     </tr>`;
         $("#tvShowsTable tbody").append(rowHTML);
     }
+    // Scroll to the table
+    document.querySelector('#tvShowsTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 function getTitleInfo(uid, row) {
@@ -714,6 +722,10 @@ function showSeasonInfo(data, row) {
                     </tr>`;
         $("#episodesTable tbody").append(rowHTML);
     }
+    // Scroll to the table
+    document.querySelector('#episodesTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 function getEpisodeInfo(uid, row) {
@@ -776,6 +788,11 @@ function showEpisodeInfo(data, row) {
                         <td class="code">--</td>
                     </tr>`;
     $("#subtitleTable tbody").prepend(noSubsRow);
+
+    // Scroll to the table
+    document.querySelector('#audioTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 async function setAudioStream(partsId, streamId, row) {
