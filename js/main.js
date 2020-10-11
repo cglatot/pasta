@@ -30,6 +30,8 @@ $(document).ready(() => {
     $('.helpButtons, #titleLogo').tooltip();
     // Enable history tracking for tabs
     $('a[data-toggle="tab"]').historyTabs();
+    // Enable Toasts
+    $('.toast').toast({'delay': 1750});
 
     // Check if the page was loaded locally or over http and warn them about the value of https
     if ((location.protocol == "http:") || (location.protocol == "file:")) {
@@ -506,6 +508,10 @@ function displayLibraries(data) {
                     </tr>`;
         $("#libraryTable tbody").append(rowHTML);
     }
+    // Scroll to the table
+    document.querySelector('#libraryTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 function getAlphabet(uid, row) {
@@ -607,6 +613,10 @@ function displayTitles(titles) {
                     </tr>`;
         $("#tvShowsTable tbody").append(rowHTML);
     }
+    // Scroll to the table
+    document.querySelector('#tvShowsTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 function getTitleInfo(uid, row) {
@@ -709,10 +719,14 @@ function showSeasonInfo(data, row) {
 
     for (let i = 0; i < episodes.length; i++) {
         let rowHTML = `<tr onclick="getEpisodeInfo(${episodes[i].ratingKey}, this)">
-                        <td>${episodes[i].title}</td>
+                        <td>S${episodes[i].parentIndex}E${episodes[i].index} - ${episodes[i].title}</td>
                     </tr>`;
         $("#episodesTable tbody").append(rowHTML);
     }
+    // Scroll to the table
+    document.querySelector('#episodesTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 function getEpisodeInfo(uid, row) {
@@ -775,6 +789,11 @@ function showEpisodeInfo(data, row) {
                         <td class="code">--</td>
                     </tr>`;
     $("#subtitleTable tbody").prepend(noSubsRow);
+
+    // Scroll to the table
+    document.querySelector('#audioTable').scrollIntoView({
+        behavior: 'smooth' 
+    });
 }
 
 async function setAudioStream(partsId, streamId, row) {
@@ -798,6 +817,10 @@ async function setAudioStream(partsId, streamId, row) {
                 setTimeout(() => {
                     $(row).removeClass('success-transition');
                 }, 1750);
+                // Show the toast
+                let audioTrackName = $(row).find('td.name')[0].innerText;
+                $('#successToast .toast-body').html( `Audio track successfully updated to <strong>${audioTrackName}</strong>`);
+                $('#successToast').toast('show');
             },
             "error": (data) => {
                 console.log("ERROR L670");
@@ -1093,6 +1116,10 @@ async function setSubtitleStream(partsId, streamId, row) {
                 setTimeout(() => {
                     $(row).removeClass('success-transition');
                 }, 1750);
+                // Show the toast
+                let subtitleTrackName = $(row).find('td.name')[0].innerText;
+                $('#successToast .toast-body').html( `Subtitle track successfully updated to <strong>${subtitleTrackName}</strong>`);
+                $('#successToast').toast('show');
             },
             "error": (data) => {
                 console.log("ERROR L965");

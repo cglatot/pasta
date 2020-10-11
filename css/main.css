@@ -172,6 +172,20 @@ label, p {
     color: #856404
 }
 
+#successToast {
+    position: fixed;
+    top: 5%;
+    left: 0;
+    right: 0;
+    max-width: fit-content;
+    margin: auto;
+    z-index: 999;
+}
+
+.toast.show {
+    opacity: 0.9;
+}
+
 /*==========================
         NAV TABS
 ==========================*/
