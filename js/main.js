@@ -536,6 +536,7 @@ function getAlphabet(uid, row) {
 
 function displayAlphabet(data, row) {
     const availableAlphabet = data.MediaContainer.Directory;
+
     if (data.MediaContainer.thumb.indexOf('show') > -1) { libraryType = "shows"; }
     else { libraryType = "movie"; }
 
@@ -572,6 +573,20 @@ function displayAlphabet(data, row) {
         }
         else {
             $(`#btn${availableAlphabet[i].title}`).prop("disabled", false);
+        }
+    }
+
+    // Get the non-English characters
+    const nonEngChars = availableAlphabet.filter(entry => !entry.title.match(/[a-z#]/i));
+
+    // Remove all custom buttons after the Z
+    $('#btnZ').nextAll().remove();
+
+    if (nonEngChars.length > 0) {
+        // Add buttons for the non English characters
+        for (let j = 0; j < nonEngChars.length; j++) {
+            $('#alphabetGroup').append(`<button id="btn${nonEngChars[j].title}" type="button" class="btn btn-outline-dark"
+            onclick="getLibraryByLetter(this)">${nonEngChars[j].title}</button>`);
         }
     }
 }

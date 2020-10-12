@@ -240,8 +240,15 @@ label, p {
     cursor: default;
 }
 
+#alphabetGroup {
+    border-radius: 0.25rem;
+    overflow: hidden;
+    max-width: 990px;
+}
+
 #alphabetGroup button {
     margin-left: 0;
+    border-radius: 0;
 }
 
 #alphabetGroup .btn-outline-dark {
@@ -397,11 +404,11 @@ table, td, tr, th {
 }
 
 @media only screen and (max-width: 1199px) {
-    #alphabetGroup.btn-group .btn:not(:last-child):not(.dropdown-toggle) {
+    /*#alphabetGroup.btn-group .btn:not(:last-child):not(.dropdown-toggle) {
         border-bottom-left-radius: 0;
     }
 
     #alphabetGroup.btn-group .btn:not(:first-child) {
         border-top-right-radius: 0;
-    }
+    }*/
 }
