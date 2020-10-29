@@ -21,7 +21,15 @@ var libraryType = "shows"; // Sets whether the library is a show or a movie / ot
 
 $(document).ready(() => {
     // Check if there is a page refresh, if so we want to push the history without the #
-    let navigationType = performance.getEntriesByType("navigation")[0].type;
+    let navigationType;
+    if (window.performance && window.performance.getEntriesByType('navigation').length) {
+        navigationType = window.performance.getEntriesByType("navigation")[0].type;
+    } else if (performance.getEntriesByType('navigation').length) {
+        navigationType = performance.getEntriesByType("navigation")[0].type;
+    }
+    else {
+        console.log("Couldn't find the window.performance or performance to get reload information");
+    }
     if ((navigationType == 'reload') && (window.location.href.indexOf('#authentication') == -1)) {
         window.history.pushState('', document.title, window.location.pathname + '#authentication');
     }
