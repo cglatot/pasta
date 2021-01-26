@@ -191,7 +191,7 @@ function checkIfAuthTokenIsValid() {
             $('#new-pin-container').hide();
             $('#authed-pin-container').show();
             $('#loggedInAs').text(data.username);
-            getServers();
+            getUserAccounts();
         },
         "error": (data) => {
             if (data.status == 401) {
@@ -309,12 +309,92 @@ function useLocalAddress (checkbox) {
     window.location.reload();
 }
 
+function getUserAccounts() {
+    // Get managed accounts
+    $.ajax({
+        "url": `https://plex.tv/api/v2/home/users`,
+        "method": "GET",
+        "headers": {
+            "X-Plex-Client-Identifier": clientIdentifier,
+            "X-Plex-Token": plexToken,
+            "accept": "application/json"
+    },
+        "success": (data) => {
+            if (data.users.length == 0) {
+                getServers();
+            } else {
+                let userAccounts = [];
+                for (let i = 0; i < data.users.length; i++) {
+                    userAccounts.push(data.users[i]);
+                }
+                // Populate and show the users table
+                displayUserAccounts(userAccounts);
+            }
+        },
+        "error": (error) => {
+            console.log(error);
+        }
+    });
+}
+
+function displayUserAccounts(users) {
+    $("#userTable tbody").empty();
+    $("#serverTable tbody").empty();
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    for (let i = 0; i < users.length; i++) {
+        let rowHTML = `<tr onclick="switchUser('${users[i].uuid}', this)">
+                        <td>${users[i].title}</td>
+                    </tr>`;
+        $("#userTable tbody").append(rowHTML);
+    }
+
+    $('#userTableContainer').show();
+}
+
+function switchUser(userId, row) {
+    $("#serverTable tbody").empty();
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    $(row).siblings().removeClass("table-active");
+    $(row).addClass("table-active");
+
+    $.ajax({
+        "url": `https://plex.tv/api/v2/home/users/${userId}/switch`,
+        "method": "POST",
+        "headers": {
+            "X-Plex-Client-Identifier": clientIdentifier,
+            "X-Plex-Token": plexToken,
+            "accept": "application/json"
+    },
+        "success": (data) => {
+            // Change the plex token to the auth token of the chosen user
+            plexToken = data.authToken;
+            getServers();
+        },
+        "error": (error) => {
+            console.log(error);
+        }
+    });
+}
+
 function getServers () {
     // Choose whether or not to include https connections
     let includeHttps = 1;
     if (location.protocol == 'http:') {
         includeHttps = 0;
     }
+
     // Get the servers for this user
     $.ajax({
         "url": `https://plex.tv/api/v2/resources?includeHttps=${includeHttps}&includeRelay=0`,
@@ -388,7 +468,6 @@ function displayServers(servers) {
                     </tr>`;
         $("#serverTable tbody").append(rowHTML);
     }
-    $("#serverTableContainer").show();
 }
 
 async function chooseServer(number, row) {
