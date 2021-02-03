@@ -318,7 +318,7 @@ function getUserAccounts() {
             "X-Plex-Client-Identifier": clientIdentifier,
             "X-Plex-Token": plexToken,
             "accept": "application/json"
-    },
+        },
         "success": (data) => {
             if (data.users.length == 0) {
                 getServers();
@@ -348,7 +348,7 @@ function displayUserAccounts(users) {
     $("#subtitleTable tbody").empty();
 
     for (let i = 0; i < users.length; i++) {
-        let rowHTML = `<tr onclick="switchUser('${users[i].uuid}', this)">
+        let rowHTML = `<tr onclick="switchUser('${users[i].uuid}', '${users[i].pin != undefined ? users[i].pin : ""}', this)">
                         <td>${users[i].title}</td>
                     </tr>`;
         $("#userTable tbody").append(rowHTML);
@@ -357,7 +357,7 @@ function displayUserAccounts(users) {
     $('#userTableContainer').show();
 }
 
-function switchUser(userId, row) {
+function switchUser(userId, pin, row) {
     $("#serverTable tbody").empty();
     $("#libraryTable tbody").empty();
     $("#tvShowsTable tbody").empty();
@@ -370,6 +370,7 @@ function switchUser(userId, row) {
     $(row).addClass("table-active");
 
     $.ajax({
+        // TODO - investigate if we can take the pin (which is a long string of numbers and letters) and use it in switch. Or if we need to prompt for it.
         "url": `https://plex.tv/api/v2/home/users/${userId}/switch`,
         "method": "POST",
         "headers": {
@@ -491,6 +492,7 @@ async function chooseServer(number, row) {
                 "url": `${connections[i].uri}/identity`,
                 "method": "GET",
                 "headers": {
+                    "X-Plex-Client-Identifier": clientIdentifier,
                     "X-Plex-Token": plexToken,
                     "Accept": "application/json"
                 }
@@ -498,6 +500,19 @@ async function chooseServer(number, row) {
 
             // Check if it is a valid server
             if (testResult.MediaContainer.machineIdentifier != undefined) {
+                console.log(testResult); //"0dc6987b21c52f78a156bd583aa5a82f6ff825e8"
+
+                let testResult2 = await $.ajax({ // TODO
+                    "url": `https://plex.tv/api/v2/home/users`,
+                    "method": "GET",
+                    "headers": {
+                        "X-Plex-Client-Identifier": clientIdentifier,
+                        "X-Plex-Token": plexToken,
+                        "Accept": "application/json"
+                    }
+                });
+                console.log(testResult2);
+
                 plexUrl = connections[i].uri;
                 connectToPlex();
                 break;
