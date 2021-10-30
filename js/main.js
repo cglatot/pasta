@@ -398,6 +398,7 @@ async function chooseServer(number, row) {
     $("#episodesTable tbody").empty();
     $("#audioTable tbody").empty();
     $("#subtitleTable tbody").empty();
+    $('#alphabetGroup').children().removeClass("btn-dark").addClass("btn-outline-dark").prop("disabled", true);
 
     $(row).siblings().removeClass("table-active");
     $(row).addClass("table-active");
