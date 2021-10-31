@@ -9,6 +9,7 @@ var deviceName; // X-Plex-Device-Name - Main name shown
 // End auth devices card variables
 var plexUrl;
 var plexToken;
+var adminPlexToken;
 var backOffTimer = 0;
 var serverList = []; // save server information for pin login and multiple servers
 
@@ -188,6 +189,7 @@ function checkIfAuthTokenIsValid() {
         "method": "GET",
         "success": (data) => {
             plexToken = localStorage.pinAuthToken;
+            adminPlexToken = localStorage.pinAuthToken;
             $('#new-pin-container').hide();
             $('#authed-pin-container').show();
             $('#loggedInAs').text(data.username);
@@ -348,7 +350,7 @@ function displayUserAccounts(users) {
     $("#subtitleTable tbody").empty();
 
     for (let i = 0; i < users.length; i++) {
-        let rowHTML = `<tr onclick="switchUser('${users[i].uuid}', '${users[i].pin != undefined ? users[i].pin : ""}', this)">
+        let rowHTML = `<tr onclick="switchUser('${users[i].uuid}', '${users[i].pin ? true : false}', this)">
                         <td>${users[i].title}</td>
                     </tr>`;
         $("#userTable tbody").append(rowHTML);
@@ -358,6 +360,11 @@ function displayUserAccounts(users) {
 }
 
 function switchUser(userId, pin, row) {
+    // The pin is required for pin enabled users but the value is not checked so it can be anything
+    let inputPin;
+    if(pin === 'true'){
+        inputPin = 'anythingWillWork';
+    }
     $("#serverTable tbody").empty();
     $("#libraryTable tbody").empty();
     $("#tvShowsTable tbody").empty();
@@ -370,13 +377,13 @@ function switchUser(userId, pin, row) {
     $(row).addClass("table-active");
 
     $.ajax({
-        // TODO - investigate if we can take the pin (which is a long string of numbers and letters) and use it in switch. Or if we need to prompt for it.
         "url": `https://plex.tv/api/v2/home/users/${userId}/switch`,
         "method": "POST",
         "headers": {
             "X-Plex-Client-Identifier": clientIdentifier,
-            "X-Plex-Token": plexToken,
-            "accept": "application/json"
+            "X-Plex-Token": adminPlexToken, //adminTokenRequired for switching between users
+            "accept": "application/json",
+            "pin": inputPin
     },
         "success": (data) => {
             // Change the plex token to the auth token of the chosen user
@@ -500,19 +507,6 @@ async function chooseServer(number, row) {
 
             // Check if it is a valid server
             if (testResult.MediaContainer.machineIdentifier != undefined) {
-                console.log(testResult); //"0dc6987b21c52f78a156bd583aa5a82f6ff825e8"
-
-                let testResult2 = await $.ajax({ // TODO
-                    "url": `https://plex.tv/api/v2/home/users`,
-                    "method": "GET",
-                    "headers": {
-                        "X-Plex-Client-Identifier": clientIdentifier,
-                        "X-Plex-Token": plexToken,
-                        "Accept": "application/json"
-                    }
-                });
-                console.log(testResult2);
-
                 plexUrl = connections[i].uri;
                 connectToPlex();
                 break;
