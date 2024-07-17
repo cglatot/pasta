@@ -1085,12 +1085,10 @@ async function setAudioStream(partsId, streamId, row) {
                     "X-Plex-Token": plexToken,
                     "Accept": "application/json"
                 }
-            }).then((result) => {
-                $('#progressModal #modalBodyText').append(data.messageAppend);
-                $(row).siblings().removeClass("table-active");
-                $(row).addClass("table-active");
+            }).then((_result) => {
                 handleProgress();
-            }).catch((e) => console.log(e));
+                return data;
+            });
         }
 
         for (let k = 0; k < promiseConstructors.length; k++) {
@@ -1107,6 +1105,15 @@ async function setAudioStream(partsId, streamId, row) {
 
         try {
             Promise.allSettled(matchPromises).then(() => {
+                matchPromises.forEach(async (matchPromise) => {
+                    await matchPromise.then((data) => {
+                        $('#progressModal #modalBodyText').append(data.messageAppend);
+                        $(row).siblings().removeClass("table-active");
+                        $(row).addClass("table-active");
+                    }).catch((e) => console.log(e));
+                })
+            })
+            .then(() => {
                 $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
                 $("#modalBodyText #modalTitleText").text("Processing Complete! You can now close this popup.");
                 $('#modalBodyText #progressBarContainer').hide();
@@ -1394,11 +1401,9 @@ async function setSubtitleStream(partsId, streamId, row) {
                     "X-Plex-Token": plexToken,
                     "Accept": "application/json"
                 }
-            }).then((result) => {
-                $('#progressModal #modalBodyText').append(data.messageAppend);
-                $(row).siblings().removeClass("table-active");
-                $(row).addClass("table-active");
+            }).then((_result) => {
                 handleProgress();
+                return data;
             }).catch((e) => console.log(e));
         } 
 
@@ -1416,6 +1421,15 @@ async function setSubtitleStream(partsId, streamId, row) {
 
         try {
             Promise.allSettled(matchPromises).then(() => {
+                matchPromises.forEach(async (matchPromise) => {
+                    await matchPromise.then((data) => {
+                        $('#progressModal #modalBodyText').append(data.messageAppend);
+                        $(row).siblings().removeClass("table-active");
+                        $(row).addClass("table-active");
+                    }).catch((e) => console.log(e));
+                })
+            })
+            .then(() => {
                 $('#modalBodyText .alert').removeClass("alert-warning").addClass("alert-success");
                 $("#modalBodyText #modalTitleText").text("Processing Complete! You can now close this popup.");
                 $('#modalBodyText #progressBarContainer').hide();
