@@ -1202,9 +1202,6 @@ async function setSubtitleStream(partsId, streamId, row) {
     let currentProgress = 0;
     let maxProgress = 0;
 
-    console.log(libraryType);
-    console.log(singleEpisode);
-
     if ((libraryType == "shows" && singleEpisode) || (libraryType == "movie" && singleMovie)) {
         console.log("singleEpisode");
         $.ajax({
@@ -1328,8 +1325,6 @@ async function setSubtitleStream(partsId, streamId, row) {
                 }
             }
         }
-
-        console.log(episodeList);
 
         // Set the progress bar to have a certain length
         maxProgress = episodeList.length;
