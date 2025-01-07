@@ -470,8 +470,8 @@
                         </div>
                         <!-- / EPISODES TABLE -->
 
-                        <!-- SWITCH TOGGLE -->
-                        <div id="switchToggleContainer" class="row mt-4">
+                        <!-- TV SWITCH TOGGLE -->
+                        <div id="tvSwitchToggleContainer" class="row mt-4">
                             <div class="col text-center">
                                 <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
                                     <label class="btn btn-secondary active">
@@ -486,10 +486,31 @@
                                         <input type="radio" name="episodeOrSeries" id="entireSeries" autocomplete="off">
                                         Entire Series
                                     </label>
+                                    <label class="btn btn-secondary">
+                                        <input type="radio" name="episodeOrSeries" id="entireLibrary" autocomplete="off">
+                                        Entire Library
+                                    </label>
                                 </div>
                             </div>
                         </div>
-                        <!-- / SWITCH TOGGLE -->
+                        <!-- / TV SWITCH TOGGLE -->
+
+                        <!-- Movie SWITCH TOGGLE -->
+                        <div id="movieSwitchToggleContainer" class="row mt-4">
+                            <div class="col text-center">
+                                <div id="movieOrLibraryBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-secondary active">
+                                        <input type="radio" name="movieOrLibrary" id="singleMovie" autocomplete="off">
+                                        Single Movie
+                                    </label>
+                                    <label class="btn btn-secondary">
+                                        <input type="radio" name="movieOrLibrary" id="movieEntireLibrary" autocomplete="off">
+                                        Entire Library
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- / Movie SWITCH TOGGLE -->
 
                         <!-- MOVIE NAME -->
                         <div id="movieNamePlaceholder" class="row mt-4">

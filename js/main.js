@@ -512,10 +512,13 @@ function displayLibraries(data) {
     $("#subtitleTable tbody").empty();
 
     for (let i = 0; i < libraries.length; i++) {
-        let rowHTML = `<tr onclick="getAlphabet(${libraries[i].key}, this)">
-                        <td>${libraries[i].title}</td>
-                    </tr>`;
-        $("#libraryTable tbody").append(rowHTML);
+        // Only allow libraries that are movies or TV Shows
+        if (libraries[i].type == "movie" || libraries[i].type == "show") {
+            let rowHTML = `<tr onclick="getAlphabet(${libraries[i].key}, this)">
+                            <td>${libraries[i].title}</td>
+                        </tr>`;
+            $("#libraryTable tbody").append(rowHTML);
+        }
     }
     // Scroll to the table
     document.querySelector('#libraryTable').scrollIntoView({
@@ -650,8 +653,9 @@ function getTitleInfo(uid, row) {
         // Hide TV shows tables and switches
         $('#seasonsTableContainer').hide();
         $('#episodesTableContainer').hide();
-        $('#switchToggleContainer').hide();
+        $('#tvSwitchToggleContainer').hide();
         // Update the name of the Movie in the placeholder
+        $('#movieSwitchToggleContainer').show();
         $('#movieNamePlaceholder').show();
         $('#movieNamePlaceholder h2').html(`${$(row).children().first().html()} (${$(row).children().last().html()})`);
         // Swap to the tab
@@ -659,7 +663,8 @@ function getTitleInfo(uid, row) {
     } else {
         $('#seasonsTableContainer').show();
         $('#episodesTableContainer').show();
-        $('#switchToggleContainer').show();
+        $('#tvSwitchToggleContainer').show();
+        $('#movieSwitchToggleContainer').hide();
         $('#movieNamePlaceholder').hide();
         $.ajax({
             "url": `${plexUrl}/library/metadata/${uid}/children`,
@@ -822,12 +827,18 @@ function showEpisodeInfo(data, row) {
 
 async function setAudioStream(partsId, streamId, row) {
     let singleEpisode = $("#singleEpisode").prop("checked");
+    let singleMovie = $("#singleMovie").prop("checked");
     let singleSeason = $("#singleSeason").prop("checked");
+    let entireSeries = $("#entireSeries").prop("checked");
+
+    const tvEntireLibrary = $("#entireLibrary").prop("checked") && libraryType == "shows";
+    const movieEntireLibrary = $("#movieEntireLibrary").prop("checked") && libraryType == "movie";
+
     // Need these 2 variables and function for progress bar
     let currentProgress = 0;
     let maxProgress = 0;
 
-    if (singleEpisode) {
+    if ((libraryType == "shows" && singleEpisode) || (libraryType == "movie" && singleMovie)) {
         $.ajax({
             "url": `${plexUrl}/library/parts/${partsId}?audioStreamID=${streamId}&allParts=1`,
             "method": "POST",
@@ -889,8 +900,8 @@ async function setAudioStream(partsId, streamId, row) {
             for (let k = 0; k < seasonEpisodes.MediaContainer.Metadata.length; k++) {
                 episodeList.push(seasonEpisodes.MediaContainer.Metadata[k].ratingKey);
             }
-        } else {
-            // Else we want to get all the episodes from every season
+        } else if (entireSeries) {
+            // If the "Entire Series" button is selected, we want to get all the episodes from every season
             for (let i = 0; i < seasonsList.length; i++) {
                 let seasonEpisodes = await $.ajax({
                     "url": `${plexUrl}/library/metadata/${seasonsList[i]}/children`,
@@ -902,6 +913,50 @@ async function setAudioStream(partsId, streamId, row) {
                 });
                 for (let j = 0; j < seasonEpisodes.MediaContainer.Metadata.length; j++) {
                     episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
+                }
+            }
+        } else {
+            // Else we want to get all the episodes from the entire library
+            let libarySeries = await $.ajax({
+                "url": `${plexUrl}/library/sections/${libraryNumber}/all`,
+                "method": "GET",
+                "headers": {
+                    "X-Plex-Token": plexToken,
+                    "Accept": "application/json"
+                }
+            });
+
+            // Check if TV Shows or Movies
+            if (libraryType == "movie") {
+                for (let i = 0; i < libarySeries.MediaContainer.Metadata.length; i++) {
+                    episodeList.push(libarySeries.MediaContainer.Metadata[i].ratingKey);
+                }
+            } else {
+                for (let i = 0; i < libarySeries.MediaContainer.Metadata.length; i++) {
+                    let seriesSeasons = await $.ajax({
+                        "url": `${plexUrl}/library/metadata/${libarySeries.MediaContainer.Metadata[i].ratingKey}/children`,
+                        "method": "GET",
+                        "headers": {
+                            "X-Plex-Token": plexToken,
+                            "Accept": "application/json"
+                        }
+                    });
+
+
+                    for (let j = 0; j < seriesSeasons.MediaContainer.Metadata.length; j++) {
+                        let episodeData = await $.ajax({
+                            "url": `${plexUrl}/library/metadata/${seriesSeasons.MediaContainer.Metadata[j].ratingKey}/children`,
+                            "method": "GET",
+                            "headers": {
+                                "X-Plex-Token": plexToken,
+                                "Accept": "application/json"
+                            }
+                        });
+
+                        for (let k = 0; k < episodeData.MediaContainer.Metadata.length; k++) {
+                            episodeList.push(episodeData.MediaContainer.Metadata[k].ratingKey);
+                        }
+                    }
                 }
             }
         }
@@ -929,6 +984,7 @@ async function setAudioStream(partsId, streamId, row) {
             const episodeNumber = episodeData.MediaContainer.Metadata[0].index;
             const episodePartId = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].id;
             const episodeStreams = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].Stream;
+            const seriesName = episodeData.MediaContainer.Metadata[0].grandparentTitle;
 
             // Loop through each audio stream and check for any matches using the searchTitle, searchName, searchLanguage, searchCode
             let hasMatch = false;
@@ -1061,9 +1117,16 @@ async function setAudioStream(partsId, streamId, row) {
 
             if (hasMatch) {
                 // There is a match, so update the audio track using the newStreamId and episodePartId
+                let messageToAppend = `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`;
+                if (tvEntireLibrary) {
+                    messageToAppend = `<span><strong>${seriesName} - S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`
+                } else if (movieEntireLibrary) {
+                    messageToAppend = `<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`
+                }
+
                 promiseConstructors.push({
                     "url": `${plexUrl}/library/parts/${episodePartId}?audioStreamID=${bestMatch.matchId}&allParts=1`,
-                    "messageAppend": `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Audio Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`
+                    "messageAppend": messageToAppend
                 });
             }
             else {
@@ -1128,12 +1191,22 @@ async function setAudioStream(partsId, streamId, row) {
 
 async function setSubtitleStream(partsId, streamId, row) {
     let singleEpisode = $("#singleEpisode").prop("checked");
+    let singleMovie = $("#singleMovie").prop("checked");
     let singleSeason = $("#singleSeason").prop("checked");
+    let entireSeries = $("#entireSeries").prop("checked");
+
+    let tvEntireLibrary = $("#entireLibrary").prop("checked") && libraryType == "shows";
+    let movieEntireLibrary = $("#movieEntireLibrary").prop("checked") && libraryType == "movie";
+
     // Need these 2 variables and function for progress bar
     let currentProgress = 0;
     let maxProgress = 0;
 
-    if (singleEpisode) {
+    console.log(libraryType);
+    console.log(singleEpisode);
+
+    if ((libraryType == "shows" && singleEpisode) || (libraryType == "movie" && singleMovie)) {
+        console.log("singleEpisode");
         $.ajax({
             "url": `${plexUrl}/library/parts/${partsId}?subtitleStreamID=${streamId}&allParts=1`,
             "method": "POST",
@@ -1195,8 +1268,8 @@ async function setSubtitleStream(partsId, streamId, row) {
             for (let k = 0; k < seasonEpisodes.MediaContainer.Metadata.length; k++) {
                 episodeList.push(seasonEpisodes.MediaContainer.Metadata[k].ratingKey);
             }
-        } else {
-            // Else we want to get all the episodes from every season
+        } else if (entireSeries) {
+            // If the "Entire Series" button is selected, we want to get all the episodes from every season
             for (let i = 0; i < seasonsList.length; i++) {
                 let seasonEpisodes = await $.ajax({
                     "url": `${plexUrl}/library/metadata/${seasonsList[i]}/children`,
@@ -1210,7 +1283,53 @@ async function setSubtitleStream(partsId, streamId, row) {
                     episodeList.push(seasonEpisodes.MediaContainer.Metadata[j].ratingKey);
                 }
             }
+        } else {
+            // Else we want to get all the episodes from the entire library
+            let libarySeries = await $.ajax({
+                "url": `${plexUrl}/library/sections/${libraryNumber}/all`,
+                "method": "GET",
+                "headers": {
+                    "X-Plex-Token": plexToken,
+                    "Accept": "application/json"
+                }
+            });
+
+            // Check if TV Shows or Movies
+            if (libraryType == "movie") {
+                for (let i = 0; i < libarySeries.MediaContainer.Metadata.length; i++) {
+                    episodeList.push(libarySeries.MediaContainer.Metadata[i].ratingKey);
+                }
+            } else {
+                for (let i = 0; i < libarySeries.MediaContainer.Metadata.length; i++) {
+                    let seriesSeasons = await $.ajax({
+                        "url": `${plexUrl}/library/metadata/${libarySeries.MediaContainer.Metadata[i].ratingKey}/children`,
+                        "method": "GET",
+                        "headers": {
+                            "X-Plex-Token": plexToken,
+                            "Accept": "application/json"
+                        }
+                    });
+
+
+                    for (let j = 0; j < seriesSeasons.MediaContainer.Metadata.length; j++) {
+                        let episodeData = await $.ajax({
+                            "url": `${plexUrl}/library/metadata/${seriesSeasons.MediaContainer.Metadata[j].ratingKey}/children`,
+                            "method": "GET",
+                            "headers": {
+                                "X-Plex-Token": plexToken,
+                                "Accept": "application/json"
+                            }
+                        });
+
+                        for (let k = 0; k < episodeData.MediaContainer.Metadata.length; k++) {
+                            episodeList.push(episodeData.MediaContainer.Metadata[k].ratingKey);
+                        }
+                    }
+                }
+            }
         }
+
+        console.log(episodeList);
 
         // Set the progress bar to have a certain length
         maxProgress = episodeList.length;
@@ -1235,6 +1354,7 @@ async function setSubtitleStream(partsId, streamId, row) {
             const episodeNumber = episodeData.MediaContainer.Metadata[0].index;
             const episodePartId = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].id;
             const episodeStreams = episodeData.MediaContainer.Metadata[0].Media[0].Part[0].Stream;
+            const seriesName = episodeData.MediaContainer.Metadata[0].grandparentTitle;
 
             // If streamId = 0 then we are unsetting the subtitles. Otherwise we need to find the best matches for each episode
             if (streamId != 0) {
@@ -1369,9 +1489,16 @@ async function setSubtitleStream(partsId, streamId, row) {
 
                 if (hasMatch) {
                     // There is a match, so update the subtitle track using the currentMatch.matchId and episodePartId
+                    let messageToAppend = `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`;
+                    if (tvEntireLibrary) {
+                        messageToAppend = `<span><strong>${seriesName} - S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`;
+                    } else if (movieEntireLibrary) {
+                        messageToAppend = `<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`;
+                    }
+                    
                     promiseConstructors.push({
                         "url": `${plexUrl}/library/parts/${episodePartId}?subtitleStreamID=${bestMatch.matchId}&allParts=1`,
-                        "messageAppend": `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> updated with Subtitle Track: <strong>${bestMatch.matchName}</strong> because of a match on <strong>${matchType}</strong></span><br />`
+                        "messageAppend": messageToAppend
                     });
                 }
                 else {
@@ -1380,9 +1507,16 @@ async function setSubtitleStream(partsId, streamId, row) {
             }
             else {
                 // streamId = 0, which means we just want to set the subtitleStreamID = 0 for every episode
+                let messageToAppend = `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> has had the subtitles <strong>deselected</strong></span><br />`;
+                if (tvEntireLibrary) {
+                    messageToAppend = `<span><strong>${seriesName} - S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> has had the subtitles <strong>deselected</strong></span><br />`;
+                } else if (movieEntireLibrary) {
+                    messageToAppend = `<span><strong>${episodeData.MediaContainer.Metadata[0].title}</strong> has had the subtitles <strong>deselected</strong></span><br />`;
+                }
+
                 promiseConstructors.push({
                     "url": `${plexUrl}/library/parts/${episodePartId}?subtitleStreamID=0&allParts=1`,
-                    "messageAppend": `<span><strong>S${seasonNumber}E${episodeNumber} - ${episodeData.MediaContainer.Metadata[0].title}</strong> has had the subtitles <strong>deselected</strong></span><br />`
+                    "messageAppend": messageToAppend
                 });
             }
         }
