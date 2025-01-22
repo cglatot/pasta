@@ -240,6 +240,14 @@ label, p {
     cursor: default;
 }
 
+#movieOrLibraryBtns label, #pinOrAuthBtns label {
+    cursor: pointer;
+}
+
+#movieOrLibraryBtns label.active, #pinOrAuthBtns label.active {
+    cursor: default;
+}
+
 #alphabetGroup {
     border-radius: 0.25rem;
     overflow: hidden;
@@ -315,6 +323,34 @@ label, p {
 }
 
 #episodeOrSeriesBtns .btn-secondary.active:hover, #pinOrAuthBtns .btn-secondary.active:hover {
+    color: #fff;
+    background-color: #d4860b;
+    border-color: #c87f0a;
+}
+
+#movieOrLibraryBtns .btn-secondary, #pinOrAuthBtns .btn-secondary {
+    color: rgb(240,240,240);
+    background-color: #444;
+    border-color: #444;
+}
+
+#movieOrLibraryBtns .btn-secondary:hover, #pinOrAuthBtns .btn-secondary:hover {
+    color: rgb(240,240,240);
+    background-color: #333;
+    border-color: #2c2c2c;
+}
+
+#movieOrLibraryBtns .btn-secondary.active, #pinOrAuthBtns .btn-secondary.active {
+    color: #fff;
+    background-color: #F39C12;
+    border-color: #F39C12;
+}
+
+#movieOrLibraryBtns .btn-secondary.active.focus, #pinOrAuthBtns .btn-secondary.active.focus {
+    box-shadow: 0 0 0 0.2rem rgba(243,156,18,.25);
+}
+
+#movieOrLibraryBtns .btn-secondary.active:hover, #pinOrAuthBtns .btn-secondary.active:hover {
     color: #fff;
     background-color: #d4860b;
     border-color: #c87f0a;
