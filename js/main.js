@@ -512,7 +512,7 @@ function displayLibraries(data) {
     $("#subtitleTable tbody").empty();
 
     for (let i = 0; i < libraries.length; i++) {
-        let rowHTML = `<tr onclick="getAlphabet(${libraries[i].key}, this)">
+        let rowHTML = `<tr onclick="getAlphabet(${libraries[i].key}, '${libraries[i].type}', this)">
                         <td>${libraries[i].title}</td>
                     </tr>`;
         $("#libraryTable tbody").append(rowHTML);
@@ -523,7 +523,7 @@ function displayLibraries(data) {
     });
 }
 
-function getAlphabet(uid, row) {
+function getAlphabet(uid, libType, row) {
     $.ajax({
         "url": `${plexUrl}/library/sections/${uid}/firstCharacter`,
         "method": "GET",
@@ -533,7 +533,7 @@ function getAlphabet(uid, row) {
         },
         "success": (data) => {
             libraryNumber = uid;
-            displayAlphabet(data, row);
+            displayAlphabet(data, libType, row);
             $('#series-tab').tab('show');
         },
         "error": (data) => {
@@ -543,10 +543,10 @@ function getAlphabet(uid, row) {
     });
 }
 
-function displayAlphabet(data, row) {
+function displayAlphabet(data, libType, row) {
     const availableAlphabet = data.MediaContainer.Directory;
 
-    if (data.MediaContainer.thumb.indexOf('show') > -1) { libraryType = "shows"; }
+    if ( libType == 'show') { libraryType = "shows"; }
     else { libraryType = "movie"; }
 
     if (data.MediaContainer.thumb.indexOf('video') > -1) {
