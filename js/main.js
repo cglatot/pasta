@@ -1238,6 +1238,9 @@ async function setSubtitleStream(partsId, streamId, row) {
 
             // If streamId = 0 then we are unsetting the subtitles. Otherwise we need to find the best matches for each episode
             if (streamId != 0) {
+                // Get the subtitle keyword from the UI
+                let subtitleKeyword = (typeof $('#subtitleKeywordInput').val === 'function') ? $('#subtitleKeywordInput').val().trim().toLowerCase() : '';
+
                 // Loop through each subtitle stream and check for any matches using the searchTitle, searchName, searchLanguage, searchCode
                 let hasMatch = false;
                 let matchType = "";
@@ -1252,6 +1255,12 @@ async function setSubtitleStream(partsId, streamId, row) {
                 for (let j = 0; j < episodeStreams.length; j++) {
                     // Subtitle streams are streamType 3, so we only care about that
                     if (episodeStreams[j].streamType == "3") {
+                        // If a keyword is set, skip this subtitle if it doesn't match
+                        if (subtitleKeyword &&
+                            !(String(episodeStreams[j].title || '').toLowerCase().includes(subtitleKeyword) ||
+                              String(episodeStreams[j].displayTitle || '').toLowerCase().includes(subtitleKeyword))) {
+                            continue;
+                        }
                         // If EVERYTHING is a match, even if they are "undefined" then select it
                         if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].language == searchLanguage) && (episodeStreams[j].languageCode == searchCode)) {
                             if (episodeStreams[j].selected == true) {
