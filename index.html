@@ -151,7 +151,7 @@
     </div>
 
     <!-- Toast Confirmation Message -->
-    <div class="toast" id="successToast" role="alert" aria-live="assertive" aria-atomic="true" style="">
+    <div class="toast" id="successToast" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-body alert-success">
             Success!
         </div>
@@ -412,6 +412,12 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3 id="libraryTypeTitle">TV Series</h3>
+                                  <div class="input-group mb-3">
+                                    <input type="text" id="showSearchInput" class="form-control" placeholder="Search for a show..." aria-label="Search for a show">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" id="clearShowSearch">Clear</button>
+                                    </div>
+                                </div>
                                 <div class="table-responsive">
                                     <table id="tvShowsTable" class="table table-hover mt-3">
                                         <thead>
@@ -421,7 +427,6 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-
                                         </tbody>
                                     </table>
                                 </div>
