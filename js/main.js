@@ -512,7 +512,7 @@ function displayLibraries(data) {
     $("#subtitleTable tbody").empty();
 
     for (let i = 0; i < libraries.length; i++) {
-        let rowHTML = `<tr onclick="getAlphabet(${libraries[i].key}, '${libraries[i].type}', this)">
+         let rowHTML = `<tr onclick="getAlphabet(${libraries[i].key}, '${libraries[i].type}', this); setupShowSearch(${libraries[i].key}, '${libraries[i].type}')">
                         <td>${libraries[i].title}</td>
                     </tr>`;
         $("#libraryTable tbody").append(rowHTML);
@@ -520,6 +520,50 @@ function displayLibraries(data) {
     // Scroll to the table
     document.querySelector('#libraryTable').scrollIntoView({
         behavior: 'smooth' 
+    });
+}
+
+function setupShowSearch(libraryKey, libType) {
+    $(document).off('input', '#showSearchInput');
+    $(document).off('click', '#clearShowSearch');
+    window.showSearchSetup = true;
+    let allShowsCache = null;
+    async function fetchAllShows() {
+        if (allShowsCache) return allShowsCache;
+        try {
+            const result = await $.ajax({
+                "url": `${plexUrl}/library/sections/${libraryKey}/all`,
+                "method": "GET",
+                "headers": {
+                    "X-Plex-Token": plexToken,
+                    "Accept": "application/json"
+                }
+            });
+            allShowsCache = result.MediaContainer.Metadata || [];
+            return allShowsCache;
+        } catch (e) {
+            return [];
+        }
+    }
+    $(document).on('input', '#showSearchInput', async function() {
+        $('#alphabetGroup .btn').removeClass('btn-dark').addClass('btn-outline-dark');
+        const search = $(this).val().toLowerCase();
+        if (search.length === 0) {
+            $("#tvShowsTable tbody").empty();
+            return;
+        }
+        const allShows = await fetchAllShows();
+        const filtered = allShows.filter(show => show.title && show.title.toLowerCase().includes(search));
+        $("#tvShowsTable tbody").empty();
+        for (let i = 0; i < filtered.length; i++) {
+            let rowHTML = `<tr onclick=\"getTitleInfo(${filtered[i].ratingKey}, this)\">\n<td>${filtered[i].title}</td>\n<td>${filtered[i].year}</td>\n</tr>`;
+            $("#tvShowsTable tbody").append(rowHTML);
+        }
+    });
+    $(document).on('click', '#clearShowSearch', function() {
+        $('#showSearchInput').val('');
+        $('#alphabetGroup .btn').removeClass('btn-dark').addClass('btn-outline-dark');
+        $("#tvShowsTable tbody").empty();
     });
 }
 
@@ -604,6 +648,8 @@ function getLibraryByLetter(element) {
     let letter = $(element).text();
     if (letter == "#") letter = "%23";
 
+    $('#showSearchInput').val('');
+
     $(element).siblings().removeClass("btn-dark").addClass("btn-outline-dark");
     $(element).removeClass("btn-outline-dark").addClass("btn-dark");
 
@@ -630,13 +676,60 @@ function displayTitles(titles) {
     $("#audioTable tbody").empty();
     $("#subtitleTable tbody").empty();
 
-    for (let i = 0; i < tvShows.length; i++) {
-        let rowHTML = `<tr onclick="getTitleInfo(${tvShows[i].ratingKey}, this)">
-                        <td>${tvShows[i].title}</td>
-                        <td>${tvShows[i].year}</td>
-                    </tr>`;
-        $("#tvShowsTable tbody").append(rowHTML);
+    // Store the last loaded shows for search filtering
+    window.lastLoadedShows = tvShows || [];
+
+    function renderShowsTable(shows) {
+        $("#tvShowsTable tbody").empty();
+        for (let i = 0; i < shows.length; i++) {
+            let rowHTML = `<tr onclick=\"getTitleInfo(${shows[i].ratingKey}, this)\">
+                            <td>${shows[i].title}</td>
+                            <td>${shows[i].year}</td>
+                        </tr>`;
+            $("#tvShowsTable tbody").append(rowHTML);
+        }
     }
+
+    renderShowsTable(tvShows);
+
+    if (!window.showSearchSetup) {
+        window.showSearchSetup = true;
+        let allShowsCache = null;
+        async function fetchAllShows() {
+            if (allShowsCache) return allShowsCache;
+            // Fetch all shows in the current library
+            try {
+                const result = await $.ajax({
+                    "url": `${plexUrl}/library/sections/${libraryNumber}/all`,
+                    "method": "GET",
+                    "headers": {
+                        "X-Plex-Token": plexToken,
+                        "Accept": "application/json"
+                    }
+                });
+                allShowsCache = result.MediaContainer.Metadata || [];
+                return allShowsCache;
+            } catch (e) {
+                return [];
+            }
+        }
+
+        $(document).on('input', '#showSearchInput', async function() {
+            const search = $(this).val().toLowerCase();
+            if (search.length === 0) {
+                renderShowsTable(window.lastLoadedShows || []);
+                return;
+            }
+            const allShows = await fetchAllShows();
+            const filtered = allShows.filter(show => show.title && show.title.toLowerCase().includes(search));
+            renderShowsTable(filtered);
+        });
+        $(document).on('click', '#clearShowSearch', function() {
+            $('#showSearchInput').val('');
+            renderShowsTable(window.lastLoadedShows || []);
+        });
+    }
+
     // Scroll to the table
     document.querySelector('#tvShowsTable').scrollIntoView({
         behavior: 'smooth' 
@@ -1238,6 +1331,9 @@ async function setSubtitleStream(partsId, streamId, row) {
 
             // If streamId = 0 then we are unsetting the subtitles. Otherwise we need to find the best matches for each episode
             if (streamId != 0) {
+                // Get the subtitle keyword from the UI
+                let subtitleKeyword = $('#subtitleKeywordInput').val().trim().toLowerCase();
+
                 // Loop through each subtitle stream and check for any matches using the searchTitle, searchName, searchLanguage, searchCode
                 let hasMatch = false;
                 let matchType = "";
@@ -1252,6 +1348,12 @@ async function setSubtitleStream(partsId, streamId, row) {
                 for (let j = 0; j < episodeStreams.length; j++) {
                     // Subtitle streams are streamType 3, so we only care about that
                     if (episodeStreams[j].streamType == "3") {
+                        // If a keyword is set, skip this subtitle if it doesn't match
+                        if (subtitleKeyword &&
+                            !(String(episodeStreams[j].title || '').toLowerCase().includes(subtitleKeyword) ||
+                              String(episodeStreams[j].displayTitle || '').toLowerCase().includes(subtitleKeyword))) {
+                            continue;
+                        }
                         // If EVERYTHING is a match, even if they are "undefined" then select it
                         if ((episodeStreams[j].title == searchTitle) && (episodeStreams[j].displayTitle == searchName) && (episodeStreams[j].language == searchLanguage) && (episodeStreams[j].languageCode == searchCode)) {
                             if (episodeStreams[j].selected == true) {
