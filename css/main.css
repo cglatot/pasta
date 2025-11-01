@@ -340,10 +340,6 @@ table, td, tr, th {
     background-color: transparent;
 }
 
-#userTableContainer {
-    display: none;
-}
-
 #userTable tbody tr {
     cursor: pointer;
 }

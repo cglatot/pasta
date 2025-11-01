@@ -9,8 +9,10 @@ var deviceName; // X-Plex-Device-Name - Main name shown
 // End auth devices card variables
 var plexUrl;
 var plexToken;
+var plexAdminToken;
 var backOffTimer = 0;
 var serverList = []; // save server information for pin login and multiple servers
+var machineIdentifier = ""; // Stores the machine identifier of the connected Plex server
 
 var libraryNumber = ""; // The Library ID that was clicked
 var showId = ""; // Stores the Id for the most recently clicked series
@@ -210,7 +212,7 @@ function checkIfAuthTokenIsValid() {
             $('#new-pin-container').hide();
             $('#authed-pin-container').show();
             $('#loggedInAs').text(data.username);
-            getUserAccounts();
+            getServers();
         },
         "error": (data) => {
             if (data.status == 401) {
@@ -337,86 +339,6 @@ function useLocalAddress (checkbox) {
     window.location.reload();
 }
 
-function getUserAccounts() {
-    // Get managed accounts
-    $.ajax({
-        "url": `https://plex.tv/api/v2/home/users`,
-        "method": "GET",
-        "headers": {
-            "X-Plex-Client-Identifier": clientIdentifier,
-            "X-Plex-Token": plexToken,
-            "accept": "application/json"
-        },
-        "success": (data) => {
-            if (data.users.length == 0) {
-                getServers();
-            } else {
-                let userAccounts = [];
-                for (let i = 0; i < data.users.length; i++) {
-                    userAccounts.push(data.users[i]);
-                }
-                // Populate and show the users table
-                displayUserAccounts(userAccounts);
-            }
-        },
-        "error": (error) => {
-            console.log(error);
-        }
-    });
-}
-
-function displayUserAccounts(users) {
-    $("#userTable tbody").empty();
-    $("#serverTable tbody").empty();
-    $("#libraryTable tbody").empty();
-    $("#tvShowsTable tbody").empty();
-    $("#seasonsTable tbody").empty();
-    $("#episodesTable tbody").empty();
-    $("#audioTable tbody").empty();
-    $("#subtitleTable tbody").empty();
-
-    for (let i = 0; i < users.length; i++) {
-        let rowHTML = `<tr onclick="switchUser('${users[i].uuid}', '${users[i].pin != undefined ? users[i].pin : ""}', this)">
-                        <td>${users[i].title}</td>
-                    </tr>`;
-        $("#userTable tbody").append(rowHTML);
-    }
-
-    $('#userTableContainer').show();
-}
-
-function switchUser(userId, pin, row) {
-    $("#serverTable tbody").empty();
-    $("#libraryTable tbody").empty();
-    $("#tvShowsTable tbody").empty();
-    $("#seasonsTable tbody").empty();
-    $("#episodesTable tbody").empty();
-    $("#audioTable tbody").empty();
-    $("#subtitleTable tbody").empty();
-
-    $(row).siblings().removeClass("table-active");
-    $(row).addClass("table-active");
-
-    $.ajax({
-        // TODO - investigate if we can take the pin (which is a long string of numbers and letters) and use it in switch. Or if we need to prompt for it.
-        "url": `https://plex.tv/api/v2/home/users/${userId}/switch`,
-        "method": "POST",
-        "headers": {
-            "X-Plex-Client-Identifier": clientIdentifier,
-            "X-Plex-Token": plexToken,
-            "accept": "application/json"
-    },
-        "success": (data) => {
-            // Change the plex token to the auth token of the chosen user
-            plexToken = data.authToken;
-            getServers();
-        },
-        "error": (error) => {
-            console.log(error);
-        }
-    });
-}
-
 function getServers () {
     // Choose whether or not to include https connections
     let includeHttps = 1;
@@ -500,6 +422,7 @@ function displayServers(servers) {
 }
 
 async function chooseServer(number, row) {
+    $("#userTable tbody").empty();
     $("#libraryTable tbody").empty();
     $("#tvShowsTable tbody").empty();
     $("#seasonsTable tbody").empty();
@@ -512,6 +435,7 @@ async function chooseServer(number, row) {
     $(row).addClass("table-active");
 
     plexToken = serverList[number].accessToken;
+    plexAdminToken = plexToken;
     let connections = serverList[number].connections;
 
     // Loop through the connections to see if we can find one that works
@@ -522,7 +446,7 @@ async function chooseServer(number, row) {
                 "method": "GET",
                 "headers": {
                     "X-Plex-Client-Identifier": clientIdentifier,
-                    "X-Plex-Token": plexToken,
+                    "X-Plex-Token": plexAdminToken,
                     "Accept": "application/json"
                 }
             });
@@ -530,23 +454,113 @@ async function chooseServer(number, row) {
             // Check if it is a valid server
             if (testResult.MediaContainer.machineIdentifier != undefined) {
                 console.log(testResult); //"0dc6987b21c52f78a156bd583aa5a82f6ff825e8"
+                machineIdentifier = testResult.MediaContainer.machineIdentifier;
 
                 let testResult2 = await $.ajax({ // TODO
                     "url": `https://plex.tv/api/v2/home/users`,
                     "method": "GET",
                     "headers": {
                         "X-Plex-Client-Identifier": clientIdentifier,
-                        "X-Plex-Token": plexToken,
+                        "X-Plex-Token": plexAdminToken,
                         "Accept": "application/json"
                     }
                 });
                 console.log(testResult2);
 
                 plexUrl = connections[i].uri;
-                connectToPlex();
+                getUserAccounts();
                 break;
             }
         } catch (e) {}
+    }
+}
+
+function getUserAccounts() {
+    // Get managed accounts
+    $.ajax({
+        "url": `https://plex.tv/api/v2/home/users`,
+        "method": "GET",
+        "headers": {
+            "X-Plex-Client-Identifier": clientIdentifier,
+            "X-Plex-Token": plexAdminToken,
+            "accept": "application/json"
+        },
+        "success": (data) => {
+            if (data.users.length == 0) {
+                connectToPlex();
+            } else {
+                let userAccounts = [];
+                for (let i = 0; i < data.users.length; i++) {
+                    userAccounts.push(data.users[i]);
+                }
+                console.log(userAccounts);
+                // Populate and show the users table
+                displayUserAccounts(userAccounts);
+            }
+        },
+        "error": (error) => {
+            console.log(error);
+        }
+    });
+}
+
+function displayUserAccounts(users) {
+    $("#userTable tbody").empty();
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    for (let i = 0; i < users.length; i++) {
+        let rowHTML = `<tr onclick="switchUser('${users[i].id}', '${users[i].username != null ? "false" : "true"}',  this)">
+                        <td>${users[i].title}</td>
+                    </tr>`;
+        $("#userTable tbody").append(rowHTML);
+    }
+
+    $('#userTableContainer').show();
+}
+
+function switchUser(userId, isManaged, row) {
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    $(row).siblings().removeClass("table-active");
+    $(row).addClass("table-active");
+
+    if (isManaged == "false") {
+        plexToken = plexAdminToken;
+        connectToPlex();
+    }
+    else {
+        $.ajax({
+            "url": `https://plex.tv/api/servers/${machineIdentifier}/shared_servers`,
+            "method": "GET",
+            "headers": {
+                "X-Plex-Token": plexAdminToken,
+                "accept": "application/json;odata=nometadata"
+            },
+            "success": (data) => {
+                console.log(data);
+                $(data).find('SharedServer').each(function() {
+                    if ($(this).attr('userID') == userId) {
+                        var authToken = $(this).attr('accessToken');
+                        console.log(authToken);
+                        plexToken = authToken;
+                        connectToPlex();
+                    }
+                })
+            },
+            "error": (error) => {
+                console.log(error);
+            }
+        })
     }
 }
 
