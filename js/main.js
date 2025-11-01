@@ -113,6 +113,22 @@ $(document).ready(() => {
     } else {
         $('#new-pin-container').show();
     }
+
+    // Check if the user saved Plex URL and Token previously
+    if (localStorage.plexUrl && localStorage.plexToken) {
+        plexUrl = localStorage.plexUrl;
+        plexToken = localStorage.plexToken;
+        $('input[type=radio][name=pinOrAuth][value="showPinControls"]').prop('checked', false);
+        $('input[type=radio][name=pinOrAuth][value="showUrlControls"]').prop('checked', true);
+        $('input[type=radio][name=pinOrAuth][value="showPinControls"]').closest('label').removeClass('active');
+        $('input[type=radio][name=pinOrAuth][value="showUrlControls"]').closest('label').addClass('active');
+        toggleAuthPages('showUrlControls');
+        $('#loginWithPlexBtn').prop('disabled', true);
+        $('#plexUrl').val(plexUrl);
+        $('#plexToken').val(plexToken);
+        $('#rememberDetails').prop('checked', true);
+        connectToPlex();
+    }
 });
 
 function validateEnableConnectBtn(context) {
@@ -147,10 +163,13 @@ function validateEnableConnectBtn(context) {
 function forgetDetails() {
     localStorage.removeItem('plexUrl');
     localStorage.removeItem('plexToken');
+    $('#rememberDetails').prop('checked', false);
+    $('#plexUrl, #plexToken, #rememberDetails').prop('disabled', false);
     $('#plexUrl, #plexToken').val('').removeClass('is-valid is-invalid');
     $('#confirmForget').fadeIn(250).delay(750).fadeOut(1250, () => {
         $('#forgetDivider, #forgetDetailsSection').hide();
     });
+    window.location.reload();
 }
 
 function forgetPinDetails() {
@@ -281,10 +300,19 @@ function listenForValidPincode(pinId, clientId, pinCode, popWindow) {
 // Toggle between the authentication methods
 function toggleAuthPages(value) {
     if (value == 'showPinControls') {
-        $('#pin-auth-over-container').show();
+        $('#pin-auth-over-container, #serverTableContainer, #userTableContainer').show();
         $('#url-auth-over-container').hide();
+
+        if (localStorage.plexUrl && localStorage.plexToken) {
+            $("#authTokenWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> You are currently connected to a server via URL/Token. Please <a href="javascript:void(0)" onclick="forgetDetails()">disconnect</a> before proceeding to connect using Plex sign in.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+        }
     } else {
-        $('#pin-auth-over-container').hide();
+        $('#pin-auth-over-container, #serverTableContainer, #userTableContainer').hide();
         $('#url-auth-over-container').show();
 
         if (localStorage.isPinAuth) {
@@ -543,6 +571,8 @@ function connectToPlex() {
                 localStorage.plexUrl = plexUrl;
                 localStorage.plexToken = plexToken;
                 $('#forgetDivider, #forgetDetailsSection').show();
+                $('#btnConnectToPlex').hide();
+                $('#rememberDetails, #plexUrl, #plexToken').prop('disabled', true);
             }
             displayLibraries(data);
         },
