@@ -28,8 +28,10 @@
     <link rel="stylesheet" href="css/main.css" />
 
     <!-- Font Awesome CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css"
-        integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" crossorigin="anonymous" />
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css"
+        integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" crossorigin="anonymous" /> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!--<link rel="icon" type="image/png" href="images/favicon.png">-->
 
@@ -44,8 +46,10 @@
         crossorigin="anonymous"></script>
 
     <!-- Font Awesome JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js"
-        integrity="sha256-qM7QTJSlvtPSxVRjVWNM2OfTAz/3k5ovHOKmKXuYMO4=" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js"
+        integrity="sha256-qM7QTJSlvtPSxVRjVWNM2OfTAz/3k5ovHOKmKXuYMO4=" crossorigin="anonymous"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/js/all.min.js"
+        integrity="sha512-6BTOlkauINO65nLhXhthZMtepgJSghyimIalb+crKRPhvhmsCdnIuGcVbR5/aQY2A+260iC1OPy1oCdB6pSSwQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <!-- Custom Scripts -->
     <script type="text/javascript" src="js/main.js"></script>
@@ -62,9 +66,20 @@
             <a id="titleLogo" class="navbar-brand" href="javascript:window.location.reload()" data-toggle="tooltip" data-placement="bottom" title="Home">
                 <img class="titleImage" src="images/Logo_Title_Large.png">
             </a>
-            <a id="helpAboutIcon" class="helpButtons" href="javascript:void(0)" onclick="$('#aboutModal').modal();" data-toggle="tooltip" data-placement="bottom" title="Help & About">
-                <i class="far fa-question-circle" style="color: #e5a00d; font-size: 1.5em"></i>
-            </a>
+            <div>
+                <a id="koFiIcon" class="helpButtons" href="https://ko-fi.com/cglatot" data-toggle="tooltip" data-placement="bottom" title="Ko-fi" target="_blank">
+                    <i class="fa-solid fa-mug-hot ko-fi ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+                <a id="dockerHubIcon" class="helpButtons" href="https://hub.docker.com/r/cglatot/pasta" data-toggle="tooltip" data-placement="bottom" title="DockerHub" target="_blank">
+                    <i class="fa-brands fa-docker ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+                <a id="gitHubIcon" class="helpButtons" href="https://github.com/cglatot/pasta" data-toggle="tooltip" data-placement="bottom" title="Github" target="_blank">
+                    <i class="fa-brands fa-github ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+                <a id="helpAboutIcon" class="helpButtons" href="javascript:void(0)" onclick="$('#aboutModal').modal();" data-toggle="tooltip" data-placement="bottom" title="Help & About">
+                    <i class="fa-regular fa-circle-question ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+            </div>
         </div>
     </nav>
 
