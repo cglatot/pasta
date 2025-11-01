@@ -28,8 +28,10 @@
     <link rel="stylesheet" href="css/main.css" />
 
     <!-- Font Awesome CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css"
-        integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" crossorigin="anonymous" />
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css"
+        integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" crossorigin="anonymous" /> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!--<link rel="icon" type="image/png" href="images/favicon.png">-->
 
@@ -44,8 +46,10 @@
         crossorigin="anonymous"></script>
 
     <!-- Font Awesome JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js"
-        integrity="sha256-qM7QTJSlvtPSxVRjVWNM2OfTAz/3k5ovHOKmKXuYMO4=" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js"
+        integrity="sha256-qM7QTJSlvtPSxVRjVWNM2OfTAz/3k5ovHOKmKXuYMO4=" crossorigin="anonymous"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/js/all.min.js"
+        integrity="sha512-6BTOlkauINO65nLhXhthZMtepgJSghyimIalb+crKRPhvhmsCdnIuGcVbR5/aQY2A+260iC1OPy1oCdB6pSSwQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <!-- Custom Scripts -->
     <script type="text/javascript" src="js/main.js"></script>
@@ -62,9 +66,20 @@
             <a id="titleLogo" class="navbar-brand" href="javascript:window.location.reload()" data-toggle="tooltip" data-placement="bottom" title="Home">
                 <img class="titleImage" src="images/Logo_Title_Large.png">
             </a>
-            <a id="helpAboutIcon" class="helpButtons" href="javascript:void(0)" onclick="$('#aboutModal').modal();" data-toggle="tooltip" data-placement="bottom" title="Help & About">
-                <i class="far fa-question-circle" style="color: #e5a00d; font-size: 1.5em"></i>
-            </a>
+            <div>
+                <a id="koFiIcon" class="helpButtons" href="https://ko-fi.com/cglatot" data-toggle="tooltip" data-placement="bottom" title="Ko-fi" target="_blank">
+                    <i class="fa-solid fa-mug-hot ko-fi ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+                <a id="dockerHubIcon" class="helpButtons" href="https://hub.docker.com/r/cglatot/pasta" data-toggle="tooltip" data-placement="bottom" title="DockerHub" target="_blank">
+                    <i class="fa-brands fa-docker ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+                <a id="gitHubIcon" class="helpButtons" href="https://github.com/cglatot/pasta" data-toggle="tooltip" data-placement="bottom" title="Github" target="_blank">
+                    <i class="fa-brands fa-github ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+                <a id="helpAboutIcon" class="helpButtons" href="javascript:void(0)" onclick="$('#aboutModal').modal();" data-toggle="tooltip" data-placement="bottom" title="Help & About">
+                    <i class="fa-regular fa-circle-question ml-2" style="color: #e5a00d; font-size: 1.5em"></i>
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -248,7 +263,13 @@
                                             </a>
                                         </div>
                                     </div>
-                                    
+                                    <!-- PLEX AUTHENTICATION WARNING -->
+                                    <div class="row">
+                                        <div class="col" id="authTokenWarningText">
+
+                                        </div>
+                                    </div>
+                                    <!-- / PLEX AUTHENTICATION WARNING -->
                                 </div>
                                 <!-- / PLEX AUTHENTICATION -->
                                 <!-- URL / TOKEN AUTHENTICATION -->
@@ -292,12 +313,11 @@
                         </div>
                         <!-- / PLEX LOGIN FORM -->
 
-                        
-
                         <!-- SERVERS TABLE -->
                         <div id="serverTableContainer" class="row mt-4">
                             <div class="col">
                                 <h3>Plex Servers</h3>
+                                <small class="form-text text-muted mb-1">Choose the Plex server you want to change Audio/Subtitle tracks.</small>
                                 <div class="table-responsive">
                                     <table id="serverTable" class="table table-hover mt-3">
                                         <thead>
@@ -322,10 +342,32 @@
                         </div>
                         <!-- / PLEX AUTHENTICATION WARNING -->
 
+                        <!-- USER ACCOUNTS TABLE -->
+                        <div id="userTableContainer" class="row mt-4">
+                            <div class="col">
+                                <h3>Managed Accounts</h3>
+                                <small class="form-text text-muted mb-1">Choose the account you want to change Audio/Subtitle tracks.</small>
+                                <div class="table-responsive">
+                                    <table id="userTable" class="table table-hover mt-3">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- / USER ACCOUNTS TABLE -->
+
                         <!-- LIBRARIES TABLE -->
                         <div class="row mt-4">
                             <div class="col">
                                 <h3>Plex Libraries</h3>
+                                <small class="form-text text-muted mb-1">Select a Library to display the media content.</small>
                                 <div class="table-responsive">
                                     <table id="libraryTable" class="table table-hover mt-3">
                                         <thead>
@@ -412,6 +454,7 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3 id="libraryTypeTitle">TV Series</h3>
+                                <small class="form-text text-muted mb-1">Select a Show to proceed to Audio and Subtitle selection.</small>
                                   <div class="input-group mb-3">
                                     <input type="text" id="showSearchInput" class="form-control" placeholder="Search for a show..." aria-label="Search for a show">
                                     <div class="input-group-append">
@@ -439,6 +482,7 @@
                         <div id="seasonsTableContainer" class="row mt-3">
                             <div class="col">
                                 <h3>Seasons</h3>
+                                <small class="form-text text-muted mb-1">Select a season and episode to display Audio and Subtitle Tracks below.</small>
                                 <div class="table-responsive">
                                     <table id="seasonsTable" class="table table-hover mt-3">
                                         <thead>
@@ -459,6 +503,7 @@
                         <div id="episodesTableContainer" class="row mt-4">
                             <div class="col">
                                 <h3>Episodes</h3>
+                                <small class="form-text text-muted mb-1">Select an episode to display Audio and Subtitle Tracks below.</small>
                                 <div class="table-responsive">
                                     <table id="episodesTable" class="table table-hover mt-3">
                                         <thead>
@@ -478,6 +523,7 @@
                         <!-- SWITCH TOGGLE -->
                         <div id="switchToggleContainer" class="row mt-4">
                             <div class="col text-center">
+                                <small class="form-text text-muted mb-1">Choose this before you select a track below.</small>
                                 <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
                                     <label class="btn btn-secondary active">
                                         <input type="radio" name="episodeOrSeries" id="singleEpisode" autocomplete="off"
@@ -508,6 +554,12 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3>Audio Tracks</h3>
+                                <small class="form-text text-muted mb-1">Select a track to apply it based on your choices above.</small>
+                                <div class="form-group mb-2">
+                                    <label for="audioKeywordInput"><strong>Subtitle Keyword</strong></label>
+                                    <input type="text" id="audioKeywordInput" class="form-control" placeholder="Enter keyword to match subtitles">
+                                    <small class="form-text text-muted">Only audio tracks containing this keyword in the Name or Title will be matched. You still need to select a track below. This is most useful for finding "audio descriptive" tracks.</small>
+                                </div>
                                 <div class="table-responsive">
                                     <table id="audioTable" class="table table-hover table-sm mt-3">
                                         <thead>
@@ -526,10 +578,11 @@
                             </div>
                             <div class="col">
                                 <h3>Subtitle Tracks</h3>
+                                <small class="form-text text-muted mb-1">Select a track to apply it based on your choices above.</small>
                                 <div class="form-group mb-2">
-                                    <label for="subtitleKeywordInput"><strong>Subtitle Keyword</strong></label>
+                                    <label for="subtitleKeywordInput"><strong>Audio Keyword</strong></label>
                                     <input type="text" id="subtitleKeywordInput" class="form-control" placeholder="Enter keyword to match subtitles">
-                                    <small class="form-text text-muted">Only subtitles containing this keyword will be matched.</small>
+                                    <small class="form-text text-muted">Only subtitles containing this keyword in the Name or Title will be matched. You still need to select a subtitle below. This is most useful for finding "forced" subtitles.</small>
                                 </div>
                                 <div class="table-responsive">
                                     <table id="subtitleTable" class="table table-hover table-sm mt-3">

@@ -340,6 +340,10 @@ table, td, tr, th {
     background-color: transparent;
 }
 
+#userTable tbody tr {
+    cursor: pointer;
+}
+
 #serverTable tbody tr {
     cursor: pointer;
 }

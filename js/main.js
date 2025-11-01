@@ -9,8 +9,10 @@ var deviceName; // X-Plex-Device-Name - Main name shown
 // End auth devices card variables
 var plexUrl;
 var plexToken;
+var plexAdminToken;
 var backOffTimer = 0;
 var serverList = []; // save server information for pin login and multiple servers
+var machineIdentifier = ""; // Stores the machine identifier of the connected Plex server
 
 var libraryNumber = ""; // The Library ID that was clicked
 var showId = ""; // Stores the Id for the most recently clicked series
@@ -113,6 +115,22 @@ $(document).ready(() => {
     } else {
         $('#new-pin-container').show();
     }
+
+    // Check if the user saved Plex URL and Token previously
+    if (localStorage.plexUrl && localStorage.plexToken) {
+        plexUrl = localStorage.plexUrl;
+        plexToken = localStorage.plexToken;
+        $('input[type=radio][name=pinOrAuth][value="showPinControls"]').prop('checked', false);
+        $('input[type=radio][name=pinOrAuth][value="showUrlControls"]').prop('checked', true);
+        $('input[type=radio][name=pinOrAuth][value="showPinControls"]').closest('label').removeClass('active');
+        $('input[type=radio][name=pinOrAuth][value="showUrlControls"]').closest('label').addClass('active');
+        toggleAuthPages('showUrlControls');
+        $('#loginWithPlexBtn').prop('disabled', true);
+        $('#plexUrl').val(plexUrl);
+        $('#plexToken').val(plexToken);
+        $('#rememberDetails').prop('checked', true);
+        connectToPlex();
+    }
 });
 
 function validateEnableConnectBtn(context) {
@@ -147,10 +165,13 @@ function validateEnableConnectBtn(context) {
 function forgetDetails() {
     localStorage.removeItem('plexUrl');
     localStorage.removeItem('plexToken');
+    $('#rememberDetails').prop('checked', false);
+    $('#plexUrl, #plexToken, #rememberDetails').prop('disabled', false);
     $('#plexUrl, #plexToken').val('').removeClass('is-valid is-invalid');
     $('#confirmForget').fadeIn(250).delay(750).fadeOut(1250, () => {
         $('#forgetDivider, #forgetDetailsSection').hide();
     });
+    window.location.reload();
 }
 
 function forgetPinDetails() {
@@ -281,10 +302,19 @@ function listenForValidPincode(pinId, clientId, pinCode, popWindow) {
 // Toggle between the authentication methods
 function toggleAuthPages(value) {
     if (value == 'showPinControls') {
-        $('#pin-auth-over-container').show();
+        $('#pin-auth-over-container, #serverTableContainer, #userTableContainer').show();
         $('#url-auth-over-container').hide();
+
+        if (localStorage.plexUrl && localStorage.plexToken) {
+            $("#authTokenWarningText").html(`<div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                        <strong>Warning:</strong> You are currently connected to a server via URL/Token. Please <a href="javascript:void(0)" onclick="forgetDetails()">disconnect</a> before proceeding to connect using Plex sign in.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>`);
+        }
     } else {
-        $('#pin-auth-over-container').hide();
+        $('#pin-auth-over-container, #serverTableContainer, #userTableContainer').hide();
         $('#url-auth-over-container').show();
 
         if (localStorage.isPinAuth) {
@@ -315,6 +345,7 @@ function getServers () {
     if (location.protocol == 'http:') {
         includeHttps = 0;
     }
+
     // Get the servers for this user
     $.ajax({
         "url": `https://plex.tv/api/v2/resources?includeHttps=${includeHttps}&includeRelay=0`,
@@ -388,10 +419,10 @@ function displayServers(servers) {
                     </tr>`;
         $("#serverTable tbody").append(rowHTML);
     }
-    $("#serverTableContainer").show();
 }
 
 async function chooseServer(number, row) {
+    $("#userTable tbody").empty();
     $("#libraryTable tbody").empty();
     $("#tvShowsTable tbody").empty();
     $("#seasonsTable tbody").empty();
@@ -404,6 +435,7 @@ async function chooseServer(number, row) {
     $(row).addClass("table-active");
 
     plexToken = serverList[number].accessToken;
+    plexAdminToken = plexToken;
     let connections = serverList[number].connections;
 
     // Loop through the connections to see if we can find one that works
@@ -413,18 +445,122 @@ async function chooseServer(number, row) {
                 "url": `${connections[i].uri}/identity`,
                 "method": "GET",
                 "headers": {
-                    "X-Plex-Token": plexToken,
+                    "X-Plex-Client-Identifier": clientIdentifier,
+                    "X-Plex-Token": plexAdminToken,
                     "Accept": "application/json"
                 }
             });
 
             // Check if it is a valid server
             if (testResult.MediaContainer.machineIdentifier != undefined) {
+                console.log(testResult); //"0dc6987b21c52f78a156bd583aa5a82f6ff825e8"
+                machineIdentifier = testResult.MediaContainer.machineIdentifier;
+
+                let testResult2 = await $.ajax({ // TODO
+                    "url": `https://plex.tv/api/v2/home/users`,
+                    "method": "GET",
+                    "headers": {
+                        "X-Plex-Client-Identifier": clientIdentifier,
+                        "X-Plex-Token": plexAdminToken,
+                        "Accept": "application/json"
+                    }
+                });
+                console.log(testResult2);
+
                 plexUrl = connections[i].uri;
-                connectToPlex();
+                getUserAccounts();
                 break;
             }
         } catch (e) {}
+    }
+}
+
+function getUserAccounts() {
+    // Get managed accounts
+    $.ajax({
+        "url": `https://plex.tv/api/v2/home/users`,
+        "method": "GET",
+        "headers": {
+            "X-Plex-Client-Identifier": clientIdentifier,
+            "X-Plex-Token": plexAdminToken,
+            "accept": "application/json"
+        },
+        "success": (data) => {
+            if (data.users.length == 0) {
+                connectToPlex();
+            } else {
+                let userAccounts = [];
+                for (let i = 0; i < data.users.length; i++) {
+                    userAccounts.push(data.users[i]);
+                }
+                console.log(userAccounts);
+                // Populate and show the users table
+                displayUserAccounts(userAccounts);
+            }
+        },
+        "error": (error) => {
+            console.log(error);
+        }
+    });
+}
+
+function displayUserAccounts(users) {
+    $("#userTable tbody").empty();
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    for (let i = 0; i < users.length; i++) {
+        let rowHTML = `<tr onclick="switchUser('${users[i].id}', '${users[i].username != null ? "false" : "true"}',  this)">
+                        <td>${users[i].title}</td>
+                    </tr>`;
+        $("#userTable tbody").append(rowHTML);
+    }
+
+    $('#userTableContainer').show();
+}
+
+function switchUser(userId, isManaged, row) {
+    $("#libraryTable tbody").empty();
+    $("#tvShowsTable tbody").empty();
+    $("#seasonsTable tbody").empty();
+    $("#episodesTable tbody").empty();
+    $("#audioTable tbody").empty();
+    $("#subtitleTable tbody").empty();
+
+    $(row).siblings().removeClass("table-active");
+    $(row).addClass("table-active");
+
+    if (isManaged == "false") {
+        plexToken = plexAdminToken;
+        connectToPlex();
+    }
+    else {
+        $.ajax({
+            "url": `https://plex.tv/api/servers/${machineIdentifier}/shared_servers`,
+            "method": "GET",
+            "headers": {
+                "X-Plex-Token": plexAdminToken,
+                "accept": "application/json;odata=nometadata"
+            },
+            "success": (data) => {
+                console.log(data);
+                $(data).find('SharedServer').each(function() {
+                    if ($(this).attr('userID') == userId) {
+                        var authToken = $(this).attr('accessToken');
+                        console.log(authToken);
+                        plexToken = authToken;
+                        connectToPlex();
+                    }
+                })
+            },
+            "error": (error) => {
+                console.log(error);
+            }
+        })
     }
 }
 
@@ -449,6 +585,8 @@ function connectToPlex() {
                 localStorage.plexUrl = plexUrl;
                 localStorage.plexToken = plexToken;
                 $('#forgetDivider, #forgetDetailsSection').show();
+                $('#btnConnectToPlex').hide();
+                $('#rememberDetails, #plexUrl, #plexToken').prop('disabled', true);
             }
             displayLibraries(data);
         },
