@@ -243,12 +243,18 @@ label, p {
 #alphabetGroup {
     border-radius: 0.25rem;
     overflow: hidden;
-    max-width: 990px;
+}
+
+#alphabetGroup.btn-group{
+    display: block;
 }
 
 #alphabetGroup button {
-    margin-left: 0;
-    border-radius: 0;
+    border-radius: 10px;
+    margin: 3px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
 }
 
 #alphabetGroup .btn-outline-dark {
@@ -419,4 +425,10 @@ table, td, tr, th {
     #alphabetGroup.btn-group .btn:not(:first-child) {
         border-top-right-radius: 0;
     }*/
+}
+
+@media only screen and (min-width: 1400px){
+    .container {
+        max-width: 1215px;
+    }
 }

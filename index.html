@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 
-<head></head>
+<head>
     <title>PASTA | Audio & Subtitle Track Changer for Plex</title>
 
     <!-- Required meta tags -->
@@ -151,7 +151,7 @@
     </div>
 
     <!-- Toast Confirmation Message -->
-    <div class="toast" id="successToast" role="alert" aria-live="assertive" aria-atomic="true" style="">
+    <div class="toast" id="successToast" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-body alert-success">
             Success!
         </div>
@@ -364,7 +364,7 @@
                         <!-- ALPHABET LIBRARY -->
                         <div class="row mt-3">
                             <div class="col text-center">
-                                <div id="alphabetGroup" class="btn-group flex-wrap" role="group"
+                                <div id="alphabetGroup" class="btn-group" role="group"
                                     aria-label="TV Library First Letter">
                                     <!-- set class "disabled" for buttons which are not active -->
                                     <button id="btnHash" disabled type="button" class="btn btn-outline-dark"
@@ -430,6 +430,12 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3 id="libraryTypeTitle">TV Series</h3>
+                                  <div class="input-group mb-3">
+                                    <input type="text" id="showSearchInput" class="form-control" placeholder="Search for a show..." aria-label="Search for a show">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" id="clearShowSearch">Clear</button>
+                                    </div>
+                                </div>
                                 <div class="table-responsive">
                                     <table id="tvShowsTable" class="table table-hover mt-3">
                                         <thead>
@@ -439,7 +445,6 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-
                                         </tbody>
                                     </table>
                                 </div>
@@ -539,6 +544,11 @@
                             </div>
                             <div class="col">
                                 <h3>Subtitle Tracks</h3>
+                                <div class="form-group mb-2">
+                                    <label for="subtitleKeywordInput"><strong>Subtitle Keyword</strong></label>
+                                    <input type="text" id="subtitleKeywordInput" class="form-control" placeholder="Enter keyword to match subtitles">
+                                    <small class="form-text text-muted">Only subtitles containing this keyword will be matched.</small>
+                                </div>
                                 <div class="table-responsive">
                                     <table id="subtitleTable" class="table table-hover table-sm mt-3">
                                         <thead>

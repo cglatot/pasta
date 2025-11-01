@@ -30,3 +30,22 @@ When I first began developing this for myself, I was calling it *Audio Track Aut
 PASTA was born out of a desire, one that I had seen others have as well, but that I had only seen one other solution for. However, it was in command line and I wanted something a bit more appealing to look at, and something I could use from anywhere. Initially I was only building this for myself but I thought that others might find use for it as well, so here we are!
 
 PASTA runs entirely client-side. This means that you are not passing anything to someones server to do this (other than the Plex Server), and it also means I don't have to worry about standing up a server to do that side of things either :). PASTA runs off of Github Pages. Feel free to have a look, download it yourself and use it locally, or make suggestions. I'm by no means finished with PASTA - I still have plenty of ideas for how I can add more to it, as well as fix any bugs that crop up.
+
+## Docker
+
+Here is an  example compose to help you get started creating a container.
+
+
+
+```yaml
+---
+version: "3"
+
+services:
+  pasta:
+    image: cglatot/pasta
+    container_name: pasta
+    ports:
+      - 8087:80 
+    restart: unless-stopped
+```
