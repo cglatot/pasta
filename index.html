@@ -302,6 +302,7 @@
                         <div id="serverTableContainer" class="row mt-4">
                             <div class="col">
                                 <h3>Plex Servers</h3>
+                                <small class="form-text text-muted mb-1">Choose the Plex server you want to change Audio/Subtitle tracks.</small>
                                 <div class="table-responsive">
                                     <table id="serverTable" class="table table-hover mt-3">
                                         <thead>
@@ -330,6 +331,7 @@
                         <div id="userTableContainer" class="row mt-4">
                             <div class="col">
                                 <h3>Managed Accounts</h3>
+                                <small class="form-text text-muted mb-1">Choose the account you want to change Audio/Subtitle tracks.</small>
                                 <div class="table-responsive">
                                     <table id="userTable" class="table table-hover mt-3">
                                         <thead>
@@ -350,6 +352,7 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3>Plex Libraries</h3>
+                                <small class="form-text text-muted mb-1">Select a Library to display the media content.</small>
                                 <div class="table-responsive">
                                     <table id="libraryTable" class="table table-hover mt-3">
                                         <thead>
@@ -436,6 +439,7 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3 id="libraryTypeTitle">TV Series</h3>
+                                <small class="form-text text-muted mb-1">Select a Show to proceed to Audio and Subtitle selection.</small>
                                   <div class="input-group mb-3">
                                     <input type="text" id="showSearchInput" class="form-control" placeholder="Search for a show..." aria-label="Search for a show">
                                     <div class="input-group-append">
@@ -463,6 +467,7 @@
                         <div id="seasonsTableContainer" class="row mt-3">
                             <div class="col">
                                 <h3>Seasons</h3>
+                                <small class="form-text text-muted mb-1">Select a season and episode to display Audio and Subtitle Tracks below.</small>
                                 <div class="table-responsive">
                                     <table id="seasonsTable" class="table table-hover mt-3">
                                         <thead>
@@ -483,6 +488,7 @@
                         <div id="episodesTableContainer" class="row mt-4">
                             <div class="col">
                                 <h3>Episodes</h3>
+                                <small class="form-text text-muted mb-1">Select an episode to display Audio and Subtitle Tracks below.</small>
                                 <div class="table-responsive">
                                     <table id="episodesTable" class="table table-hover mt-3">
                                         <thead>
@@ -502,6 +508,7 @@
                         <!-- SWITCH TOGGLE -->
                         <div id="switchToggleContainer" class="row mt-4">
                             <div class="col text-center">
+                                <small class="form-text text-muted mb-1">Choose this before you select a track below.</small>
                                 <div id="episodeOrSeriesBtns" class="btn-group btn-group-toggle" data-toggle="buttons">
                                     <label class="btn btn-secondary active">
                                         <input type="radio" name="episodeOrSeries" id="singleEpisode" autocomplete="off"
@@ -532,6 +539,12 @@
                         <div class="row mt-4">
                             <div class="col">
                                 <h3>Audio Tracks</h3>
+                                <small class="form-text text-muted mb-1">Select a track to apply it based on your choices above.</small>
+                                <div class="form-group mb-2">
+                                    <label for="audioKeywordInput"><strong>Subtitle Keyword</strong></label>
+                                    <input type="text" id="audioKeywordInput" class="form-control" placeholder="Enter keyword to match subtitles">
+                                    <small class="form-text text-muted">Only audio tracks containing this keyword in the Name or Title will be matched. You still need to select a track below. This is most useful for finding "audio descriptive" tracks.</small>
+                                </div>
                                 <div class="table-responsive">
                                     <table id="audioTable" class="table table-hover table-sm mt-3">
                                         <thead>
@@ -550,10 +563,11 @@
                             </div>
                             <div class="col">
                                 <h3>Subtitle Tracks</h3>
+                                <small class="form-text text-muted mb-1">Select a track to apply it based on your choices above.</small>
                                 <div class="form-group mb-2">
-                                    <label for="subtitleKeywordInput"><strong>Subtitle Keyword</strong></label>
+                                    <label for="subtitleKeywordInput"><strong>Audio Keyword</strong></label>
                                     <input type="text" id="subtitleKeywordInput" class="form-control" placeholder="Enter keyword to match subtitles">
-                                    <small class="form-text text-muted">Only subtitles containing this keyword will be matched.</small>
+                                    <small class="form-text text-muted">Only subtitles containing this keyword in the Name or Title will be matched. You still need to select a subtitle below. This is most useful for finding "forced" subtitles.</small>
                                 </div>
                                 <div class="table-responsive">
                                     <table id="subtitleTable" class="table table-hover table-sm mt-3">
