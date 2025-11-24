@@ -1,0 +1,467 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgb(240, 240, 240);
+  background-color: rgb(51, 51, 51);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --primary-color: #e5a00d;
+  --accent-color: #F39C12;
+  --accent-hover: #d4860b;
+  --text-muted: rgb(190, 190, 190);
+  --bg-card: rgba(25, 25, 25, 0.85);
+
+  /* Shared Active States */
+  --active-bg: rgba(192, 118, 0, 0.2);
+  --active-hover-bg: rgba(192, 118, 0, 0.4);
+}
+
+a {
+  font-weight: 500;
+  color: var(--accent-color);
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: rgb(240, 240, 240);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: rgb(51, 51, 51);
+  background-image: radial-gradient(rgba(100, 50, 0, 0.75), black 120%), repeating-linear-gradient(rgba(0, 0, 0, 0.75),
+      rgba(0, 0, 0, 0.75) 2px,
+      transparent 2px,
+      transparent 4px);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  color: var(--primary-color);
+  line-height: 1.1;
+}
+
+h1 {
+  font-size: 3.2em;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid var(--accent-color);
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--accent-color);
+  color: #fff;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+button:hover {
+  background-color: var(--accent-hover);
+  border-color: #c87f0a;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Force dark mode styles */
+@media (prefers-color-scheme: light) {
+  :root {
+    color: rgb(240, 240, 240);
+    background-color: rgb(51, 51, 51);
+  }
+
+  a:hover {
+    color: rgb(240, 240, 240);
+  }
+
+  button {
+    background-color: var(--accent-color);
+    color: #fff;
+  }
+}
+
+/* ==========================
+   BOOTSTRAP OVERRIDES
+   ========================== */
+
+/* Tables */
+.table {
+  color: rgb(240, 240, 240) !important;
+  background-color: transparent !important;
+}
+
+.table td,
+.table th {
+  border-top: 1px solid #aaa;
+  border-color: #aaa;
+  background-color: transparent !important;
+  color: rgb(240, 240, 240) !important;
+}
+
+.table thead th {
+  border-bottom: 2px solid #aaa;
+  color: var(--primary-color) !important;
+}
+
+.table-active,
+.table-active>td,
+.table-active>th,
+tr.selected,
+tr[aria-selected="true"] {
+  background-color: var(--active-bg) !important;
+  /* Orange tint */
+  color: rgb(240, 240, 240) !important;
+}
+
+.table-hover tbody tr:hover,
+.table-hover tbody tr:hover>td,
+.table-hover tbody tr:hover>th {
+  color: rgb(240, 240, 240) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.table-hover tbody tr.table-active:hover,
+.table-hover tbody tr.table-active:hover>td,
+.table-hover tbody tr.table-active:hover>th {
+  background-color: var(--active-hover-bg) !important;
+  /* Brighter orange on hover */
+}
+
+/* Modals */
+.modal-content {
+  background-color: rgba(25, 25, 25, 1);
+  color: rgb(240, 240, 240);
+  border: 1px solid #aaa;
+}
+
+.modal-header {
+  border-bottom: 1px solid #aaa;
+}
+
+.modal-footer {
+  border-top: 1px solid #aaa;
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Buttons */
+.btn-primary {
+  color: #fff;
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-primary:hover {
+  color: #fff;
+  background-color: var(--accent-hover);
+  border-color: #c87f0a;
+}
+
+.btn-primary:focus,
+.btn-primary.focus {
+  box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.5);
+}
+
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-primary:not(:disabled):not(.disabled).active,
+.show>.btn-primary.dropdown-toggle {
+  color: #fff;
+  background-color: #c87f0a;
+  border-color: #bc770a;
+}
+
+.btn-outline-primary {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-outline-primary:hover {
+  color: #fff;
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Secondary Outline Buttons (Actions) */
+.btn-outline-secondary {
+  color: #fff !important;
+  border-color: #666 !important;
+}
+
+.btn-outline-secondary:hover {
+  color: #fff !important;
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Breadcrumbs */
+.breadcrumb {
+  background-color: transparent;
+  padding: 0.75rem 1rem;
+}
+
+.breadcrumb-item {
+  color: var(--accent-color);
+}
+
+.breadcrumb-item+.breadcrumb-item::before {
+  color: rgb(190, 190, 190);
+}
+
+.breadcrumb-item.active {
+  color: rgb(240, 240, 240);
+}
+
+.breadcrumb-item a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  color: rgb(240, 240, 240);
+}
+
+/* Cards - Ensure dark background wins */
+.card {
+  background-color: var(--bg-card) !important;
+  color: rgb(240, 240, 240);
+}
+
+/* ==========================
+   SCORCHED EARTH RESET
+   ========================== */
+
+/* Global Selection */
+::selection {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 5px;
+}
+
+/* Dropdowns */
+.dropdown-menu {
+  background-color: rgba(25, 25, 25, 0.95) !important;
+  color: rgb(240, 240, 240) !important;
+  border: 1px solid #444 !important;
+}
+
+.dropdown-item {
+  color: rgb(240, 240, 240) !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: rgba(192, 118, 0, 0.2) !important;
+  color: #fff !important;
+}
+
+/* Inputs & Form Controls */
+.form-control,
+input,
+select,
+textarea {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  color: rgb(240, 240, 240) !important;
+  border: 1px solid #555 !important;
+}
+
+.form-control:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(229, 160, 13, 0.25) !important;
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1;
+}
+
+/* Modals (Reinforce) */
+.modal-content {
+  background-color: rgba(25, 25, 25, 1) !important;
+  color: rgb(240, 240, 240) !important;
+  border: 1px solid #444 !important;
+}
+
+.modal-header,
+.modal-footer {
+  border-color: #444 !important;
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+/* Pagination */
+.page-link {
+  background-color: transparent !important;
+  color: var(--primary-color) !important;
+  border-color: #444 !important;
+}
+
+.page-item.active .page-link {
+  background-color: var(--primary-color) !important;
+  color: black !important;
+  border-color: var(--primary-color) !important;
+}
+
+.page-item.disabled .page-link {
+  background-color: transparent !important;
+  color: #666 !important;
+}
+
+/* List Groups */
+.list-group-item {
+  background-color: transparent !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: #444 !important;
+  padding: 0.5rem 1rem !important;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  border-radius: 0 !important;
+  /* Remove rounded corners */
+}
+
+.list-group-item:first-child {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.list-group-item:last-child {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.list-group-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgb(240, 240, 240) !important;
+}
+
+.list-group-item.active {
+  background-color: var(--active-bg) !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: #444 !important;
+  /* Keep border neutral */
+  z-index: 2;
+}
+
+.list-group-item.active:hover {
+  background-color: var(--active-hover-bg) !important;
+}
+
+/* Alerts */
+.alert {
+  background-color: rgba(25, 25, 25, 0.9) !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: #444 !important;
+}
+
+/* ==========================
+   UTILITY CLASS NUKES
+   ========================== */
+
+/* Force transparent backgrounds for white/light utilities */
+.bg-white,
+.bg-light {
+  background-color: transparent !important;
+  color: rgb(240, 240, 240) !important;
+}
+
+/* Card Headers & Footers - Force Dark */
+.card-header {
+  background-color: rgba(25, 25, 25, 1) !important;
+  color: var(--primary-color) !important;
+  border-bottom: 1px solid #444 !important;
+}
+
+.card-footer {
+  background-color: rgba(25, 25, 25, 1) !important;
+  border-top: 1px solid #444 !important;
+}
+
+/* Ensure text within these areas is readable */
+.card-header h5,
+.card-footer label,
+.card-footer .form-check-label {
+  color: var(--primary-color) !important;
+}
+
+.card-footer .text-muted {
+  color: #aaa !important;
+}
+
+/* ==========================
+   CONTRAST & COLOR FIXES
+   ========================== */
+
+/* Text Contrast */
+.text-muted {
+  color: #aaa !important;
+  /* Light gray for readability on dark bg */
+}
+
+.form-text {
+  color: #ccc !important;
+  /* Lighter gray for helper text */
+}
+
+.fw-bold {
+  color: #fff !important;
+  /* White for bold text */
+}
+
+/* Buttons - Force PASTA Orange */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: #e67e22 !important;
+  /* Slightly darker orange */
+  border-color: #e67e22 !important;
+}
+
+/* Separators - Make visible */
+.list-group-item {
+  border-color: #444 !important;
+}
+
+.dropdown-divider {
+  border-top: 1px solid #444 !important;
+}
