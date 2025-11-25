@@ -66,7 +66,14 @@ export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libra
                 onClick={onToggleCollapse}
             >
                 <h5 className="mb-0 d-flex justify-content-between align-items-center">
-                    <span>{getHeaderTitle()}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {getHeaderTitle()}
+                        {isCollapsed && selectedShow && (
+                            <span className="text-muted ms-3" style={{ fontSize: '0.85rem', fontWeight: 'normal' }}>
+                                {selectedShow.title}
+                            </span>
+                        )}
+                    </span>
                     {onToggleCollapse && <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>}
                 </h5>
                 {!isCollapsed && (

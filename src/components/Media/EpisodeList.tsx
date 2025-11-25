@@ -52,7 +52,14 @@ export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSele
                 onClick={onToggleCollapse}
             >
                 <h5 className="mb-0 d-flex justify-content-between align-items-center">
-                    <span>Episodes</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Episodes
+                        {isCollapsed && selectedEpisode && (
+                            <span className="text-muted ms-3" style={{ fontSize: '0.85rem', fontWeight: 'normal' }}>
+                                {selectedEpisode.title}
+                            </span>
+                        )}
+                    </span>
                     {onToggleCollapse && <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>}
                 </h5>
             </div>

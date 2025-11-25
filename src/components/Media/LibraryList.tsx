@@ -47,7 +47,14 @@ export const LibraryList: React.FC<Props> = ({ libraries, selectedLibrary, onSel
                 onClick={onToggleCollapse}
             >
                 <h5 className="mb-0 d-flex justify-content-between align-items-center">
-                    <span>Libraries</span>
+                    <span>
+                        Libraries
+                        {isCollapsed && selectedLibrary && (
+                            <span className="text-muted ms-3" style={{ fontSize: '0.85rem', fontWeight: 'normal' }}>
+                                {selectedLibrary.title}
+                            </span>
+                        )}
+                    </span>
                     {onToggleCollapse && <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>}
                 </h5>
             </div>
