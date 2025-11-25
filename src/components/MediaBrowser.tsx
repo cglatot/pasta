@@ -4,6 +4,7 @@ import { useBatchUpdater } from '../hooks/useBatchUpdater';
 import { MediaNavigation } from './Media/MediaNavigation';
 import { AudioTable } from './Tracks/AudioTable';
 import { SubtitleTable } from './Tracks/SubtitleTable';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 // Lazy load ProgressModal
 const ProgressModal = React.lazy(() => import('./Layout/ProgressModal').then(module => ({ default: module.ProgressModal })));
@@ -11,6 +12,7 @@ import { LoadingOverlay } from './Layout/LoadingOverlay';
 import { ErrorMessage } from './Layout/ErrorMessage';
 
 export const MediaBrowser: React.FC = () => {
+    const isMobile = useIsMobile();
     const {
         libraries,
         serverName,
@@ -130,7 +132,7 @@ export const MediaBrowser: React.FC = () => {
 
             <div className="row">
                 {/* Navigation Column */}
-                <div className="col-md-3">
+                <div className={`col-md-3 ${isMobile ? 'mb-4 px-3' : ''}`}>
                     <MediaNavigation
                         libraries={libraries}
                         selectedLibrary={selectedLibrary}
@@ -148,7 +150,7 @@ export const MediaBrowser: React.FC = () => {
                 </div>
 
                 {/* Content Column */}
-                <div className="col-md-9 position-relative">
+                <div className={`col-md-9 position-relative ${isMobile ? 'px-3' : ''}`}>
 
                     {selectedEpisode ? (
                         <div>
@@ -158,7 +160,7 @@ export const MediaBrowser: React.FC = () => {
 
                             {selectedEpisode.Media?.[0]?.Part?.[0]?.Stream ? (
                                 <div className="row">
-                                    <div className="col-md-6">
+                                    <div className={isMobile ? 'col-12' : 'col-md-6'}>
                                         <AudioTable
                                             streams={selectedEpisode.Media[0].Part[0].Stream}
                                             onSelect={(id, scope) => handleStreamUpdate(id, scope, 'audio')}
@@ -167,7 +169,7 @@ export const MediaBrowser: React.FC = () => {
                                             isMovie={selectedLibrary?.type === 'movie'}
                                         />
                                     </div>
-                                    <div className="col-md-6">
+                                    <div className={isMobile ? 'col-12' : 'col-md-6'}>
                                         <SubtitleTable
                                             streams={selectedEpisode.Media[0].Part[0].Stream}
                                             onSelect={(id, scope) => handleStreamUpdate(id, scope, 'subtitle')}
