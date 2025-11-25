@@ -8,9 +8,11 @@ interface Props {
     selectedShow: PlexMetadata | null;
     onSelect: (show: PlexMetadata) => void;
     libraryType?: string;
+    isCollapsed?: boolean;
+    onToggleCollapse?: () => void;
 }
 
-export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libraryType }) => {
+export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libraryType, isCollapsed = false, onToggleCollapse }) => {
     const [filter, setFilter] = useState('');
 
     const filteredShows = shows.filter(show =>
@@ -26,7 +28,6 @@ export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libra
     const Row = ({ index, style, data }: ListChildComponentProps<PlexMetadata[]>) => {
         const show = data[index];
 
-        // Safety check: If data is missing or index is out of bounds, render nothing
         if (!show) {
             return null;
         }
@@ -40,48 +41,66 @@ export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libra
                 >
                     <div className="d-flex justify-content-between align-items-center">
                         <span className="text-truncate" style={{ maxWidth: '80%' }}>{show.title}</span>
-                        <small>{show.year}</small>
+                        <small className="flex-shrink-0">{show.year}</small>
                     </div>
                 </button>
             </div>
         );
     };
 
-    const ITEM_SIZE = 50;
-    const MAX_ITEMS = 8;
+    const ITEM_SIZE = 45;
+    const MAX_ITEMS = 6;
     const listHeight = Math.min(Math.max(filteredShows.length, 1), MAX_ITEMS) * ITEM_SIZE;
 
     return (
-        <div className="card shadow-sm mb-4" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header bg-white">
-                <h5 className="mb-0">{getHeaderTitle()}</h5>
-                <input
-                    type="text"
-                    className="form-control mt-2"
-                    placeholder="Search..."
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                />
-            </div>
-            <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
-                {filteredShows.length > 0 ? (
-                    <AutoSizer disableHeight>
-                        {({ width }) => (
-                            <List
-                                height={listHeight}
-                                itemCount={filteredShows.length}
-                                itemSize={ITEM_SIZE}
-                                width={width}
-                                itemData={filteredShows}
-                            >
-                                {Row}
-                            </List>
-                        )}
-                    </AutoSizer>
-                ) : (
-                    <div className="list-group-item text-muted">No matches found</div>
+        <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+                className="card-header bg-white"
+                style={{
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    borderBottomLeftRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
+                    borderBottomRightRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
+                    borderBottom: isCollapsed ? 'none' : undefined
+                }}
+                onClick={onToggleCollapse}
+            >
+                <h5 className="mb-0 d-flex justify-content-between align-items-center">
+                    <span>{getHeaderTitle()}</span>
+                    {onToggleCollapse && <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>}
+                </h5>
+                {!isCollapsed && (
+                    <input
+                        type="text"
+                        className="form-control mt-2"
+                        placeholder="Search..."
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                    />
                 )}
             </div>
+            {!isCollapsed && (
+                <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
+                    {filteredShows.length > 0 ? (
+                        <AutoSizer disableHeight>
+                            {({ width }) => (
+                                <List
+                                    height={listHeight}
+                                    itemCount={filteredShows.length}
+                                    itemSize={ITEM_SIZE}
+                                    width={width}
+                                    itemData={filteredShows}
+                                >
+                                    {Row}
+                                </List>
+                            )}
+                        </AutoSizer>
+                    ) : (
+                        <div className="list-group-item text-muted">No matches found</div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

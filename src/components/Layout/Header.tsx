@@ -22,7 +22,7 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
 
     return (
         <>
-            <nav className="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+            <nav className="navbar navbar-expand-lg navbar-dark static-top" style={{ backgroundColor: '#0d0d0d' }}>
                 <div className="container-fluid d-flex justify-content-between px-5">
                     <a className="navbar-brand" href="/">
                         <img src="/images/Logo_Title_Large.png" alt="PASTA" height="50" />

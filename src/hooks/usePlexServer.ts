@@ -85,7 +85,7 @@ export const usePlexServer = () => {
         const successfulConnection = results.find(r => r.success);
 
         if (successfulConnection) {
-            setServerUrl(successfulConnection.uri, successfulConnection.machineId);
+            setServerUrl(successfulConnection.uri, successfulConnection.machineId, server.name);
 
             if (server.accessToken !== accessToken) {
                 await login(server.accessToken, !server.owned);

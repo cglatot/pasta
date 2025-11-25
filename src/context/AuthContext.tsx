@@ -10,13 +10,14 @@ interface AuthContextType {
     clientIdentifier: string;
     accessToken: string | null;
     serverUrl: string | null;
+    serverName: string | null;
     machineIdentifier: string | null;
     user: PlexUser | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (token: string, isShared?: boolean) => Promise<void>;
     logout: () => void;
-    setServerUrl: (url: string, machineId?: string) => void;
+    setServerUrl: (url: string, machineId?: string, name?: string) => void;
     clearServer: () => void;
     switchUser: (user: PlexHomeUser, pin?: string) => Promise<void>;
     adminToken: string | null;
@@ -30,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [clientIdentifier, setClientIdentifier] = useState<string>('');
     const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('plexToken'));
     const [serverUrl, setServerUrlState] = useState<string | null>(localStorage.getItem('plexServerUrl'));
+    const [serverName, setServerName] = useState<string | null>(localStorage.getItem('plexServerName'));
     const [machineIdentifier, setMachineIdentifier] = useState<string | null>(localStorage.getItem('plexMachineId'));
     const [user, setUser] = useState<PlexUser | null>(() => {
         const storedUser = localStorage.getItem('plexUser');
@@ -44,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = useCallback(() => {
         localStorage.removeItem('plexToken');
         localStorage.removeItem('plexServerUrl');
+        localStorage.removeItem('plexServerName');
         localStorage.removeItem('plexAdminToken');
         localStorage.removeItem('plexMachineId');
         localStorage.removeItem('plexUser');
@@ -51,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('isSharedServer');
         setAccessToken(null);
         setServerUrlState(null);
+        setServerName(null);
         setMachineIdentifier(null);
         setUser(null);
         setAdminToken(null);
@@ -114,19 +118,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const setServerUrl = (url: string, machineId?: string) => {
+    const setServerUrl = (url: string, machineId?: string, name?: string) => {
         localStorage.setItem('plexServerUrl', url);
         setServerUrlState(url);
         if (machineId) {
             localStorage.setItem('plexMachineId', machineId);
             setMachineIdentifier(machineId);
         }
+        if (name) {
+            localStorage.setItem('plexServerName', name);
+            setServerName(name);
+        }
     };
 
     const clearServer = () => {
         localStorage.removeItem('plexServerUrl');
+        localStorage.removeItem('plexServerName');
         localStorage.removeItem('plexMachineId');
         setServerUrlState(null);
+        setServerName(null);
         setMachineIdentifier(null);
 
         // If we're currently a managed user or on a shared server, revert to admin user
@@ -250,6 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 clientIdentifier,
                 accessToken,
                 serverUrl,
+                serverName,
                 machineIdentifier,
                 user,
                 isAuthenticated: !!user,

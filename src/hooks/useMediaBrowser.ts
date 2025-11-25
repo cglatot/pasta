@@ -4,7 +4,7 @@ import type { PlexLibrary, PlexMetadata } from '../types/plex';
 import { useLibraries, useLibraryItems, useMetadataChildren, useMetadata } from './usePlexQueries';
 
 export const useMediaBrowser = () => {
-    const { clientIdentifier, accessToken, serverUrl, machineIdentifier } = useAuth();
+    const { clientIdentifier, accessToken, serverUrl, serverName, machineIdentifier } = useAuth();
 
     // Selection State
     const [selectedLibrary, setSelectedLibrary] = useState<PlexLibrary | null>(null);
@@ -120,6 +120,7 @@ export const useMediaBrowser = () => {
 
     return {
         libraries,
+        serverName,
         selectedLibrary,
         shows,
         selectedShow,

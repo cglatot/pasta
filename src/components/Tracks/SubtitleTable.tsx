@@ -18,7 +18,7 @@ export const SubtitleTable: React.FC<Props> = ({ streams, onSelect, keyword, onK
             <div className="card-header bg-white">
                 <h5 className="mb-0">Subtitle Tracks</h5>
             </div>
-            <div className="card-body bg-light border-bottom">
+            <div className="card-body bg-light border-bottom pt-2 pb-3">
                 <div className="form-group mb-0">
                     <label htmlFor="subtitleKeyword" className="form-label fw-bold small">Subtitle Keyword</label>
                     <input

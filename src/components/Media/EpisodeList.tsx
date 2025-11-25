@@ -7,9 +7,11 @@ interface Props {
     episodes: PlexMetadata[];
     selectedEpisode: PlexMetadata | null;
     onSelect: (episode: PlexMetadata) => void;
+    isCollapsed?: boolean;
+    onToggleCollapse?: () => void;
 }
 
-export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSelect }) => {
+export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSelect, isCollapsed = false, onToggleCollapse }) => {
     const Row = ({ index, style, data }: ListChildComponentProps<PlexMetadata[]>) => {
         const episode = data[index];
 
@@ -23,41 +25,58 @@ export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSele
                     onClick={() => onSelect(episode)}
                     style={{ height: '100%', width: '100%', textAlign: 'left' }}
                 >
-                    {episode.index !== undefined && <span className="me-2 text-muted">E{episode.index}</span>}
-                    {episode.title}
+                    <span className="text-truncate d-block">
+                        {episode.index !== undefined && <span className="me-2 text-muted">E{episode.index}</span>}
+                        {episode.title}
+                    </span>
                 </button>
             </div>
         );
     };
 
-    const ITEM_SIZE = 50;
-    const MAX_ITEMS = 8;
+    const ITEM_SIZE = 45;
+    const MAX_ITEMS = 6;
     const listHeight = Math.min(Math.max(episodes.length, 1), MAX_ITEMS) * ITEM_SIZE;
 
     return (
-        <div className="card shadow-sm mb-4" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header bg-white">
-                <h5 className="mb-0">Episodes</h5>
+        <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+                className="card-header bg-white"
+                style={{
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    borderBottomLeftRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
+                    borderBottomRightRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
+                    borderBottom: isCollapsed ? 'none' : undefined
+                }}
+                onClick={onToggleCollapse}
+            >
+                <h5 className="mb-0 d-flex justify-content-between align-items-center">
+                    <span>Episodes</span>
+                    {onToggleCollapse && <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>}
+                </h5>
             </div>
-            <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
-                {episodes.length > 0 ? (
-                    <AutoSizer disableHeight>
-                        {({ width }) => (
-                            <List
-                                height={listHeight}
-                                itemCount={episodes.length}
-                                itemSize={ITEM_SIZE}
-                                width={width}
-                                itemData={episodes}
-                            >
-                                {Row}
-                            </List>
-                        )}
-                    </AutoSizer>
-                ) : (
-                    <div className="list-group-item text-muted">No episodes found</div>
-                )}
-            </div>
+            {!isCollapsed && (
+                <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
+                    {episodes.length > 0 ? (
+                        <AutoSizer disableHeight>
+                            {({ width }) => (
+                                <List
+                                    height={listHeight}
+                                    itemCount={episodes.length}
+                                    itemSize={ITEM_SIZE}
+                                    width={width}
+                                    itemData={episodes}
+                                >
+                                    {Row}
+                                </List>
+                            )}
+                        </AutoSizer>
+                    ) : (
+                        <div className="list-group-item text-muted">No episodes found</div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

@@ -1,21 +1,19 @@
 import React, { useState, Suspense } from 'react';
 import { useMediaBrowser } from '../hooks/useMediaBrowser';
 import { useBatchUpdater } from '../hooks/useBatchUpdater';
-import { LibraryList } from './Media/LibraryList';
-import { ShowList } from './Media/ShowList';
-import { SeasonList } from './Media/SeasonList';
-import { EpisodeList } from './Media/EpisodeList';
+import { MediaNavigation } from './Media/MediaNavigation';
 import { AudioTable } from './Tracks/AudioTable';
 import { SubtitleTable } from './Tracks/SubtitleTable';
 
 // Lazy load ProgressModal
 const ProgressModal = React.lazy(() => import('./Layout/ProgressModal').then(module => ({ default: module.ProgressModal })));
-import { LoadingSpinner } from './Layout/LoadingSpinner';
+import { LoadingOverlay } from './Layout/LoadingOverlay';
 import { ErrorMessage } from './Layout/ErrorMessage';
 
 export const MediaBrowser: React.FC = () => {
     const {
         libraries,
+        serverName,
         selectedLibrary,
         shows,
         selectedShow,
@@ -68,6 +66,16 @@ export const MediaBrowser: React.FC = () => {
         }
     };
 
+    // Determine loading message based on what's being loaded
+    const getLoadingMessage = () => {
+        if (!selectedLibrary) return 'Loading libraries...';
+        if (!selectedShow && selectedLibrary.type !== 'movie') return 'Loading shows...';
+        if (selectedLibrary.type === 'movie') return 'Loading movies...';
+        if (!selectedSeason) return 'Loading seasons...';
+        if (!selectedEpisode) return 'Loading episodes...';
+        return 'Loading track information...';
+    };
+
     // Breadcrumb / Header Logic
     const renderHeader = () => {
         const isMovie = selectedLibrary?.type === 'movie';
@@ -76,7 +84,10 @@ export const MediaBrowser: React.FC = () => {
             <div className="row">
                 <div className="col-12">
                     <nav aria-label="breadcrumb" className="mb-2">
-                        <ol className="breadcrumb">
+                        <ol className="breadcrumb mb-0" style={{ padding: '6px 4px' }}>
+                            <li className={`breadcrumb-item ${!selectedLibrary ? 'active' : ''}`}>
+                                {serverName || 'Server'}
+                            </li>
                             {selectedLibrary && (
                                 <li className={`breadcrumb-item ${(!selectedShow && !isMovie) || isMovie ? 'active' : ''}`}>
                                     {selectedLibrary.title}
@@ -101,6 +112,7 @@ export const MediaBrowser: React.FC = () => {
 
     return (
         <div className="container-fluid">
+            {loading && <LoadingOverlay message={getLoadingMessage()} />}
             <Suspense fallback={null}>
                 <ProgressModal
                     show={progress.isProcessing || (progress.results.length > 0 && progress.current === progress.total)}
@@ -119,45 +131,28 @@ export const MediaBrowser: React.FC = () => {
             <div className="row">
                 {/* Navigation Column */}
                 <div className="col-md-3">
-                    <LibraryList
+                    <MediaNavigation
                         libraries={libraries}
                         selectedLibrary={selectedLibrary}
-                        onSelect={selectLibrary}
+                        onSelectLibrary={selectLibrary}
+                        shows={shows}
+                        selectedShow={selectedShow}
+                        onSelectShow={selectShow}
+                        seasons={seasons}
+                        selectedSeason={selectedSeason}
+                        onSelectSeason={selectSeason}
+                        episodes={episodes}
+                        selectedEpisode={selectedEpisode}
+                        onSelectEpisode={selectEpisode}
                     />
-
-                    {selectedLibrary && (
-                        <ShowList
-                            shows={shows}
-                            selectedShow={selectedShow}
-                            onSelect={selectShow}
-                            libraryType={selectedLibrary.type}
-                        />
-                    )}
-
-                    {selectedShow && seasons.length > 0 && (
-                        <SeasonList
-                            seasons={seasons}
-                            selectedSeason={selectedSeason}
-                            onSelect={selectSeason}
-                        />
-                    )}
-
-                    {selectedSeason && (
-                        <EpisodeList
-                            episodes={episodes}
-                            selectedEpisode={selectedEpisode}
-                            onSelect={selectEpisode}
-                        />
-                    )}
                 </div>
 
                 {/* Content Column */}
                 <div className="col-md-9 position-relative">
-                    {loading && <LoadingSpinner overlay message="Loading content..." />}
 
                     {selectedEpisode ? (
                         <div>
-                            <div className="d-flex justify-content-between align-items-center mb-4">
+                            <div className="d-flex justify-content-between align-items-center mb-1">
                                 <h3>{selectedEpisode.title}</h3>
                             </div>
 
@@ -188,8 +183,17 @@ export const MediaBrowser: React.FC = () => {
                         </div>
                     ) : (
                         <div className="text-center text-muted my-5">
-                            <h4>Select an episode to view tracks</h4>
-                            <p>Navigate using the menu on the left</p>
+                            <h4>
+                                {!selectedLibrary ? 'Select a Library' :
+                                    selectedLibrary.type === 'movie' && !selectedEpisode ? 'Select a Movie' :
+                                        !selectedShow ? 'Select a Show' :
+                                            !selectedSeason ? 'Select a Season' :
+                                                'Select an Episode'}
+                            </h4>
+                            <p>
+                                <span className="d-md-none">Navigate using the menu above</span>
+                                <span className="d-none d-md-inline">Navigate using the menu on the left</span>
+                            </p>
                         </div>
                     )}
                 </div>

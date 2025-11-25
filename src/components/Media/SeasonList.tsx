@@ -7,9 +7,11 @@ interface Props {
     seasons: PlexMetadata[];
     selectedSeason: PlexMetadata | null;
     onSelect: (season: PlexMetadata) => void;
+    isCollapsed?: boolean;
+    onToggleCollapse?: () => void;
 }
 
-export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect }) => {
+export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect, isCollapsed = false, onToggleCollapse }) => {
     const Row = ({ index, style, data }: ListChildComponentProps<PlexMetadata[]>) => {
         const season = data[index];
 
@@ -23,40 +25,55 @@ export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect 
                     onClick={() => onSelect(season)}
                     style={{ height: '100%', width: '100%', textAlign: 'left' }}
                 >
-                    {season.title}
+                    <span className="text-truncate d-block">{season.title}</span>
                 </button>
             </div>
         );
     };
 
-    const ITEM_SIZE = 50;
-    const MAX_ITEMS = 8;
+    const ITEM_SIZE = 45;
+    const MAX_ITEMS = 6;
     const listHeight = Math.min(Math.max(seasons.length, 1), MAX_ITEMS) * ITEM_SIZE;
 
     return (
-        <div className="card shadow-sm mb-4" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header bg-white">
-                <h5 className="mb-0">Seasons</h5>
+        <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+                className="card-header bg-white"
+                style={{
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    borderBottomLeftRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
+                    borderBottomRightRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
+                    borderBottom: isCollapsed ? 'none' : undefined
+                }}
+                onClick={onToggleCollapse}
+            >
+                <h5 className="mb-0 d-flex justify-content-between align-items-center">
+                    <span>Seasons</span>
+                    {onToggleCollapse && <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>}
+                </h5>
             </div>
-            <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
-                {seasons.length > 0 ? (
-                    <AutoSizer disableHeight>
-                        {({ width }) => (
-                            <List
-                                height={listHeight}
-                                itemCount={seasons.length}
-                                itemSize={ITEM_SIZE}
-                                width={width}
-                                itemData={seasons}
-                            >
-                                {Row}
-                            </List>
-                        )}
-                    </AutoSizer>
-                ) : (
-                    <div className="list-group-item text-muted">No seasons found</div>
-                )}
-            </div>
+            {!isCollapsed && (
+                <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
+                    {seasons.length > 0 ? (
+                        <AutoSizer disableHeight>
+                            {({ width }) => (
+                                <List
+                                    height={listHeight}
+                                    itemCount={seasons.length}
+                                    itemSize={ITEM_SIZE}
+                                    width={width}
+                                    itemData={seasons}
+                                >
+                                    {Row}
+                                </List>
+                            )}
+                        </AutoSizer>
+                    ) : (
+                        <div className="list-group-item text-muted">No seasons found</div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

@@ -118,7 +118,7 @@ export const MainApp: React.FC = () => {
         return (
             <>
                 <Header onSwitchUser={handleRequestUserSwitch} />
-                <div className="container-fluid py-4">
+                <div className="container-fluid py-2">
                     <MediaBrowser />
                 </div>
             </>
