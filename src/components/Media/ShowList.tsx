@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { PlexMetadata } from '../../types/plex';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     shows: PlexMetadata[];
@@ -14,6 +15,16 @@ interface Props {
 
 export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libraryType, isCollapsed = false, onToggleCollapse }) => {
     const [filter, setFilter] = useState('');
+    const isMobile = useIsMobile();
+
+    const handleSelect = (show: PlexMetadata) => {
+        onSelect(show);
+
+        // Auto-collapse on mobile after selection
+        if (isMobile && !isCollapsed && onToggleCollapse) {
+            onToggleCollapse();
+        }
+    };
 
     const filteredShows = shows.filter(show =>
         show.title.toLowerCase().includes(filter.toLowerCase())
@@ -36,7 +47,7 @@ export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libra
             <div style={style}>
                 <button
                     className={`list-group-item list-group-item-action rounded-0 ${index === 0 ? 'border-0' : 'border-start-0 border-end-0 border-bottom-0'} ${selectedShow?.ratingKey === show.ratingKey ? 'active' : ''}`}
-                    onClick={() => onSelect(show)}
+                    onClick={() => handleSelect(show)}
                     style={{ height: '100%', width: '100%', textAlign: 'left' }}
                 >
                     <div className="d-flex justify-content-between align-items-center">

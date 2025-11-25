@@ -1,13 +1,30 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>temp-app</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Open Graph / Social Media Preview -->
+  <meta property="og:title" content="PASTA" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.pastatool.com" />
+  <meta property="og:image" content="https://www.pastatool.com/images/android-chrome-512.png" />
+  <meta property="og:description" content="Audio & Subtitle Track Changer for Plex" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple_icon180.png" />
+  <link rel="shortcut icon" sizes="192x192" href="/images/android-chrome-192.png" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <title>PASTA | Audio & Subtitle Track Changer for Plex</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

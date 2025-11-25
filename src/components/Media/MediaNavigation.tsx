@@ -46,10 +46,16 @@ export const MediaNavigation: React.FC<Props> = ({
         setCollapsedSections(new Set());
     }, [user, serverUrl]);
 
-    // Expand all sections when library changes
+    // Expand shows, seasons, and episodes when library changes (but keep libraries collapsed if user collapsed it)
     useEffect(() => {
         if (selectedLibrary) {
-            setCollapsedSections(new Set());
+            setCollapsedSections(prev => {
+                const newSet = new Set(prev);
+                newSet.delete('shows');
+                newSet.delete('seasons');
+                newSet.delete('episodes');
+                return newSet;
+            });
         }
     }, [selectedLibrary?.key]);
 

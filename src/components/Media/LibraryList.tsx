@@ -2,6 +2,7 @@ import React from 'react';
 import type { PlexLibrary } from '../../types/plex';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     libraries: PlexLibrary[];
@@ -12,6 +13,17 @@ interface Props {
 }
 
 export const LibraryList: React.FC<Props> = ({ libraries, selectedLibrary, onSelect, isCollapsed = false, onToggleCollapse }) => {
+    const isMobile = useIsMobile();
+
+    const handleSelect = (lib: PlexLibrary) => {
+        onSelect(lib);
+
+        // Auto-collapse on mobile after selection
+        if (isMobile && !isCollapsed && onToggleCollapse) {
+            onToggleCollapse();
+        }
+    };
+
     const Row = ({ index, style, data }: ListChildComponentProps<PlexLibrary[]>) => {
         const lib = data[index];
         if (!lib) return null;
@@ -20,7 +32,7 @@ export const LibraryList: React.FC<Props> = ({ libraries, selectedLibrary, onSel
             <div style={style}>
                 <button
                     className={`list-group-item list-group-item-action rounded-0 ${index === 0 ? 'border-0' : 'border-start-0 border-end-0 border-bottom-0'} ${selectedLibrary?.key === lib.key ? 'active' : ''}`}
-                    onClick={() => onSelect(lib)}
+                    onClick={() => handleSelect(lib)}
                     style={{ height: '100%', width: '100%', textAlign: 'left' }}
                 >
                     <span className="text-truncate d-block">{lib.title}</span>

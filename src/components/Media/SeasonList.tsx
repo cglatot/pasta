@@ -2,6 +2,7 @@ import React from 'react';
 import type { PlexMetadata } from '../../types/plex';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     seasons: PlexMetadata[];
@@ -12,6 +13,17 @@ interface Props {
 }
 
 export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect, isCollapsed = false, onToggleCollapse }) => {
+    const isMobile = useIsMobile();
+
+    const handleSelect = (season: PlexMetadata) => {
+        onSelect(season);
+
+        // Auto-collapse on mobile after selection
+        if (isMobile && !isCollapsed && onToggleCollapse) {
+            onToggleCollapse();
+        }
+    };
+
     const Row = ({ index, style, data }: ListChildComponentProps<PlexMetadata[]>) => {
         const season = data[index];
 
@@ -22,7 +34,7 @@ export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect,
             <div style={style}>
                 <button
                     className={`list-group-item list-group-item-action rounded-0 ${index === 0 ? 'border-0' : 'border-start-0 border-end-0 border-bottom-0'} ${selectedSeason?.ratingKey === season.ratingKey ? 'active' : ''}`}
-                    onClick={() => onSelect(season)}
+                    onClick={() => handleSelect(season)}
                     style={{ height: '100%', width: '100%', textAlign: 'left' }}
                 >
                     <span className="text-truncate d-block">{season.title}</span>

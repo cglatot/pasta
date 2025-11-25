@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHomeUsers } from '../../hooks/usePlexQueries';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     onSwitchUser?: () => void;
@@ -11,6 +12,7 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [hasManagedUsers, setHasManagedUsers] = useState(false);
+    const isMobile = useIsMobile();
 
     const { data: homeUsers } = useHomeUsers(clientIdentifier, adminToken || accessToken);
 
@@ -23,12 +25,14 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
     return (
         <>
             <nav className="navbar navbar-expand-lg navbar-dark static-top" style={{ backgroundColor: '#0d0d0d' }}>
-                <div className="container-fluid d-flex justify-content-between px-5">
-                    <a className="navbar-brand" href="/">
-                        <img src="/images/Logo_Title_Large.png" alt="PASTA" height="50" />
-                    </a>
+                <div className={`container-fluid ${isMobile ? 'flex-column' : 'd-flex justify-content-between'} px-5`}>
+                    <div className={isMobile ? 'w-100 text-center mb-2' : ''}>
+                        <a className="navbar-brand" href="/" style={isMobile ? { marginRight: 0 } : undefined}>
+                            <img src="/images/Logo_Title_Large.png" alt="PASTA" height="50" />
+                        </a>
+                    </div>
 
-                    <div className="d-flex align-items-center">
+                    <div className={`d-flex align-items-center ${isMobile ? 'w-100 justify-content-center' : ''}`}>
                         {isAuthenticated && user && (
                             <div className="dropdown me-3">
                                 <button
