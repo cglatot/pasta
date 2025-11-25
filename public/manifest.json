@@ -1,0 +1,40 @@
+{
+   "name": "PASTA | Audio & Subtitle Track Changer for Plex",
+   "short_name": "PASTA",
+   "description": "Easily manage audio and subtitle tracks for your Plex media library. Change tracks for entire TV series, seasons, or individual episodes.",
+   "id": "/",
+   "start_url": "/",
+   "scope": "/",
+   "display": "standalone",
+   "display_override": [
+      "fullscreen",
+      "standalone"
+   ],
+   "orientation": "any",
+   "theme_color": "#000000",
+   "background_color": "#000000",
+   "categories": [
+      "entertainment",
+      "utilities"
+   ],
+   "icons": [
+      {
+         "src": "images/android-chrome-192-maskable.png",
+         "sizes": "192x192",
+         "type": "image/png",
+         "purpose": "any maskable"
+      },
+      {
+         "src": "images/android-chrome-192.png",
+         "sizes": "192x192",
+         "type": "image/png",
+         "purpose": "any"
+      },
+      {
+         "src": "images/android-chrome-512.png",
+         "sizes": "512x512",
+         "type": "image/png",
+         "purpose": "any"
+      }
+   ]
+}
