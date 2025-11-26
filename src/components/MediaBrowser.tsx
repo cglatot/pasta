@@ -85,7 +85,12 @@ export const MediaBrowser: React.FC = () => {
 
     const toggleLibraryMode = () => {
         if (!isLibraryMode) {
-            setShowWarning(true);
+            const dismissed = localStorage.getItem('pasta_library_warning_dismissed');
+            if (dismissed === 'true') {
+                setIsLibraryMode(true);
+            } else {
+                setShowWarning(true);
+            }
         } else {
             setIsLibraryMode(false);
         }
@@ -153,7 +158,10 @@ export const MediaBrowser: React.FC = () => {
 
             <WarningModal
                 show={showWarning}
-                onAccept={() => {
+                onAccept={(dontShowAgain) => {
+                    if (dontShowAgain) {
+                        localStorage.setItem('pasta_library_warning_dismissed', 'true');
+                    }
                     setShowWarning(false);
                     setIsLibraryMode(true);
                 }}

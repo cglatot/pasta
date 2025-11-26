@@ -2,18 +2,27 @@ import React from 'react';
 
 interface Props {
     show: boolean;
-    onAccept: () => void;
+    onAccept: (dontShowAgain: boolean) => void;
     onCancel: () => void;
 }
 
 export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
+    const [dontShowAgain, setDontShowAgain] = React.useState(false);
+
+    // Reset checkbox when modal opens
+    React.useEffect(() => {
+        if (show) {
+            setDontShowAgain(false);
+        }
+    }, [show]);
+
     if (!show) return null;
 
     return (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
-                    <div className="modal-header border-bottom">
+                    <div className="modal-header text-white" style={{ backgroundColor: '#212529' }}>
                         <h5 className="modal-title">
                             <i className="fas fa-exclamation-triangle me-2 text-warning"></i>
                             Warning: Library Mode
@@ -34,13 +43,27 @@ export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
                         </div>
                         <p className="mb-0">Are you sure you want to proceed?</p>
                     </div>
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={onCancel}>
-                            Cancel
-                        </button>
-                        <button type="button" className="btn btn-warning" onClick={onAccept}>
-                            I Understand, Enable Library Mode
-                        </button>
+                    <div className="modal-footer d-flex flex-column align-items-end">
+                        <div className="d-flex justify-content-end w-100 gap-2 mb-2">
+                            <button type="button" className="btn btn-secondary" onClick={onCancel}>
+                                Cancel
+                            </button>
+                            <button type="button" className="btn btn-warning" onClick={() => onAccept(dontShowAgain)}>
+                                I Understand, Enable Library Mode
+                            </button>
+                        </div>
+                        <div className="d-flex align-items-center justify-content-end">
+                            <label className="text-muted small me-2" htmlFor="dontShowAgain">
+                                Do not show this message again
+                            </label>
+                            <input
+                                className="form-check-input mt-0 ms-0"
+                                type="checkbox"
+                                id="dontShowAgain"
+                                checked={dontShowAgain}
+                                onChange={(e) => setDontShowAgain(e.target.checked)}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
