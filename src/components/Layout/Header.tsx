@@ -150,15 +150,12 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
                                 <p>The site uses some minor technical cookies to help improve your experience (for example, remembering your details if you choose that option).
                                     Third-party cookies are not used on this site. By continuing to use this site, you agree to the use of these functional cookies.
                                 </p>
-                                <p>
-                                    <iframe
-                                        id="kofiframe"
-                                        src="https://ko-fi.com/cglatot/?hidefeed=true&widget=true&embed=true&preview=true"
-                                        style={{ border: 'none', width: '100%', padding: '4px', background: '#f9f9f9' }}
-                                        height="712"
-                                        title="cglatot"
-                                    ></iframe>
-                                </p>
+                                <div className="text-center my-3">
+                                    <a href="https://ko-fi.com/cglatot" target="_blank" rel="noreferrer" className="btn btn-warning btn-lg text-dark fw-bold">
+                                        <i className="fas fa-mug-hot me-2"></i>
+                                        Buy me a coffee on Ko-fi
+                                    </a>
+                                </div>
                                 <p>Enjoying the tool? Consider adding to my coffee funds :)</p>
                             </div>
                             <div className="modal-footer">

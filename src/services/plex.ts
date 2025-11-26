@@ -100,9 +100,11 @@ export const getLibraryItems = async (
     serverUrl: string,
     libraryId: string,
     clientIdentifier: string,
-    token: string
+    token: string,
+    params?: Record<string, string | number>
 ) => {
     const response = await axios.get<PlexMediaContainer<PlexMetadata>>(`${serverUrl}/library/sections/${libraryId}/all`, {
+        params,
         headers: getHeaders(clientIdentifier, token),
         timeout: DEFAULT_TIMEOUT,
     });

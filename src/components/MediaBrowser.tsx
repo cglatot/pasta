@@ -10,6 +10,7 @@ import { useIsMobile } from '../hooks/useIsMobile';
 const ProgressModal = React.lazy(() => import('./Layout/ProgressModal').then(module => ({ default: module.ProgressModal })));
 import { LoadingOverlay } from './Layout/LoadingOverlay';
 import { ErrorMessage } from './Layout/ErrorMessage';
+import { WarningModal } from './Layout/WarningModal';
 
 export const MediaBrowser: React.FC = () => {
     const isMobile = useIsMobile();
@@ -32,11 +33,18 @@ export const MediaBrowser: React.FC = () => {
         refreshEpisode
     } = useMediaBrowser();
 
-    const { progress, updateSeason, updateShow, updateSingleEpisode, resetProgress } = useBatchUpdater();
+    const { progress, updateSeason, updateShow, updateLibrary, updateSingleEpisode, resetProgress } = useBatchUpdater();
     const [audioKeyword, setAudioKeyword] = useState<string>('');
     const [subtitleKeyword, setSubtitleKeyword] = useState<string>('');
+    const [isLibraryMode, setIsLibraryMode] = useState(false);
+    const [showWarning, setShowWarning] = useState(false);
 
-    const handleStreamUpdate = async (streamId: number, scope: 'episode' | 'season' | 'show', type: 'audio' | 'subtitle') => {
+    // Reset Library Mode when navigating
+    React.useEffect(() => {
+        setIsLibraryMode(false);
+    }, [selectedLibrary?.key, selectedShow?.ratingKey, selectedSeason?.ratingKey, selectedEpisode?.ratingKey, serverName]);
+
+    const handleStreamUpdate = async (streamId: number, scope: 'episode' | 'season' | 'show' | 'library', type: 'audio' | 'subtitle') => {
         if (!selectedEpisode) return;
 
         const part = selectedEpisode.Media?.[0]?.Part?.[0];
@@ -65,6 +73,26 @@ export const MediaBrowser: React.FC = () => {
             } else {
                 alert('No show selected');
             }
+        } else if (scope === 'library') {
+            if (selectedLibrary) {
+                await updateLibrary(selectedLibrary, targetStream, type, keyword);
+                await refreshEpisode();
+            } else {
+                alert('No library selected');
+            }
+        }
+    };
+
+    const toggleLibraryMode = () => {
+        if (!isLibraryMode) {
+            const dismissed = localStorage.getItem('pasta_library_warning_dismissed');
+            if (dismissed === 'true') {
+                setIsLibraryMode(true);
+            } else {
+                setShowWarning(true);
+            }
+        } else {
+            setIsLibraryMode(false);
         }
     };
 
@@ -128,6 +156,21 @@ export const MediaBrowser: React.FC = () => {
 
             {error && <ErrorMessage message={error} />}
 
+            <WarningModal
+                show={showWarning}
+                onAccept={(dontShowAgain) => {
+                    if (dontShowAgain) {
+                        localStorage.setItem('pasta_library_warning_dismissed', 'true');
+                    }
+                    setShowWarning(false);
+                    setIsLibraryMode(true);
+                }}
+                onCancel={() => {
+                    setShowWarning(false);
+                    setIsLibraryMode(false);
+                }}
+            />
+
             {renderHeader()}
 
             <div className="row">
@@ -152,10 +195,24 @@ export const MediaBrowser: React.FC = () => {
                 {/* Content Column */}
                 <div className={`col-md-9 position-relative ${isMobile ? 'px-3' : ''}`}>
 
+
                     {selectedEpisode ? (
                         <div>
                             <div className="d-flex justify-content-between align-items-center mb-1">
                                 <h3>{selectedEpisode.title}</h3>
+                                <div className="form-check form-switch d-flex align-items-center ps-0 gap-2">
+                                    <input
+                                        className="form-check-input ms-0 mt-0"
+                                        type="checkbox"
+                                        role="switch"
+                                        id="libraryModeSwitch"
+                                        checked={isLibraryMode}
+                                        onChange={toggleLibraryMode}
+                                    />
+                                    <label className="form-check-label fw-bold" htmlFor="libraryModeSwitch" style={{ fontSize: '1rem' }}>
+                                        Apply to Library
+                                    </label>
+                                </div>
                             </div>
 
                             {selectedEpisode.Media?.[0]?.Part?.[0]?.Stream ? (
@@ -167,6 +224,7 @@ export const MediaBrowser: React.FC = () => {
                                             keyword={audioKeyword}
                                             onKeywordChange={setAudioKeyword}
                                             isMovie={selectedLibrary?.type === 'movie'}
+                                            isLibraryMode={isLibraryMode}
                                         />
                                     </div>
                                     <div className={isMobile ? 'col-12' : 'col-md-6'}>
@@ -176,6 +234,7 @@ export const MediaBrowser: React.FC = () => {
                                             keyword={subtitleKeyword}
                                             onKeywordChange={setSubtitleKeyword}
                                             isMovie={selectedLibrary?.type === 'movie'}
+                                            isLibraryMode={isLibraryMode}
                                         />
                                     </div>
                                 </div>
