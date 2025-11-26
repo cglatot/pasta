@@ -35,8 +35,6 @@ PASTA runs entirely client-side. This means that you are not passing anything to
 
 Here is an  example compose to help you get started creating a container.
 
-
-
 ```yaml
 ---
 version: "3"
@@ -49,3 +47,16 @@ services:
       - 8087:80 
     restart: unless-stopped
 ```
+
+### Docker for ARM based devices
+
+Here's a basic guide to run on a Raspberry Pi. Other ARM based devices should be similar. (Thanks to /u/MatthKarl on reddit for this!)
+
+1. `git clone https://github.com/cglatot/pasta`
+2. `cd pasta`
+3. `docker buildx build -t "cglatot/pasta:latest" --platform linux/arm64 .` (Don't forget the . at the end of the command)
+4. `nano docker-compose.yml`
+5. Copy paste the yml example above
+6. `docker compose up -d`
+You should have it up and running and can access it on the machine's IP address plus port 8087.
+
