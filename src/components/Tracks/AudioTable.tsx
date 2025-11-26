@@ -4,13 +4,14 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     streams: PlexStream[];
-    onSelect: (streamId: number, scope: 'episode' | 'season' | 'show') => void;
+    onSelect: (streamId: number, scope: 'episode' | 'season' | 'show' | 'library') => void;
     keyword: string;
     onKeywordChange: (keyword: string) => void;
     isMovie?: boolean;
+    isLibraryMode?: boolean;
 }
 
-export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeywordChange, isMovie = false }) => {
+export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeywordChange, isMovie = false, isLibraryMode = false }) => {
     const audioStreams = streams.filter(s => s.streamType === 2);
     const isMobile = useIsMobile();
 
@@ -58,7 +59,7 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                             <th>Title</th>
                             {!isMobile && <th>Language</th>}
                             {!isMobile && <th>Codec</th>}
-                            {!isMovie && <th>Actions</th>}
+                            {(isLibraryMode || !isMovie) && <th>Actions</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -83,25 +84,38 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                                         {stream.codec}
                                     </td>
                                 )}
-                                {!isMovie && (
+                                {(isLibraryMode || !isMovie) && (
                                     <td>
                                         <div className={isMobile ? 'btn-group-vertical btn-group-sm' : 'btn-group btn-group-sm'} role="group">
-                                            <button
-                                                className="btn btn-outline-secondary btn-sm"
-                                                onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'season'); }}
-                                                title="Apply to Season"
-                                                style={isMobile ? { textAlign: 'center' } : undefined}
-                                            >
-                                                Season
-                                            </button>
-                                            <button
-                                                className="btn btn-outline-secondary btn-sm"
-                                                onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'show'); }}
-                                                title="Apply to Show"
-                                                style={isMobile ? { textAlign: 'center' } : undefined}
-                                            >
-                                                Show
-                                            </button>
+                                            {isLibraryMode ? (
+                                                <button
+                                                    className="btn btn-warning btn-sm"
+                                                    onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'library'); }}
+                                                    title="Apply to Entire Library"
+                                                    style={isMobile ? { textAlign: 'center' } : undefined}
+                                                >
+                                                    Library
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        className="btn btn-outline-secondary btn-sm"
+                                                        onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'season'); }}
+                                                        title="Apply to Season"
+                                                        style={isMobile ? { textAlign: 'center' } : undefined}
+                                                    >
+                                                        Season
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-outline-secondary btn-sm"
+                                                        onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'show'); }}
+                                                        title="Apply to Show"
+                                                        style={isMobile ? { textAlign: 'center' } : undefined}
+                                                    >
+                                                        Show
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 )}

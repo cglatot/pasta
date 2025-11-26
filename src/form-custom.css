@@ -1,0 +1,38 @@
+/* ==========================
+   FORM CUSTOMIZATIONS
+   ========================== */
+
+/* Form Switches - PASTA Orange when checked, transparent when unchecked */
+.form-switch .form-check-input {
+    width: 2em !important;
+    height: 1em !important;
+    background-color: rgba(108, 117, 125, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,.5)'/%3e%3c/svg%3e") !important;
+    background-position: left center !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+    background-position: right center !important;
+}
+
+.form-switch .form-check-input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(229, 160, 13, 0.25) !important;
+}
+
+/* Regular Checkboxes - PASTA Orange */
+.form-check-input:not(.form-switch .form-check-input):checked {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.form-check-input:not(.form-switch .form-check-input):focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(229, 160, 13, 0.25) !important;
+}

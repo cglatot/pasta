@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { updateStream, getMetadataChildren, getMetadata } from '../services/plex';
+import { updateStream, getMetadataChildren, getMetadata, getLibraryItems } from '../services/plex';
 import { findMatchingStream } from '../utils/smartMatch';
 import { useAuth } from '../context/AuthContext';
-import type { PlexStream, PlexMetadata } from '../types/plex';
+import type { PlexStream, PlexMetadata, PlexLibrary } from '../types/plex';
 import type { DetailedProgressState, EpisodeResult, SkipReason, MatchReason } from '../types/batchTypes';
 import { useQueryClient } from '@tanstack/react-query';
 import { plexKeys } from './usePlexQueries';
@@ -111,6 +111,19 @@ export const useBatchUpdater = () => {
                         errorMessage: 'Cannot set audio to None'
                     };
                 }
+                // Check if "None" is already selected (i.e., no subtitle stream is selected)
+                const anySubtitleSelected = part.Stream.some(s => s.streamType === 3 && s.selected);
+                if (!anySubtitleSelected) {
+                    return {
+                        episodeTitle,
+                        seasonNumber,
+                        episodeNumber,
+                        success: false,
+                        skipReason: 'AlreadyMatched',
+                        streamName: 'None'
+                    };
+                }
+
                 streamName = 'None';
                 matchReason = 'Exact Match (All Properties)'; // Setting to None is exact
             }
@@ -148,14 +161,36 @@ export const useBatchUpdater = () => {
         keyword?: string
     ) => {
         const total = episodes.length;
+        // Determine item type based on the first episode's metadata (if available) or default to 'episode'
+        // Ideally this should be passed in, but we can infer or default.
+        // Actually, let's pass it in or infer it.
+        // For now, we'll default to 'episode' here, but updateLibrary will set it correctly if we pass it.
+        // Let's add itemType to processBatch arguments.
+
+        // Wait, I can't easily change the signature of processBatch without updating all callers.
+        // Let's infer it. If it has seasonNumber/episodeNumber it's an episode.
+        // But movies don't have those.
+        // Let's just default to 'episode' in the state init, but allow callers to override?
+        // No, let's just add the argument to processBatch. It's internal to this hook mostly.
+        // Actually updateSeason and updateShow call it too.
+
+        // Let's stick to 'episode' as default for updateSeason/updateShow.
+        // For updateLibrary, we know the type.
+
+        // Let's just update the state initialization in processBatch.
+        // We can check if the first item has `type='movie'`.
+        const firstItem = episodes[0];
+        const inferredType = firstItem?.type === 'movie' ? 'movie' : 'episode';
+
         setProgress({
             total,
             current: 0,
             success: 0,
             failed: 0,
             isProcessing: true,
-            statusMessage: `Processing ${total} episodes...`,
-            results: []
+            statusMessage: `Processing ${total} items...`,
+            results: [],
+            itemType: inferredType
         });
 
         // First, identify which episodes need metadata fetched
@@ -176,6 +211,13 @@ export const useBatchUpdater = () => {
         const fetchedEpisodes: PlexMetadata[] = [];
 
         if (episodesNeedingMetadata.length > 0 && serverUrl && accessToken) {
+            // Update status for metadata fetching
+            setProgress(prev => ({
+                ...prev,
+                total: episodesNeedingMetadata.length,
+                current: 0,
+                statusMessage: `Fetching metadata for ${episodesNeedingMetadata.length} items...`
+            }));
 
             for (let i = 0; i < episodesNeedingMetadata.length; i += BATCH_SIZE) {
                 const batch = episodesNeedingMetadata.slice(i, i + BATCH_SIZE);
@@ -192,6 +234,16 @@ export const useBatchUpdater = () => {
 
                 const batchResults = await Promise.all(batchPromises);
                 fetchedEpisodes.push(...batchResults.filter((ep): ep is PlexMetadata => ep !== null));
+
+                // Throttle metadata fetch progress updates
+                if (i % 50 === 0) {
+                    setProgress(prev => ({
+                        ...prev,
+                        current: fetchedEpisodes.length,
+                        statusMessage: `Fetched metadata: ${fetchedEpisodes.length} / ${episodesNeedingMetadata.length}`
+                    }));
+                    await new Promise(resolve => setTimeout(resolve, 10)); // Small yield
+                }
             }
         }
 
@@ -202,28 +254,43 @@ export const useBatchUpdater = () => {
         const results: EpisodeResult[] = [];
         let success = 0;
         let failed = 0;
+        let lastUpdate = Date.now();
 
         for (let i = 0; i < allEpisodes.length; i++) {
             const episode = allEpisodes[i];
             const result = await updateSingleEpisode(episode, targetStream, type, keyword);
 
-            results.push(result);
-
             if (result.success) {
                 success++;
+                results.push(result);
             } else {
                 failed++;
+                // Memory Safety: For large batches (>5000), only store Errors.
+                // Skips (AlreadyMatched, NoMatch) are counted but not stored to save memory.
+                // Increased limit from 1000 to 5000 based on user feedback.
+                if (total <= 5000 || result.skipReason === 'Error') {
+                    results.push(result);
+                }
             }
 
-            setProgress({
-                total,
-                current: i + 1,
-                success,
-                failed,
-                isProcessing: true,
-                statusMessage: `Processing episode ${i + 1} of ${total}...`,
-                results
-            });
+            // UI Throttling: Update state only every 500ms or on the last item
+            const now = Date.now();
+            if (now - lastUpdate > 500 || i === allEpisodes.length - 1) {
+                setProgress({
+                    total,
+                    current: i + 1,
+                    success,
+                    failed,
+                    isProcessing: true,
+                    statusMessage: `Processing ${i + 1} of ${total}...`,
+                    results: [...results],
+                    itemType: inferredType
+                });
+                lastUpdate = now;
+
+                // Yield to event loop to prevent freezing
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
         }
 
         setProgress({
@@ -233,8 +300,55 @@ export const useBatchUpdater = () => {
             failed,
             isProcessing: false,
             statusMessage: `Completed! ${success} successful, ${failed} failed/skipped.`,
-            results
+            results,
+            itemType: inferredType
         });
+    };
+
+    const updateLibrary = async (
+        library: PlexLibrary,
+        targetStream: PlexStream | null,
+        type: 'audio' | 'subtitle',
+        keyword?: string
+    ) => {
+        if (!serverUrl || !accessToken) return;
+
+        // Prevent navigation
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        try {
+            let episodes: PlexMetadata[] = [];
+
+            if (library.type === 'show') {
+                // Fetch all episodes directly using type=4
+                // This is much more efficient than fetching shows -> seasons -> episodes
+                episodes = await getLibraryItems(serverUrl, library.key, clientIdentifier, accessToken, { type: 4 });
+            } else if (library.type === 'movie') {
+                // Fetch all movies
+                episodes = await getLibraryItems(serverUrl, library.key, clientIdentifier, accessToken);
+            }
+
+            if (episodes.length === 0) {
+                alert('No items found in this library.');
+                return;
+            }
+
+            await processBatch(episodes, targetStream, type, keyword);
+
+            // Invalidate the library query to reflect changes
+            // Note: We don't invalidate every single item as that would be too heavy
+            queryClient.invalidateQueries({ queryKey: plexKeys.libraryItems(machineIdentifier, library.key) });
+
+        } catch (e) {
+            console.error(e);
+            alert('Failed to fetch library items');
+        } finally {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        }
     };
 
     const updateSeason = async (season: PlexMetadata, targetStream: PlexStream | null, type: 'audio' | 'subtitle', keyword?: string) => {
@@ -309,6 +423,7 @@ export const useBatchUpdater = () => {
         progress,
         updateSeason,
         updateShow,
+        updateLibrary,
         updateSingleEpisode,
         resetProgress
     };

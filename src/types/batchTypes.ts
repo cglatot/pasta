@@ -32,4 +32,5 @@ export interface DetailedProgressState {
     isProcessing: boolean;
     statusMessage: string;
     results: EpisodeResult[];
+    itemType?: 'movie' | 'episode';
 }

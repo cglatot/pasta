@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import type { DetailedProgressState } from '../../types/batchTypes';
+import type { DetailedProgressState, EpisodeResult } from '../../types/batchTypes';
+import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 interface Props {
     show: boolean;
@@ -23,11 +25,78 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
     const changedEpisodes = progress.results.filter(r => r.success);
     const skippedEpisodes = progress.results.filter(r => !r.success);
 
-    const formatEpisodeTitle = (result: typeof progress.results[0]) => {
+    const itemLabel = progress.itemType === 'movie' ? 'Movies' : 'Episodes';
+    const itemLabelSingular = progress.itemType === 'movie' ? 'Movie' : 'Episode';
+
+    const formatEpisodeTitle = (result: EpisodeResult) => {
         if (result.seasonNumber !== undefined && result.episodeNumber !== undefined) {
             return `S${result.seasonNumber}E${result.episodeNumber} - ${result.episodeTitle}`;
         }
         return result.episodeTitle;
+    };
+
+    // Virtualized Row for Changed Items
+    const ChangedRow = ({ index, style, data }: ListChildComponentProps<EpisodeResult[]>) => {
+        const result = data[index];
+        return (
+            <div style={style} className="px-2 py-2 border-bottom">
+                <div className="d-flex justify-content-between align-items-start">
+                    <div className="flex-grow-1">
+                        <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
+                        <div className="text-muted small">
+                            → {result.streamName}
+                        </div>
+                    </div>
+                    <span className="badge bg-success text-white small ms-2">
+                        {result.matchReason}
+                    </span>
+                </div>
+            </div>
+        );
+    };
+
+    // Virtualized Row for Skipped Items
+    const SkippedRow = ({ index, style, data }: ListChildComponentProps<EpisodeResult[]>) => {
+        const result = data[index];
+        let badgeText = '';
+        let badgeClass = 'bg-warning';
+
+        if (result.skipReason === 'NoMatch') {
+            badgeText = 'No Match';
+            badgeClass = 'bg-warning';
+        } else if (result.skipReason === 'AlreadyMatched') {
+            badgeText = 'Already Set';
+            badgeClass = 'bg-warning';
+        } else if (result.skipReason === 'KeywordFiltered') {
+            badgeText = 'No Match (Keyword)';
+            badgeClass = 'bg-warning';
+        } else if (result.skipReason === 'Error') {
+            badgeText = 'Error';
+            badgeClass = 'bg-danger';
+        }
+
+        return (
+            <div style={style} className="px-2 py-2 border-bottom">
+                <div className="d-flex justify-content-between align-items-start">
+                    <div className="flex-grow-1">
+                        <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
+                        {result.skipReason === 'AlreadyMatched' && result.streamName && (
+                            <div className="text-muted small">
+                                → {result.streamName}
+                            </div>
+                        )}
+                        {result.skipReason === 'Error' && result.errorMessage && (
+                            <div className="text-danger small">
+                                {result.errorMessage}
+                            </div>
+                        )}
+                    </div>
+                    <span className={`badge ${badgeClass} text-dark small ms-2`}>
+                        {badgeText}
+                    </span>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -40,14 +109,14 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                             <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
                         )}
                     </div>
-                    <div className="modal-body">
+                    <div className="modal-body" style={{ maxHeight: '85vh', overflowY: 'auto' }}>
                         {!isComplete && (
                             <>
                                 <div className="progress mb-3" style={{ height: '25px' }}>
                                     <div
-                                        className="progress-bar progress-bar-striped progress-bar-animated"
+                                        className="progress-bar progress-bar-striped progress-bar-animated bg-warning"
                                         role="progressbar"
-                                        style={{ width: `${percentage}%` }}
+                                        style={{ width: `${percentage}%`, color: 'black', fontWeight: 'bold' }}
                                         aria-valuenow={percentage}
                                         aria-valuemin={0}
                                         aria-valuemax={100}
@@ -65,105 +134,68 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                         {isComplete && (
                             <div>
                                 <div className="alert alert-success mb-3">
-                                    <strong>Completed!</strong> {progress.success} episode{progress.success !== 1 ? 's' : ''} updated, {progress.failed} skipped
+                                    <strong>Completed!</strong> {progress.success} {progress.success !== 1 ? itemLabel.toLowerCase() : itemLabelSingular.toLowerCase()} updated, {progress.failed} skipped
                                 </div>
 
-                                {/* Changed Episodes */}
+                                {/* Changed Items */}
                                 {changedEpisodes.length > 0 && (
                                     <div className="mb-3">
                                         <button
-                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center"
+                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center text-warning"
                                             onClick={() => setShowChanged(!showChanged)}
                                         >
                                             <h6 className="mb-0">
                                                 <i className={`fas fa-chevron-${showChanged ? 'down' : 'right'} me-2`}></i>
-                                                Changed Episodes ({changedEpisodes.length})
+                                                Changed {itemLabel} ({changedEpisodes.length})
                                             </h6>
                                         </button>
                                         {showChanged && (
-                                            <div className="mt-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                                <ul className="list-group list-group-flush">
-                                                    {changedEpisodes.map((result, idx) => (
-                                                        <li key={idx} className="list-group-item px-2 py-2">
-                                                            <div className="d-flex justify-content-between align-items-start">
-                                                                <div className="flex-grow-1">
-                                                                    <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
-                                                                    <div className="text-muted small">
-                                                                        → {result.streamName}
-                                                                    </div>
-                                                                </div>
-                                                                <span className="badge bg-success text-white small ms-2">
-                                                                    {result.matchReason}
-                                                                </span>
-                                                            </div>
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                            <div className="mt-2" style={{ height: '300px' }}>
+                                                <AutoSizer>
+                                                    {({ height, width }) => (
+                                                        <List
+                                                            height={height}
+                                                            itemCount={changedEpisodes.length}
+                                                            itemSize={60}
+                                                            width={width}
+                                                            itemData={changedEpisodes}
+                                                        >
+                                                            {ChangedRow}
+                                                        </List>
+                                                    )}
+                                                </AutoSizer>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Skipped Episodes */}
+                                {/* Skipped Items */}
                                 {skippedEpisodes.length > 0 && (
                                     <div className="mb-3">
                                         <button
-                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center"
+                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center text-warning"
                                             onClick={() => setShowSkipped(!showSkipped)}
                                         >
                                             <h6 className="mb-0">
                                                 <i className={`fas fa-chevron-${showSkipped ? 'down' : 'right'} me-2`}></i>
-                                                Skipped Episodes ({skippedEpisodes.length})
+                                                Skipped {itemLabel} ({skippedEpisodes.length})
                                             </h6>
                                         </button>
                                         {showSkipped && (
-                                            <div className="mt-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                                <ul className="list-group list-group-flush">
-                                                    {skippedEpisodes.map((result, idx) => {
-                                                        let badgeText = '';
-                                                        let badgeClass = 'bg-warning';
-
-                                                        if (result.skipReason === 'NoMatch') {
-                                                            badgeText = 'No Match';
-                                                            badgeClass = 'bg-warning';
-                                                        } else if (result.skipReason === 'AlreadyMatched') {
-                                                            badgeText = 'Already Set';
-                                                            badgeClass = 'bg-warning';
-                                                        } else if (result.skipReason === 'KeywordFiltered') {
-                                                            badgeText = 'No Match (Keyword)';
-                                                            badgeClass = 'bg-warning';
-                                                        } else if (result.skipReason === 'Error') {
-                                                            badgeText = 'Error';
-                                                            badgeClass = 'bg-danger';
-                                                        }
-
-                                                        return (
-                                                            <li
-                                                                key={idx}
-                                                                className="list-group-item px-2 py-2"
-                                                            >
-                                                                <div className="d-flex justify-content-between align-items-start">
-                                                                    <div className="flex-grow-1">
-                                                                        <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
-                                                                        {result.skipReason === 'AlreadyMatched' && result.streamName && (
-                                                                            <div className="text-muted small">
-                                                                                → {result.streamName}
-                                                                            </div>
-                                                                        )}
-                                                                        {result.skipReason === 'Error' && result.errorMessage && (
-                                                                            <div className="text-danger small">
-                                                                                {result.errorMessage}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                    <span className={`badge ${badgeClass} text-white small ms-2`}>
-                                                                        {badgeText}
-                                                                    </span>
-                                                                </div>
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
+                                            <div className="mt-2" style={{ height: '300px' }}>
+                                                <AutoSizer>
+                                                    {({ height, width }) => (
+                                                        <List
+                                                            height={height}
+                                                            itemCount={skippedEpisodes.length}
+                                                            itemSize={60}
+                                                            width={width}
+                                                            itemData={skippedEpisodes}
+                                                        >
+                                                            {SkippedRow}
+                                                        </List>
+                                                    )}
+                                                </AutoSizer>
                                             </div>
                                         )}
                                     </div>
