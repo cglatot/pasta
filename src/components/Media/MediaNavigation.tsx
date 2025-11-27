@@ -5,6 +5,8 @@ import { SeasonList } from './SeasonList';
 import { EpisodeList } from './EpisodeList';
 import type { PlexLibrary, PlexMetadata } from '../../types/plex';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     libraries: PlexLibrary[];
@@ -39,6 +41,8 @@ export const MediaNavigation: React.FC<Props> = ({
     onSelectEpisode
 }) => {
     const { user, serverUrl } = useAuth();
+    const { autoCollapse } = useSettings();
+    const isMobile = useIsMobile();
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
     // Reset all sections to expanded when user or server changes
@@ -54,10 +58,15 @@ export const MediaNavigation: React.FC<Props> = ({
                 newSet.delete('shows');
                 newSet.delete('seasons');
                 newSet.delete('episodes');
+
+                if (isMobile || autoCollapse) {
+                    newSet.add('libraries');
+                }
+
                 return newSet;
             });
         }
-    }, [selectedLibrary?.key]);
+    }, [selectedLibrary?.key, isMobile, autoCollapse]);
 
     // Expand seasons and episodes when show changes
     useEffect(() => {
@@ -66,10 +75,17 @@ export const MediaNavigation: React.FC<Props> = ({
                 const newSet = new Set(prev);
                 newSet.delete('seasons');
                 newSet.delete('episodes');
+
+                // Only auto-collapse the "shows" list if it's NOT a movie library
+                // For movies, selecting a movie is the end of the line (no seasons/episodes), so we keep the list open.
+                if ((isMobile || autoCollapse) && selectedLibrary?.type !== 'movie') {
+                    newSet.add('shows');
+                }
+
                 return newSet;
             });
         }
-    }, [selectedShow?.ratingKey]);
+    }, [selectedShow?.ratingKey, isMobile, autoCollapse, selectedLibrary?.type]);
 
     // Expand episodes when season changes
     useEffect(() => {
@@ -77,10 +93,15 @@ export const MediaNavigation: React.FC<Props> = ({
             setCollapsedSections(prev => {
                 const newSet = new Set(prev);
                 newSet.delete('episodes');
+
+                if (isMobile || autoCollapse) {
+                    newSet.add('seasons');
+                }
+
                 return newSet;
             });
         }
-    }, [selectedSeason?.ratingKey]);
+    }, [selectedSeason?.ratingKey, isMobile, autoCollapse]);
 
     const toggleCollapse = (section: string) => {
         setCollapsedSections(prev => {
