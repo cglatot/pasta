@@ -5,6 +5,9 @@ interface SettingsContextType {
     setAutoCollapse: (value: boolean) => void;
     maxListItems: number;
     setMaxListItems: (value: number) => void;
+    navWidth: number;
+    setNavWidth: (value: number) => void;
+    resetSettings: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -21,6 +24,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         return saved !== null ? JSON.parse(saved) : 6;
     });
 
+    const [navWidth, setNavWidthState] = useState(() => {
+        const saved = localStorage.getItem('pasta_settings_navWidth');
+        return saved !== null ? JSON.parse(saved) : 25;
+    });
+
     // Persistence wrappers
     const setAutoCollapse = (value: boolean) => {
         setAutoCollapseState(value);
@@ -32,8 +40,27 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.setItem('pasta_settings_maxListItems', JSON.stringify(value));
     };
 
+    const setNavWidth = (value: number) => {
+        setNavWidthState(value);
+        localStorage.setItem('pasta_settings_navWidth', JSON.stringify(value));
+    };
+
+    const resetSettings = () => {
+        setAutoCollapse(false);
+        setMaxListItems(6);
+        setNavWidth(25);
+    };
+
     return (
-        <SettingsContext.Provider value={{ autoCollapse, setAutoCollapse, maxListItems, setMaxListItems }}>
+        <SettingsContext.Provider value={{
+            autoCollapse,
+            setAutoCollapse,
+            maxListItems,
+            setMaxListItems,
+            navWidth,
+            setNavWidth,
+            resetSettings
+        }}>
             {children}
         </SettingsContext.Provider>
     );

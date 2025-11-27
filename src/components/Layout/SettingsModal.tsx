@@ -7,7 +7,7 @@ interface Props {
 }
 
 export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
-    const { autoCollapse, setAutoCollapse, maxListItems, setMaxListItems } = useSettings();
+    const { autoCollapse, setAutoCollapse, maxListItems, setMaxListItems, navWidth, setNavWidth, resetSettings } = useSettings();
 
     if (!show) return null;
 
@@ -55,7 +55,7 @@ export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
                                     value={maxListItems}
                                     onChange={(e) => setMaxListItems(parseInt(e.target.value))}
                                 />
-                                <span className="badge bg-warning text-dark" style={{ minWidth: '40px' }}>
+                                <span className="badge bg-pasta-orange" style={{ minWidth: '40px' }}>
                                     {maxListItems}
                                 </span>
                             </div>
@@ -63,10 +63,36 @@ export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
                                 Controls how many items are visible in the selection lists before scrolling is required.
                             </div>
                         </div>
+
+                        {/* Navigation Width Setting */}
+                        <div className="mb-3">
+                            <label htmlFor="navWidthRange" className="form-label fw-bold">Navigation Width</label>
+                            <div className="d-flex align-items-center">
+                                <input
+                                    type="range"
+                                    className="form-range flex-grow-1 me-3"
+                                    min="15"
+                                    max="50"
+                                    step="1"
+                                    id="navWidthRange"
+                                    value={navWidth}
+                                    onChange={(e) => setNavWidth(parseInt(e.target.value))}
+                                />
+                                <span className="badge bg-pasta-orange" style={{ minWidth: '40px' }}>
+                                    {navWidth}%
+                                </span>
+                            </div>
+                            <div className="form-text">
+                                Adjust the width of the navigation sidebar (15% - 50%).
+                            </div>
+                        </div>
                     </div>
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-primary" onClick={onClose}>
-                            Done
+                    <div className="modal-footer justify-content-between">
+                        <button type="button" className="btn btn-outline-secondary" onClick={resetSettings}>
+                            Restore Defaults
+                        </button>
+                        <button type="button" className="btn btn-secondary" onClick={onClose}>
+                            Close
                         </button>
                     </div>
                 </div>
