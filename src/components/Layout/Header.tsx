@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHomeUsers } from '../../hooks/usePlexQueries';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { SettingsModal } from './SettingsModal';
 
 interface Props {
     onSwitchUser?: () => void;
@@ -10,6 +11,7 @@ interface Props {
 export const Header: React.FC<Props> = ({ onSwitchUser }) => {
     const { user, logout, clearServer, isAuthenticated, clientIdentifier, accessToken, adminToken, isSharedServer } = useAuth();
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [hasManagedUsers, setHasManagedUsers] = useState(false);
     const isMobile = useIsMobile();
@@ -77,6 +79,15 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
                             </div>
                         )}
 
+                        <button
+                            onClick={() => setShowSettingsModal(true)}
+                            className="btn btn-link text-warning ms-3 p-0"
+                            style={{ border: 'none', background: 'none' }}
+                            title="Settings"
+                        >
+                            <i className="fas fa-cog fa-lg"></i>
+                        </button>
+
                         <a href="https://ko-fi.com/cglatot" target="_blank" rel="noreferrer" className="text-warning ms-3">
                             <i className="fas fa-mug-hot fa-lg"></i>
                         </a>
@@ -96,6 +107,8 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
                     </div>
                 </div>
             </nav>
+
+            <SettingsModal show={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
 
             {showHelpModal && (
                 <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>

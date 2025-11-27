@@ -3,6 +3,7 @@ import type { PlexMetadata } from '../../types/plex';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useSettings } from '../../context/SettingsContext';
 
 interface Props {
     shows: PlexMetadata[];
@@ -16,6 +17,7 @@ interface Props {
 export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libraryType, isCollapsed = false, onToggleCollapse }) => {
     const [filter, setFilter] = useState('');
     const isMobile = useIsMobile();
+    const { maxListItems } = useSettings();
 
     const handleSelect = (show: PlexMetadata) => {
         onSelect(show);
@@ -60,8 +62,7 @@ export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libra
     };
 
     const ITEM_SIZE = 45;
-    const MAX_ITEMS = 6;
-    const listHeight = Math.min(Math.max(filteredShows.length, 1), MAX_ITEMS) * ITEM_SIZE;
+    const listHeight = Math.min(Math.max(filteredShows.length, 1), maxListItems) * ITEM_SIZE;
 
     return (
         <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>

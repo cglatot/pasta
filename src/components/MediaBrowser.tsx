@@ -11,9 +11,11 @@ const ProgressModal = React.lazy(() => import('./Layout/ProgressModal').then(mod
 import { LoadingOverlay } from './Layout/LoadingOverlay';
 import { ErrorMessage } from './Layout/ErrorMessage';
 import { WarningModal } from './Layout/WarningModal';
+import { useSettings } from '../context/SettingsContext';
 
 export const MediaBrowser: React.FC = () => {
     const isMobile = useIsMobile();
+    const { navWidth } = useSettings();
     const {
         libraries,
         serverName,
@@ -175,7 +177,10 @@ export const MediaBrowser: React.FC = () => {
 
             <div className="row">
                 {/* Navigation Column */}
-                <div className={`col-md-3 ${isMobile ? 'mb-4 px-3' : ''}`}>
+                <div
+                    className={`${isMobile ? 'col-12 mb-4 px-3' : ''}`}
+                    style={!isMobile ? { width: `${navWidth}%`, flex: `0 0 ${navWidth}%` } : undefined}
+                >
                     <MediaNavigation
                         libraries={libraries}
                         selectedLibrary={selectedLibrary}
@@ -193,7 +198,7 @@ export const MediaBrowser: React.FC = () => {
                 </div>
 
                 {/* Content Column */}
-                <div className={`col-md-9 position-relative ${isMobile ? 'px-3' : ''}`}>
+                <div className={`${isMobile ? 'col-12 px-3' : 'col'} position-relative`}>
 
 
                     {selectedEpisode ? (

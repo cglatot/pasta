@@ -11,8 +11,7 @@ interface Props {
 }
 
 export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose }) => {
-    const [showChanged, setShowChanged] = useState(false); // Start collapsed
-    const [showSkipped, setShowSkipped] = useState(false); // Start collapsed
+    const [expandedSection, setExpandedSection] = useState<'changed' | 'skipped' | null>(null);
 
     if (!show) return null;
 
@@ -102,14 +101,14 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
     return (
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered modal-lg">
-                <div className="modal-content">
+                <div className="modal-content" style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
                     <div className="modal-header">
                         <h5 className="modal-title">{isComplete ? 'Update Complete' : title}</h5>
                         {isComplete && onClose && (
                             <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
                         )}
                     </div>
-                    <div className="modal-body" style={{ maxHeight: '85vh', overflowY: 'auto' }}>
+                    <div className="modal-body d-flex flex-column" style={{ overflow: 'hidden', minHeight: 0 }}>
                         {!isComplete && (
                             <>
                                 <div className="progress mb-3" style={{ height: '25px' }}>
@@ -132,25 +131,25 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                         )}
 
                         {isComplete && (
-                            <div>
-                                <div className="alert alert-success mb-3">
+                            <div className="d-flex flex-column flex-grow-1" style={{ minHeight: 0 }}>
+                                <div className="alert alert-success mb-3 flex-shrink-0">
                                     <strong>Completed!</strong> {progress.success} {progress.success !== 1 ? itemLabel.toLowerCase() : itemLabelSingular.toLowerCase()} updated, {progress.failed} skipped
                                 </div>
 
                                 {/* Changed Items */}
                                 {changedEpisodes.length > 0 && (
-                                    <div className="mb-3">
+                                    <div className="mb-3 d-flex flex-column" style={{ flex: expandedSection === 'changed' ? '1 1 auto' : '0 0 auto', minHeight: 0 }}>
                                         <button
-                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center text-warning"
-                                            onClick={() => setShowChanged(!showChanged)}
+                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center text-warning flex-shrink-0"
+                                            onClick={() => setExpandedSection(expandedSection === 'changed' ? null : 'changed')}
                                         >
                                             <h6 className="mb-0">
-                                                <i className={`fas fa-chevron-${showChanged ? 'down' : 'right'} me-2`}></i>
+                                                <i className={`fas fa-chevron-${expandedSection === 'changed' ? 'down' : 'right'} me-2`}></i>
                                                 Changed {itemLabel} ({changedEpisodes.length})
                                             </h6>
                                         </button>
-                                        {showChanged && (
-                                            <div className="mt-2" style={{ height: '300px' }}>
+                                        {expandedSection === 'changed' && (
+                                            <div className="mt-2" style={{ height: changedEpisodes.length * 60, minHeight: 0, flex: '1 1 auto', overflow: 'hidden' }}>
                                                 <AutoSizer>
                                                     {({ height, width }) => (
                                                         <List
@@ -171,18 +170,18 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
 
                                 {/* Skipped Items */}
                                 {skippedEpisodes.length > 0 && (
-                                    <div className="mb-3">
+                                    <div className="mb-3 d-flex flex-column" style={{ flex: expandedSection === 'skipped' ? '1 1 auto' : '0 0 auto', minHeight: 0 }}>
                                         <button
-                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center text-warning"
-                                            onClick={() => setShowSkipped(!showSkipped)}
+                                            className="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center text-warning flex-shrink-0"
+                                            onClick={() => setExpandedSection(expandedSection === 'skipped' ? null : 'skipped')}
                                         >
                                             <h6 className="mb-0">
-                                                <i className={`fas fa-chevron-${showSkipped ? 'down' : 'right'} me-2`}></i>
+                                                <i className={`fas fa-chevron-${expandedSection === 'skipped' ? 'down' : 'right'} me-2`}></i>
                                                 Skipped {itemLabel} ({skippedEpisodes.length})
                                             </h6>
                                         </button>
-                                        {showSkipped && (
-                                            <div className="mt-2" style={{ height: '300px' }}>
+                                        {expandedSection === 'skipped' && (
+                                            <div className="mt-2" style={{ height: skippedEpisodes.length * 60, minHeight: 0, flex: '1 1 auto', overflow: 'hidden' }}>
                                                 <AutoSizer>
                                                     {({ height, width }) => (
                                                         <List

@@ -36,3 +36,53 @@
     border-color: var(--primary-color) !important;
     box-shadow: 0 0 0 0.25rem rgba(229, 160, 13, 0.25) !important;
 }
+
+/* Custom Range Slider - PASTA Orange */
+.form-range {
+    border: none !important;
+}
+
+.form-range::-webkit-slider-thumb {
+    background-color: #ffc107 !important;
+    /* Bootstrap warning color */
+}
+
+.form-range::-webkit-slider-thumb:active {
+    background-color: #ffca2c !important;
+}
+
+.form-range::-moz-range-thumb {
+    background-color: #ffc107 !important;
+}
+
+.form-range::-moz-range-thumb:active {
+    background-color: #ffca2c !important;
+}
+
+/* Remove default focus glow/border on range slider */
+.form-range:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.25rem rgba(255, 193, 7, 0.25) !important;
+}
+
+.form-range:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.25rem rgba(255, 193, 7, 0.25) !important;
+}
+
+.form-range:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+
+/* Custom Focus Ring - PASTA Orange */
+.btn-link:focus,
+.btn-link:active {
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25) !important;
+    /* Warning color with opacity */
+}
+
+/* Override Bootstrap primary badge */
+.bg-pasta-orange {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
