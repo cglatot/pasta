@@ -89,7 +89,7 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                                         <div className={isMobile ? 'btn-group-vertical btn-group-sm' : 'btn-group btn-group-sm'} role="group">
                                             {isLibraryMode ? (
                                                 <button
-                                                    className="btn btn-warning btn-sm"
+                                                    className="btn btn-primary btn-sm"
                                                     onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'library'); }}
                                                     title="Apply to Entire Library"
                                                     style={isMobile ? { textAlign: 'center' } : undefined}
@@ -99,7 +99,7 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                                             ) : (
                                                 <>
                                                     <button
-                                                        className="btn btn-outline-secondary btn-sm"
+                                                        className="btn btn-outline-primary btn-sm"
                                                         onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'season'); }}
                                                         title="Apply to Season"
                                                         style={isMobile ? { textAlign: 'center' } : undefined}
@@ -107,7 +107,7 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                                                         Season
                                                     </button>
                                                     <button
-                                                        className="btn btn-outline-secondary btn-sm"
+                                                        className="btn btn-outline-primary btn-sm"
                                                         onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'show'); }}
                                                         title="Apply to Show"
                                                         style={isMobile ? { textAlign: 'center' } : undefined}

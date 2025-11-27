@@ -115,6 +115,37 @@ export const MediaNavigation: React.FC<Props> = ({
         });
     };
 
+    // Auto-scroll Refs
+    const showListRef = React.useRef<HTMLDivElement>(null);
+    const seasonListRef = React.useRef<HTMLDivElement>(null);
+    const episodeListRef = React.useRef<HTMLDivElement>(null);
+
+    // Auto-scroll logic
+    useEffect(() => {
+        if (selectedLibrary && showListRef.current) {
+            // Small delay to allow render
+            setTimeout(() => {
+                showListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }, [selectedLibrary?.key, shows]);
+
+    useEffect(() => {
+        if (selectedShow && seasonListRef.current) {
+            setTimeout(() => {
+                seasonListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }, [selectedShow?.ratingKey, seasons]);
+
+    useEffect(() => {
+        if (selectedSeason && episodeListRef.current) {
+            setTimeout(() => {
+                episodeListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }, [selectedSeason?.ratingKey, episodes]);
+
     return (
         <>
             <LibraryList
@@ -127,6 +158,7 @@ export const MediaNavigation: React.FC<Props> = ({
 
             {selectedLibrary && (
                 <ShowList
+                    ref={showListRef}
                     shows={shows}
                     selectedShow={selectedShow}
                     onSelect={onSelectShow}
@@ -138,6 +170,7 @@ export const MediaNavigation: React.FC<Props> = ({
 
             {selectedShow && seasons.length > 0 && (
                 <SeasonList
+                    ref={seasonListRef}
                     seasons={seasons}
                     selectedSeason={selectedSeason}
                     onSelect={onSelectSeason}
@@ -148,6 +181,7 @@ export const MediaNavigation: React.FC<Props> = ({
 
             {selectedSeason && (
                 <EpisodeList
+                    ref={episodeListRef}
                     episodes={episodes}
                     selectedEpisode={selectedEpisode}
                     onSelect={onSelectEpisode}

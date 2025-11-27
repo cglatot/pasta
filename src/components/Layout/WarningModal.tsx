@@ -48,7 +48,7 @@ export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
                             <button type="button" className="btn btn-secondary" onClick={onCancel}>
                                 Cancel
                             </button>
-                            <button type="button" className="btn btn-warning" onClick={() => onAccept(dontShowAgain)}>
+                            <button type="button" className="btn btn-primary" onClick={() => onAccept(dontShowAgain)}>
                                 I Understand, Enable Library Mode
                             </button>
                         </div>
