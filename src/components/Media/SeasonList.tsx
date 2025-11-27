@@ -13,7 +13,7 @@ interface Props {
     onToggleCollapse?: () => void;
 }
 
-export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect, isCollapsed = false, onToggleCollapse }) => {
+export const SeasonList = React.forwardRef<HTMLDivElement, Props>(({ seasons, selectedSeason, onSelect, isCollapsed = false, onToggleCollapse }, ref) => {
     const isMobile = useIsMobile();
     const { maxListItems } = useSettings();
 
@@ -39,7 +39,9 @@ export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect,
                     onClick={() => handleSelect(season)}
                     style={{ height: '100%', width: '100%', textAlign: 'left' }}
                 >
-                    <span className="text-truncate d-block">{season.title}</span>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <span>{season.title}</span>
+                    </div>
                 </button>
             </div>
         );
@@ -49,7 +51,7 @@ export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect,
     const listHeight = Math.min(Math.max(seasons.length, 1), maxListItems) * ITEM_SIZE;
 
     return (
-        <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div ref={ref} className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
             <div
                 className="card-header bg-white"
                 style={{
@@ -96,4 +98,4 @@ export const SeasonList: React.FC<Props> = ({ seasons, selectedSeason, onSelect,
             )}
         </div>
     );
-};
+});

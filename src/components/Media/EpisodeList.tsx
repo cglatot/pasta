@@ -13,7 +13,7 @@ interface Props {
     onToggleCollapse?: () => void;
 }
 
-export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSelect, isCollapsed = false, onToggleCollapse }) => {
+export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, selectedEpisode, onSelect, isCollapsed = false, onToggleCollapse }, ref) => {
     const isMobile = useIsMobile();
     const { maxListItems } = useSettings();
 
@@ -39,10 +39,12 @@ export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSele
                     onClick={() => handleSelect(episode)}
                     style={{ height: '100%', width: '100%', textAlign: 'left' }}
                 >
-                    <span className="text-truncate d-block">
-                        {episode.index !== undefined && <span className="me-2 text-muted">E{episode.index}</span>}
-                        {episode.title}
-                    </span>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <span className="text-truncate" style={{ maxWidth: '85%' }}>
+                            {episode.index !== undefined && <span className="me-2 text-muted">E{episode.index}</span>}
+                            {episode.title}
+                        </span>
+                    </div>
                 </button>
             </div>
         );
@@ -52,7 +54,7 @@ export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSele
     const listHeight = Math.min(Math.max(episodes.length, 1), maxListItems) * ITEM_SIZE;
 
     return (
-        <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div ref={ref} className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
             <div
                 className="card-header bg-white"
                 style={{
@@ -99,4 +101,4 @@ export const EpisodeList: React.FC<Props> = ({ episodes, selectedEpisode, onSele
             )}
         </div>
     );
-};
+});

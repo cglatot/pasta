@@ -14,7 +14,7 @@ interface Props {
     onToggleCollapse?: () => void;
 }
 
-export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libraryType, isCollapsed = false, onToggleCollapse }) => {
+export const ShowList = React.forwardRef<HTMLDivElement, Props>(({ shows, selectedShow, onSelect, libraryType, isCollapsed = false, onToggleCollapse }, ref) => {
     const [filter, setFilter] = useState('');
     const isMobile = useIsMobile();
     const { maxListItems } = useSettings();
@@ -65,7 +65,7 @@ export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libra
     const listHeight = Math.min(Math.max(filteredShows.length, 1), maxListItems) * ITEM_SIZE;
 
     return (
-        <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div ref={ref} className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
             <div
                 className="card-header bg-white"
                 style={{
@@ -122,4 +122,4 @@ export const ShowList: React.FC<Props> = ({ shows, selectedShow, onSelect, libra
             )}
         </div>
     );
-};
+});
