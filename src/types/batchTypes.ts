@@ -5,7 +5,8 @@ export type MatchReason =
     | 'Match: Title'
     | 'Match: Display Title'
     | 'Match: Language'
-    | 'Match: Language Code';
+    | 'Match: Language Code'
+    | 'Exact Selection';
 
 export type SkipReason =
     | 'NoMatch'

@@ -25,7 +25,8 @@ export const useBatchUpdater = () => {
         episode: PlexMetadata,
         targetStream: PlexStream | null,
         type: 'audio' | 'subtitle',
-        keyword?: string
+        keyword?: string,
+        exactMatch: boolean = false
     ): Promise<EpisodeResult> => {
         const episodeTitle = episode.title || 'Unknown Episode';
         const seasonNumber = episode.parentIndex;
@@ -61,43 +62,83 @@ export const useBatchUpdater = () => {
             let streamName: string | undefined;
 
             if (targetStream) {
-                // Find matching stream
-                const matchResult = findMatchingStream(targetStream, part.Stream, keyword);
-                if (matchResult) {
-                    streamIdToSet = matchResult.stream.id;
-                    matchReason = matchResult.matchReason;
+                // If exactMatch is true, we try to find the exact stream ID in the current episode
+                if (exactMatch) {
+                    const exactStream = part.Stream.find(s => s.id === targetStream.id);
+                    if (exactStream) {
+                        streamIdToSet = exactStream.id;
+                        matchReason = 'Exact Selection';
 
-                    // Format as "DisplayTitle - Title" or just show what's available
-                    const displayTitle = matchResult.stream.displayTitle || '';
-                    const title = matchResult.stream.title || '';
+                        const displayTitle = exactStream.displayTitle || '';
+                        const title = exactStream.title || '';
 
-                    if (displayTitle && title) {
-                        streamName = `${displayTitle} - ${title}`;
+                        if (displayTitle && title) {
+                            streamName = `${displayTitle} - ${title}`;
+                        } else {
+                            streamName = displayTitle || title || 'Unknown';
+                        }
+
+                        // Check if already selected
+                        if (exactStream.selected) {
+                            return {
+                                episodeTitle,
+                                seasonNumber,
+                                episodeNumber,
+                                success: false,
+                                skipReason: 'AlreadyMatched',
+                                streamName
+                            };
+                        }
                     } else {
-                        streamName = displayTitle || title || 'Unknown';
-                    }
-
-                    // Check if the matched stream is already selected
-                    if (matchResult.stream.selected) {
+                        // Should not happen if invoked correctly for single episode
                         return {
                             episodeTitle,
                             seasonNumber,
                             episodeNumber,
                             success: false,
-                            skipReason: 'AlreadyMatched',
-                            streamName
+                            skipReason: 'Error',
+                            errorMessage: 'Target stream not found in episode'
                         };
                     }
                 } else {
-                    // No match found, skip update
-                    const skipReason: SkipReason = keyword ? 'KeywordFiltered' : 'NoMatch';
-                    return {
-                        episodeTitle,
-                        seasonNumber,
-                        episodeNumber,
-                        success: false,
-                        skipReason
-                    };
+                    // Find matching stream using smart match
+                    const matchResult = findMatchingStream(targetStream, part.Stream, keyword);
+                    if (matchResult) {
+                        streamIdToSet = matchResult.stream.id;
+                        matchReason = matchResult.matchReason;
+
+                        // Format as "DisplayTitle - Title" or just show what's available
+                        const displayTitle = matchResult.stream.displayTitle || '';
+                        const title = matchResult.stream.title || '';
+
+                        if (displayTitle && title) {
+                            streamName = `${displayTitle} - ${title}`;
+                        } else {
+                            streamName = displayTitle || title || 'Unknown';
+                        }
+
+                        // Check if the matched stream is already selected
+                        if (matchResult.stream.selected) {
+                            return {
+                                episodeTitle,
+                                seasonNumber,
+                                episodeNumber,
+                                success: false,
+                                skipReason: 'AlreadyMatched',
+                                streamName
+                            };
+                        }
+                    } else {
+                        // No match found, skip update
+                        const skipReason: SkipReason = keyword ? 'KeywordFiltered' : 'NoMatch';
+                        return {
+                            episodeTitle,
+                            seasonNumber,
+                            episodeNumber,
+                            success: false,
+                            skipReason
+                        };
+                    }
                 }
             } else {
                 // If targetStream is null, we are setting to "None" (only valid for subtitles)

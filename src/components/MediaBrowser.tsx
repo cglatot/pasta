@@ -59,7 +59,7 @@ export const MediaBrowser: React.FC = () => {
         const keyword = type === 'audio' ? audioKeyword : subtitleKeyword;
 
         if (scope === 'episode') {
-            await updateSingleEpisode(selectedEpisode, targetStream, type, keyword);
+            await updateSingleEpisode(selectedEpisode, targetStream, type, keyword, true);
             await refreshEpisode();
         } else if (scope === 'season') {
             if (selectedSeason) {
