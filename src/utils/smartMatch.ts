@@ -48,9 +48,11 @@ export const findMatchingStream = (
     const searchCode = targetStream.languageCode;
     const searchCodec = targetStream.codec;
 
-    // Helper to check if a value is defined and not "undefined" string
-    const isDefined = (val: unknown): boolean => {
-        return val !== undefined && val !== null && val !== 'undefined' && val !== '';
+    // Helper to normalize values for comparison
+    // Treats null, undefined, 'undefined', and '' as equivalent (empty string)
+    const normalize = (val: unknown): string => {
+        if (val === undefined || val === null || val === 'undefined') return '';
+        return String(val);
     };
 
     interface Match {
@@ -65,51 +67,44 @@ export const findMatchingStream = (
         let matchLevel = 0;
         let matchReason: MatchReason | null = null;
 
+        const titleMatch = normalize(candidate.title) === normalize(searchTitle);
+        const displayTitleMatch = normalize(candidate.displayTitle) === normalize(searchDisplayTitle);
+        const languageMatch = normalize(candidate.language) === normalize(searchLanguage);
+        const codeMatch = normalize(candidate.languageCode) === normalize(searchCode);
+        const codecMatch = normalize(candidate.codec) === normalize(searchCodec);
+
         // Level 7: Everything matches (including codec)
-        if (
-            isDefined(searchTitle) && candidate.title === searchTitle &&
-            isDefined(searchDisplayTitle) && candidate.displayTitle === searchDisplayTitle &&
-            isDefined(searchLanguage) && candidate.language === searchLanguage &&
-            isDefined(searchCode) && candidate.languageCode === searchCode &&
-            isDefined(searchCodec) && candidate.codec === searchCodec
-        ) {
+        if (titleMatch && displayTitleMatch && languageMatch && codeMatch && codecMatch) {
             matchLevel = 7;
             matchReason = 'Exact Match (All Properties)';
         }
         // Level 6: title + displayTitle + codec match
-        else if (
-            isDefined(searchTitle) && candidate.title === searchTitle &&
-            isDefined(searchDisplayTitle) && candidate.displayTitle === searchDisplayTitle &&
-            isDefined(searchCodec) && candidate.codec === searchCodec
-        ) {
+        else if (titleMatch && displayTitleMatch && codecMatch) {
             matchLevel = 6;
             matchReason = 'Match: Title + Display Title + Codec';
         }
         // Level 5: title + displayTitle match
-        else if (
-            isDefined(searchTitle) && candidate.title === searchTitle &&
-            isDefined(searchDisplayTitle) && candidate.displayTitle === searchDisplayTitle
-        ) {
+        else if (titleMatch && displayTitleMatch) {
             matchLevel = 5;
             matchReason = 'Match: Title + Display Title';
         }
         // Level 4: title matches exactly
-        else if (isDefined(searchTitle) && candidate.title === searchTitle) {
+        else if (titleMatch) {
             matchLevel = 4;
             matchReason = 'Match: Title';
         }
         // Level 3: displayTitle matches exactly
-        else if (isDefined(searchDisplayTitle) && candidate.displayTitle === searchDisplayTitle) {
+        else if (displayTitleMatch) {
             matchLevel = 3;
             matchReason = 'Match: Display Title';
         }
         // Level 2: language matches
-        else if (isDefined(searchLanguage) && candidate.language === searchLanguage) {
+        else if (languageMatch) {
             matchLevel = 2;
             matchReason = 'Match: Language';
         }
         // Level 1: languageCode matches
-        else if (isDefined(searchCode) && candidate.languageCode === searchCode) {
+        else if (codeMatch) {
             matchLevel = 1;
             matchReason = 'Match: Language Code';
         }
