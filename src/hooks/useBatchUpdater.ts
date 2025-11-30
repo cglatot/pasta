@@ -362,6 +362,16 @@ export const useBatchUpdater = () => {
         window.addEventListener('beforeunload', handleBeforeUnload);
 
         try {
+            setProgress({
+                total: 0,
+                current: 0,
+                success: 0,
+                failed: 0,
+                isProcessing: true,
+                statusMessage: 'Fetching library items...',
+                results: []
+            });
+
             let episodes: PlexMetadata[] = [];
 
             if (library.type === 'show') {
@@ -387,6 +397,7 @@ export const useBatchUpdater = () => {
         } catch (e) {
             console.error(e);
             alert('Failed to fetch library items');
+            resetProgress();
         } finally {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         }
@@ -394,6 +405,17 @@ export const useBatchUpdater = () => {
 
     const updateSeason = async (season: PlexMetadata, targetStream: PlexStream | null, type: 'audio' | 'subtitle', keyword?: string) => {
         if (!serverUrl || !accessToken) return;
+
+        setProgress({
+            total: 0,
+            current: 0,
+            success: 0,
+            failed: 0,
+            isProcessing: true,
+            statusMessage: 'Fetching season episodes...',
+            results: []
+        });
+
         try {
             const episodes = await queryClient.fetchQuery({
                 queryKey: plexKeys.children(machineIdentifier, accessToken, season.ratingKey),
@@ -409,11 +431,23 @@ export const useBatchUpdater = () => {
         } catch (e) {
             console.error(e);
             alert('Failed to fetch season episodes');
+            resetProgress();
         }
     };
 
     const updateShow = async (show: PlexMetadata, targetStream: PlexStream | null, type: 'audio' | 'subtitle', keyword?: string) => {
         if (!serverUrl || !accessToken) return;
+
+        setProgress({
+            total: 0,
+            current: 0,
+            success: 0,
+            failed: 0,
+            isProcessing: true,
+            statusMessage: 'Fetching show information...',
+            results: []
+        });
+
         try {
             // Fetch all seasons
             const seasons = await queryClient.fetchQuery({
@@ -445,6 +479,7 @@ export const useBatchUpdater = () => {
         } catch (e) {
             console.error(e);
             alert('Failed to fetch show episodes');
+            resetProgress();
         }
     };
 

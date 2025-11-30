@@ -38,7 +38,7 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
     const ChangedRow = ({ index, style, data }: ListChildComponentProps<EpisodeResult[]>) => {
         const result = data[index];
         return (
-            <div style={style} className="px-2 py-2 border-bottom">
+            <div style={style} className="px-2 py-2 border-bottom cursor-default hover-highlight">
                 <div className="d-flex justify-content-between align-items-start">
                     <div className="flex-grow-1">
                         <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
@@ -75,7 +75,7 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
         }
 
         return (
-            <div style={style} className="px-2 py-2 border-bottom">
+            <div style={style} className="px-2 py-2 border-bottom cursor-default hover-highlight">
                 <div className="d-flex justify-content-between align-items-start">
                     <div className="flex-grow-1">
                         <div className="fw-bold small">{formatEpisodeTitle(result)}</div>

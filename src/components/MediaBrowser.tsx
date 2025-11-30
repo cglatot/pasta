@@ -46,6 +46,13 @@ export const MediaBrowser: React.FC = () => {
         setIsLibraryMode(false);
     }, [selectedLibrary?.key, selectedShow?.ratingKey, selectedSeason?.ratingKey, selectedEpisode?.ratingKey, serverName]);
 
+    // Auto-scroll to top on desktop when an episode is selected
+    React.useEffect(() => {
+        if (!isMobile && selectedEpisode) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [selectedEpisode, isMobile]);
+
     const handleStreamUpdate = async (streamId: number, scope: 'episode' | 'season' | 'show' | 'library', type: 'audio' | 'subtitle') => {
         if (!selectedEpisode) return;
 

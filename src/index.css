@@ -444,6 +444,181 @@ textarea:focus {
 
 /* Buttons - Force PASTA Orange */
 .btn-primary {
+  color: rgb(240, 240, 240) !important;
+  border: 1px solid #444 !important;
+}
+
+.dropdown-item {
+  color: rgb(240, 240, 240) !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: rgba(192, 118, 0, 0.2) !important;
+  color: #fff !important;
+}
+
+/* Inputs & Form Controls */
+.form-control,
+input,
+select,
+textarea {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  color: rgb(240, 240, 240) !important;
+  border: 1px solid #555 !important;
+}
+
+.form-control:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(229, 160, 13, 0.25) !important;
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1;
+}
+
+/* Modals (Reinforce) */
+.modal-content {
+  background-color: rgba(25, 25, 25, 1) !important;
+  color: rgb(240, 240, 240) !important;
+  border: 1px solid #444 !important;
+}
+
+.modal-header,
+.modal-footer {
+  border-color: #444 !important;
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+/* Pagination */
+.page-link {
+  background-color: transparent !important;
+  color: var(--primary-color) !important;
+  border-color: #444 !important;
+}
+
+.page-item.active .page-link {
+  background-color: var(--primary-color) !important;
+  color: black !important;
+  border-color: var(--primary-color) !important;
+}
+
+.page-item.disabled .page-link {
+  background-color: transparent !important;
+  color: #666 !important;
+}
+
+/* List Groups */
+.list-group-item {
+  background-color: transparent !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: #444 !important;
+  padding: 0.5rem 1rem !important;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  border-radius: 0 !important;
+  /* Remove rounded corners */
+}
+
+.list-group-item:first-child {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.list-group-item:last-child {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.list-group-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgb(240, 240, 240) !important;
+}
+
+.list-group-item.active {
+  background-color: var(--active-bg) !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: #444 !important;
+  /* Keep border neutral */
+  z-index: 2;
+}
+
+.list-group-item.active:hover {
+  background-color: var(--active-hover-bg) !important;
+}
+
+/* Alerts */
+.alert {
+  background-color: rgba(25, 25, 25, 0.9) !important;
+  color: rgb(240, 240, 240) !important;
+  border-color: #444 !important;
+}
+
+/* ==========================
+   UTILITY CLASS NUKES
+   ========================== */
+
+/* Force transparent backgrounds for white/light utilities */
+.bg-white,
+.bg-light {
+  background-color: transparent !important;
+  color: rgb(240, 240, 240) !important;
+}
+
+/* Card Headers & Footers - Force Dark */
+.card-header {
+  background-color: rgba(25, 25, 25, 1) !important;
+  color: var(--primary-color) !important;
+  border-bottom: 1px solid #444 !important;
+}
+
+.card-footer {
+  background-color: rgba(25, 25, 25, 1) !important;
+  border-top: 1px solid #444 !important;
+}
+
+/* Ensure text within these areas is readable */
+.card-header h5,
+.card-footer label,
+.card-footer .form-check-label {
+  color: var(--primary-color) !important;
+}
+
+.card-footer .text-muted {
+  color: #aaa !important;
+}
+
+/* ==========================
+   CONTRAST & COLOR FIXES
+   ========================== */
+
+/* Text Contrast */
+.text-muted {
+  color: #aaa !important;
+  /* Light gray for readability on dark bg */
+}
+
+.form-text {
+  color: #ccc !important;
+  /* Lighter gray for helper text */
+}
+
+.fw-bold {
+  color: #fff !important;
+  /* White for bold text */
+}
+
+/* Buttons - Force PASTA Orange */
+.btn-primary {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
   color: #fff !important;
@@ -464,4 +639,14 @@ textarea:focus {
 
 .dropdown-divider {
   border-top: 1px solid #444 !important;
+}
+
+/* Utility Classes */
+.cursor-default {
+  cursor: default !important;
+}
+
+.hover-highlight:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgb(240, 240, 240) !important;
 }
