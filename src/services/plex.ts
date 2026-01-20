@@ -14,6 +14,15 @@ export const PLEX_HEADERS = {
 
 const DEFAULT_TIMEOUT = 20000; // 20 seconds
 
+// Headers for direct Plex Media Server connections (minimal to avoid CORS issues)
+export const getPmsHeaders = (clientIdentifier: string, token: string) => {
+    return {
+        'Accept': 'application/json',
+        'X-Plex-Client-Identifier': clientIdentifier,
+        'X-Plex-Token': token,
+    };
+};
+
 export const getHeaders = (clientIdentifier: string, token?: string) => {
     const headers: Record<string, string> = {
         ...PLEX_HEADERS,
@@ -81,7 +90,7 @@ export const checkServerIdentity = async (
     signal?: AbortSignal
 ) => {
     const response = await axios.get(`${serverUrl}/identity`, {
-        headers: getHeaders(clientIdentifier, token),
+        headers: getPmsHeaders(clientIdentifier, token),
         timeout: 5000, // Keep 5 second timeout for identity check as it needs to be fast
         signal, // Allow request cancellation
     });
@@ -90,7 +99,7 @@ export const checkServerIdentity = async (
 
 export const getLibraries = async (serverUrl: string, clientIdentifier: string, token: string) => {
     const response = await axios.get<PlexMediaContainer<PlexLibrary>>(`${serverUrl}/library/sections`, {
-        headers: getHeaders(clientIdentifier, token),
+        headers: getPmsHeaders(clientIdentifier, token),
         timeout: DEFAULT_TIMEOUT,
     });
     return response.data.MediaContainer.Directory || [];
@@ -105,7 +114,7 @@ export const getLibraryItems = async (
 ) => {
     const response = await axios.get<PlexMediaContainer<PlexMetadata>>(`${serverUrl}/library/sections/${libraryId}/all`, {
         params,
-        headers: getHeaders(clientIdentifier, token),
+        headers: getPmsHeaders(clientIdentifier, token),
         timeout: DEFAULT_TIMEOUT,
     });
     return response.data.MediaContainer.Metadata || [];
@@ -118,7 +127,7 @@ export const getMetadataChildren = async (
     token: string
 ) => {
     const response = await axios.get<PlexMediaContainer<PlexMetadata>>(`${serverUrl}/library/metadata/${ratingKey}/children`, {
-        headers: getHeaders(clientIdentifier, token),
+        headers: getPmsHeaders(clientIdentifier, token),
         timeout: DEFAULT_TIMEOUT,
     });
     return response.data.MediaContainer.Metadata || [];
@@ -131,7 +140,7 @@ export const getMetadata = async (
     token: string
 ) => {
     const response = await axios.get<PlexMediaContainer<PlexMetadata>>(`${serverUrl}/library/metadata/${ratingKey}`, {
-        headers: getHeaders(clientIdentifier, token),
+        headers: getPmsHeaders(clientIdentifier, token),
         timeout: DEFAULT_TIMEOUT,
     });
     return response.data.MediaContainer.Metadata?.[0];
@@ -150,7 +159,7 @@ export const updateStream = async (
         `${serverUrl}/library/parts/${partId}?${param}=${streamId}&allParts=1`,
         {},
         {
-            headers: getHeaders(clientIdentifier, token),
+            headers: getPmsHeaders(clientIdentifier, token),
             timeout: DEFAULT_TIMEOUT,
         }
     );
