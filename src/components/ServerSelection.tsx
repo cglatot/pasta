@@ -72,7 +72,7 @@ export const ServerSelection: React.FC<Props> = ({ onConnect }) => {
                             onChange={handleCheckboxChange}
                         />
                         <label className="form-check-label" htmlFor="useLocalAddress">
-                            Use Local Address
+                            Prefer Local Address
                         </label>
                     </div>
                     {error && <div className="text-danger mt-2">{error}</div>}

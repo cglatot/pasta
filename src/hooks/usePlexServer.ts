@@ -22,21 +22,26 @@ export const usePlexServer = () => {
         setConnecting(true);
         setConnectionError(null);
 
-        // Filter connections based on preference and protocol
-        const connections = server.connections.filter(c => {
+        // Filter connections based on protocol, then prioritize based on preference
+        let connections = server.connections.filter(c => {
             // Protocol check (HTTPS vs HTTP)
             if (window.location.protocol === 'https:' && c.protocol !== 'https') return false;
+            return true;
+        });
 
-            // Local address check
+        // Sort based on preference
+        connections.sort((a, b) => {
             if (useLocalAddress) {
-                return c.local === true;
+                // Prefer local: true < false (sort a before b if a is local)
+                return (a.local === b.local) ? 0 : (a.local ? -1 : 1);
             } else {
-                return c.local === false;
+                // Prefer remote: false < true (sort a before b if a is remote)
+                return (a.local === b.local) ? 0 : (!a.local ? -1 : 1);
             }
         });
 
         if (connections.length === 0) {
-            setConnectionError(`No ${useLocalAddress ? 'local' : 'remote'} connections found for this server.`);
+            setConnectionError(`No secure connections found for this server. enable 'Secure connections' in your Plex Media Server settings.`);
             setConnecting(false);
             return false;
         }
