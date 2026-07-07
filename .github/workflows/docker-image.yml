@@ -37,7 +37,7 @@ jobs:
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Pull data automatically for tag and label info
@@ -50,7 +50,7 @@ jobs:
             latest=auto
           images: |
             ${{ secrets.DOCKER_USERNAME }}/pasta
-            ghcr.io/${{ github.actor }}/pasta
+            ghcr.io/${{ github.repository_owner }}/pasta
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}
@@ -61,7 +61,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           platforms: linux/amd64,linux/arm64
-          # Push if not pull requeste
+          # Push if not pull requested
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
