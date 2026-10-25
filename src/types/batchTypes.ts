@@ -23,6 +23,7 @@ export interface EpisodeResult {
     skipReason?: SkipReason;
     errorMessage?: string;
     streamName?: string; // The name of the stream that was applied
+    previousStreamName?: string; // The name of the stream that was selected before processing
 }
 
 export interface DetailedProgressState {

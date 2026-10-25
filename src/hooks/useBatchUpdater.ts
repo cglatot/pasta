@@ -7,6 +7,17 @@ import type { DetailedProgressState, EpisodeResult, SkipReason, MatchReason } fr
 import { useQueryClient } from '@tanstack/react-query';
 import { plexKeys } from './usePlexQueries';
 
+// Format as "DisplayTitle - Title" or just show what's available
+const formatStreamName = (stream: PlexStream): string => {
+    const displayTitle = stream.displayTitle || '';
+    const title = stream.title || '';
+
+    if (displayTitle && title) {
+        return `${displayTitle} - ${title}`;
+    }
+    return displayTitle || title || 'Unknown';
+};
+
 export const useBatchUpdater = () => {
     const { serverUrl, clientIdentifier, accessToken, machineIdentifier } = useAuth();
     const queryClient = useQueryClient();
@@ -57,6 +68,12 @@ export const useBatchUpdater = () => {
                 };
             }
 
+            // Record what was selected before processing, so results can show "from -> to"
+            const currentStream = part.Stream.find(s => s.streamType === (type === 'audio' ? 2 : 3) && s.selected);
+            const previousStreamName = currentStream
+                ? formatStreamName(currentStream)
+                : (type === 'subtitle' ? 'None' : undefined);
+
             let streamIdToSet = 0; // Default to 0 (None) for subtitles
             let matchReason: MatchReason | undefined;
             let streamName: string | undefined;
@@ -68,15 +85,7 @@ export const useBatchUpdater = () => {
                     if (exactStream) {
                         streamIdToSet = exactStream.id;
                         matchReason = 'Exact Selection';
-
-                        const displayTitle = exactStream.displayTitle || '';
-                        const title = exactStream.title || '';
-
-                        if (displayTitle && title) {
-                            streamName = `${displayTitle} - ${title}`;
-                        } else {
-                            streamName = displayTitle || title || 'Unknown';
-                        }
+                        streamName = formatStreamName(exactStream);
 
                         // Check if already selected
                         if (exactStream.selected) {
@@ -86,7 +95,8 @@ export const useBatchUpdater = () => {
                                 episodeNumber,
                                 success: false,
                                 skipReason: 'AlreadyMatched',
-                                streamName
+                                streamName,
+                                previousStreamName
                             };
                         }
                     } else {
@@ -106,16 +116,7 @@ export const useBatchUpdater = () => {
                     if (matchResult) {
                         streamIdToSet = matchResult.stream.id;
                         matchReason = matchResult.matchReason;
-
-                        // Format as "DisplayTitle - Title" or just show what's available
-                        const displayTitle = matchResult.stream.displayTitle || '';
-                        const title = matchResult.stream.title || '';
-
-                        if (displayTitle && title) {
-                            streamName = `${displayTitle} - ${title}`;
-                        } else {
-                            streamName = displayTitle || title || 'Unknown';
-                        }
+                        streamName = formatStreamName(matchResult.stream);
 
                         // Check if the matched stream is already selected
                         if (matchResult.stream.selected) {
@@ -125,7 +126,8 @@ export const useBatchUpdater = () => {
                                 episodeNumber,
                                 success: false,
                                 skipReason: 'AlreadyMatched',
-                                streamName
+                                streamName,
+                                previousStreamName
                             };
                         }
                     } else {
@@ -136,7 +138,8 @@ export const useBatchUpdater = () => {
                             seasonNumber,
                             episodeNumber,
                             success: false,
-                            skipReason
+                            skipReason,
+                            previousStreamName
                         };
                     }
                 }
@@ -161,7 +164,8 @@ export const useBatchUpdater = () => {
                         episodeNumber,
                         success: false,
                         skipReason: 'AlreadyMatched',
-                        streamName: 'None'
+                        streamName: 'None',
+                        previousStreamName
                     };
                 }
 
@@ -180,7 +184,8 @@ export const useBatchUpdater = () => {
                 episodeNumber,
                 success: true,
                 matchReason,
-                streamName
+                streamName,
+                previousStreamName
             };
         } catch (e) {
             console.error(`Failed to update episode ${episodeTitle}`, e);

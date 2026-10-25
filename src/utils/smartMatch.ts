@@ -55,6 +55,15 @@ export const findMatchingStream = (
         return String(val);
     };
 
+    // Helper to check whether a property actually has a value.
+    // Empty properties must not count as a "match" on their own, otherwise every
+    // stream without a title would "match by title" (e.g. English matching Japanese).
+    const hasValue = (val: unknown): boolean => normalize(val) !== '';
+
+    // If the target has a language, title/displayTitle-based matches must also be in
+    // that language, so a shared title (e.g. "Stereo") can't pick the wrong language.
+    const targetHasLanguage = hasValue(searchLanguage) || hasValue(searchCode);
+
     interface Match {
         stream: PlexStream;
         level: number;
@@ -67,34 +76,42 @@ export const findMatchingStream = (
         let matchLevel = 0;
         let matchReason: MatchReason | null = null;
 
-        const titleMatch = normalize(candidate.title) === normalize(searchTitle);
-        const displayTitleMatch = normalize(candidate.displayTitle) === normalize(searchDisplayTitle);
-        const languageMatch = normalize(candidate.language) === normalize(searchLanguage);
-        const codeMatch = normalize(candidate.languageCode) === normalize(searchCode);
+        // Exact equality (empty == empty), used only for the "everything matches" level
+        const titleEqual = normalize(candidate.title) === normalize(searchTitle);
+        const displayTitleEqual = normalize(candidate.displayTitle) === normalize(searchDisplayTitle);
+        const languageEqual = normalize(candidate.language) === normalize(searchLanguage);
+        const codeEqual = normalize(candidate.languageCode) === normalize(searchCode);
         const codecMatch = normalize(candidate.codec) === normalize(searchCodec);
 
+        // Meaningful matches: the target must actually have a value for the property
+        const titleMatch = hasValue(searchTitle) && titleEqual;
+        const displayTitleMatch = hasValue(searchDisplayTitle) && displayTitleEqual;
+        const languageMatch = hasValue(searchLanguage) && languageEqual;
+        const codeMatch = hasValue(searchCode) && codeEqual;
+        const sameLanguage = !targetHasLanguage || languageMatch || codeMatch;
+
         // Level 7: Everything matches (including codec)
-        if (titleMatch && displayTitleMatch && languageMatch && codeMatch && codecMatch) {
+        if (titleEqual && displayTitleEqual && languageEqual && codeEqual && codecMatch) {
             matchLevel = 7;
             matchReason = 'Exact Match (All Properties)';
         }
         // Level 6: title + displayTitle + codec match
-        else if (titleMatch && displayTitleMatch && codecMatch) {
+        else if (titleMatch && displayTitleMatch && codecMatch && sameLanguage) {
             matchLevel = 6;
             matchReason = 'Match: Title + Display Title + Codec';
         }
         // Level 5: title + displayTitle match
-        else if (titleMatch && displayTitleMatch) {
+        else if (titleMatch && displayTitleMatch && sameLanguage) {
             matchLevel = 5;
             matchReason = 'Match: Title + Display Title';
         }
         // Level 4: title matches exactly
-        else if (titleMatch) {
+        else if (titleMatch && sameLanguage) {
             matchLevel = 4;
             matchReason = 'Match: Title';
         }
         // Level 3: displayTitle matches exactly
-        else if (displayTitleMatch) {
+        else if (displayTitleMatch && sameLanguage) {
             matchLevel = 3;
             matchReason = 'Match: Display Title';
         }

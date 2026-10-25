@@ -13,6 +13,14 @@ interface Props {
 export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose }) => {
     const [expandedSection, setExpandedSection] = useState<'changed' | 'skipped' | null>(null);
 
+    // Reset expanded sections whenever modal is closed or a new process starts,
+    // so sections always start collapsed by default
+    React.useEffect(() => {
+        if (!show || progress.isProcessing) {
+            setExpandedSection(null);
+        }
+    }, [show, progress.isProcessing]);
+
     if (!show) return null;
 
     const percentage = progress.total > 0
@@ -43,7 +51,7 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                     <div className="flex-grow-1">
                         <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
                         <div className="text-muted small">
-                            → {result.streamName}
+                            {result.previousStreamName ? `${result.previousStreamName} → ` : '→ '}{result.streamName}
                         </div>
                     </div>
                     <span className="badge bg-success text-white small ms-2">
@@ -58,30 +66,35 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
     const SkippedRow = ({ index, style, data }: ListChildComponentProps<EpisodeResult[]>) => {
         const result = data[index];
         let badgeText = '';
-        let badgeClass = 'bg-warning';
+        let badgeClass = 'bg-warning text-dark';
 
         if (result.skipReason === 'NoMatch') {
             badgeText = 'No Match';
-            badgeClass = 'bg-warning';
+            badgeClass = 'bg-danger text-white';
         } else if (result.skipReason === 'AlreadyMatched') {
             badgeText = 'Already Set';
-            badgeClass = 'bg-warning';
+            badgeClass = 'bg-warning text-dark';
         } else if (result.skipReason === 'KeywordFiltered') {
             badgeText = 'No Match (Keyword)';
-            badgeClass = 'bg-warning';
+            badgeClass = 'bg-danger text-white';
         } else if (result.skipReason === 'Error') {
             badgeText = 'Error';
-            badgeClass = 'bg-danger';
+            badgeClass = 'bg-danger text-white';
         }
+
+        const isNoMatch = result.skipReason === 'NoMatch' || result.skipReason === 'KeywordFiltered';
+        const streamDisplay = result.skipReason === 'AlreadyMatched'
+            ? result.streamName
+            : (isNoMatch ? result.previousStreamName : null);
 
         return (
             <div style={style} className="px-2 py-2 border-bottom cursor-default hover-highlight">
                 <div className="d-flex justify-content-between align-items-start">
                     <div className="flex-grow-1">
                         <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
-                        {result.skipReason === 'AlreadyMatched' && result.streamName && (
+                        {streamDisplay && (
                             <div className="text-muted small">
-                                → {result.streamName}
+                                → {streamDisplay}
                             </div>
                         )}
                         {result.skipReason === 'Error' && result.errorMessage && (
@@ -90,7 +103,7 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                             </div>
                         )}
                     </div>
-                    <span className={`badge ${badgeClass} text-dark small ms-2`}>
+                    <span className={`badge ${badgeClass} small ms-2`}>
                         {badgeText}
                     </span>
                 </div>
