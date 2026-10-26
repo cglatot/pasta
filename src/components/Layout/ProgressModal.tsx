@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { DetailedProgressState, EpisodeResult } from '../../types/batchTypes';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { VirtualList, type VirtualListRowProps } from './VirtualList';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface Props {
     show: boolean;
     title: string;
     progress: DetailedProgressState;
     onClose?: () => void;
+    onCancel?: () => void;
 }
 
-export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose }) => {
+export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose, onCancel }) => {
+    useLockBodyScroll(show);
     const [expandedSection, setExpandedSection] = useState<'changed' | 'skipped' | null>(null);
 
     // Reset expanded sections whenever modal is closed or a new process starts,
     // so sections always start collapsed by default
-    React.useEffect(() => {
+    useEffect(() => {
         if (!show || progress.isProcessing) {
             setExpandedSection(null);
         }
@@ -27,7 +29,7 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
         ? Math.round((progress.current / progress.total) * 100)
         : 0;
 
-    const isComplete = !progress.isProcessing && progress.current === progress.total && progress.total > 0;
+    const isComplete = !progress.isProcessing && progress.total > 0;
 
     const changedEpisodes = progress.results.filter(r => r.success);
     const skippedEpisodes = progress.results.filter(r => !r.success);
@@ -43,8 +45,9 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
     };
 
     // Virtualized Row for Changed Items
-    const ChangedRow = ({ index, style, data }: ListChildComponentProps<EpisodeResult[]>) => {
-        const result = data[index];
+    const ChangedRow = ({ style, data }: VirtualListRowProps<EpisodeResult>) => {
+        const result = data;
+        if (!result) return null;
         return (
             <div style={style} className="px-2 py-2 border-bottom cursor-default hover-highlight">
                 <div className="d-flex justify-content-between align-items-start">
@@ -63,8 +66,9 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
     };
 
     // Virtualized Row for Skipped Items
-    const SkippedRow = ({ index, style, data }: ListChildComponentProps<EpisodeResult[]>) => {
-        const result = data[index];
+    const SkippedRow = ({ style, data }: VirtualListRowProps<EpisodeResult>) => {
+        const result = data;
+        if (!result) return null;
         let badgeText = '';
         let badgeClass = 'bg-warning text-dark';
 
@@ -163,19 +167,12 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                                         </button>
                                         {expandedSection === 'changed' && (
                                             <div className="mt-2" style={{ height: changedEpisodes.length * 60, minHeight: 0, flex: '1 1 auto', overflow: 'hidden' }}>
-                                                <AutoSizer>
-                                                    {({ height, width }) => (
-                                                        <List
-                                                            height={height}
-                                                            itemCount={changedEpisodes.length}
-                                                            itemSize={60}
-                                                            width={width}
-                                                            itemData={changedEpisodes}
-                                                        >
-                                                            {ChangedRow}
-                                                        </List>
-                                                    )}
-                                                </AutoSizer>
+                                                <VirtualList
+                                                    items={changedEpisodes}
+                                                    itemHeight={60}
+                                                >
+                                                    {ChangedRow}
+                                                </VirtualList>
                                             </div>
                                         )}
                                     </div>
@@ -195,19 +192,12 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                                         </button>
                                         {expandedSection === 'skipped' && (
                                             <div className="mt-2" style={{ height: skippedEpisodes.length * 60, minHeight: 0, flex: '1 1 auto', overflow: 'hidden' }}>
-                                                <AutoSizer>
-                                                    {({ height, width }) => (
-                                                        <List
-                                                            height={height}
-                                                            itemCount={skippedEpisodes.length}
-                                                            itemSize={60}
-                                                            width={width}
-                                                            itemData={skippedEpisodes}
-                                                        >
-                                                            {SkippedRow}
-                                                        </List>
-                                                    )}
-                                                </AutoSizer>
+                                                <VirtualList
+                                                    items={skippedEpisodes}
+                                                    itemHeight={60}
+                                                >
+                                                    {SkippedRow}
+                                                </VirtualList>
                                             </div>
                                         )}
                                     </div>
@@ -215,6 +205,14 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose 
                             </div>
                         )}
                     </div>
+                    {progress.isProcessing && onCancel && (
+                        <div className="modal-footer d-flex justify-content-between align-items-center">
+                            <span className="text-muted small">Batch update in progress...</span>
+                            <button type="button" className="btn btn-outline-danger" onClick={onCancel}>
+                                Cancel
+                            </button>
+                        </div>
+                    )}
                     {isComplete && onClose && (
                         <div className="modal-footer">
                             <button type="button" className="btn btn-primary" onClick={onClose}>

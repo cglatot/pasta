@@ -1,9 +1,9 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types:
+      - published
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -24,24 +24,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
 
       - name: Build Vite app
         run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.event_name == 'release' && github.ref_name || '' }}
 
       - name: Copy legacy app to dist
         run: cp -r legacy dist/legacy
-
-      - name: Copy CNAME to dist
-        run: cp public/CNAME dist/CNAME
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

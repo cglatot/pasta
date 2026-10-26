@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface SettingsContextType {
@@ -7,27 +8,40 @@ interface SettingsContextType {
     setMaxListItems: (value: number) => void;
     navWidth: number;
     setNavWidth: (value: number) => void;
+    connectionTimeout: number;
+    setConnectionTimeout: (value: number) => void;
     resetSettings: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+const loadSetting = <T,>(key: string, fallback: T): T => {
+    const saved = localStorage.getItem(key);
+    if (saved === null) return fallback;
+    try {
+        return JSON.parse(saved) as T;
+    } catch {
+        return fallback;
+    }
+};
+
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Initialize from localStorage or defaults
-    const [autoCollapse, setAutoCollapseState] = useState(() => {
-        const saved = localStorage.getItem('pasta_settings_autoCollapse');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
+    const [autoCollapse, setAutoCollapseState] = useState(() =>
+        loadSetting('pasta_settings_autoCollapse', false)
+    );
 
-    const [maxListItems, setMaxListItemsState] = useState(() => {
-        const saved = localStorage.getItem('pasta_settings_maxListItems');
-        return saved !== null ? JSON.parse(saved) : 6;
-    });
+    const [maxListItems, setMaxListItemsState] = useState(() =>
+        loadSetting('pasta_settings_maxListItems', 6)
+    );
 
-    const [navWidth, setNavWidthState] = useState(() => {
-        const saved = localStorage.getItem('pasta_settings_navWidth');
-        return saved !== null ? JSON.parse(saved) : 25;
-    });
+    const [navWidth, setNavWidthState] = useState(() =>
+        loadSetting('pasta_settings_navWidth', 25)
+    );
+
+    const [connectionTimeout, setConnectionTimeoutState] = useState(() =>
+        loadSetting('pasta_settings_connectionTimeout', 5)
+    );
 
     // Persistence wrappers
     const setAutoCollapse = (value: boolean) => {
@@ -45,10 +59,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.setItem('pasta_settings_navWidth', JSON.stringify(value));
     };
 
+    const setConnectionTimeout = (value: number) => {
+        setConnectionTimeoutState(value);
+        localStorage.setItem('pasta_settings_connectionTimeout', JSON.stringify(value));
+    };
+
     const resetSettings = () => {
         setAutoCollapse(false);
         setMaxListItems(6);
         setNavWidth(25);
+        setConnectionTimeout(5);
     };
 
     return (
@@ -59,6 +79,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             setMaxListItems,
             navWidth,
             setNavWidth,
+            connectionTimeout,
+            setConnectionTimeout,
             resetSettings
         }}>
             {children}

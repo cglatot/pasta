@@ -5,20 +5,19 @@ import { useState, useEffect } from 'react';
  * Uses Bootstrap's md breakpoint
  */
 export const useIsMobile = (): boolean => {
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(max-width: 767.98px)').matches;
+    });
 
     useEffect(() => {
-        const checkIsMobile = () => {
-            setIsMobile(window.innerWidth < 768);
+        const mql = window.matchMedia('(max-width: 767.98px)');
+        const onChange = (e: MediaQueryListEvent) => {
+            setIsMobile(e.matches);
         };
 
-        // Initial check
-        checkIsMobile();
-
-        // Listen for resize events
-        window.addEventListener('resize', checkIsMobile);
-
-        return () => window.removeEventListener('resize', checkIsMobile);
+        mql.addEventListener('change', onChange);
+        return () => mql.removeEventListener('change', onChange);
     }, []);
 
     return isMobile;

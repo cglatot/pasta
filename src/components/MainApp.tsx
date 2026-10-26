@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { plexKeys } from '../hooks/usePlexQueries';
 
 export const MainApp: React.FC = () => {
-    const { serverUrl, clientIdentifier, accessToken, switchUser, adminToken, isSharedServer } = useAuth();
+    const { serverUrl, clientIdentifier, accessToken, switchUser, adminToken, isSharedServer, reconnectServer } = useAuth();
     const [homeUsers, setHomeUsers] = useState<PlexHomeUser[]>([]);
     const [isUserSelectionPhase, setIsUserSelectionPhase] = useState(false);
     const queryClient = useQueryClient();
@@ -50,7 +50,7 @@ export const MainApp: React.FC = () => {
                         setIsUserSelectionPhase(true);
                     }
                 }
-            } catch (e) {
+            } catch {
                 // Proceed to MediaBrowser (no home users)
             }
         }
@@ -60,7 +60,7 @@ export const MainApp: React.FC = () => {
         try {
             await switchUser(targetUser, pin);
             setIsUserSelectionPhase(false);
-        } catch (e) {
+        } catch {
             alert('Failed to switch user. Please check PIN.');
         }
     };
@@ -85,7 +85,7 @@ export const MainApp: React.FC = () => {
                     setHomeUsers(users);
                     setIsUserSelectionPhase(true);
                 }
-            } catch (e) {
+            } catch {
                 // Failed to fetch home users
             }
         }
@@ -117,7 +117,7 @@ export const MainApp: React.FC = () => {
     if (serverUrl) {
         return (
             <>
-                <Header onSwitchUser={handleRequestUserSwitch} />
+                <Header onSwitchUser={handleRequestUserSwitch} onReconnectServer={reconnectServer} />
                 <div className="container-fluid py-2">
                     <MediaBrowser />
                 </div>

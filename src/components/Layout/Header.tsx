@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHomeUsers } from '../../hooks/usePlexQueries';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -6,15 +7,30 @@ import { SettingsModal } from './SettingsModal';
 
 interface Props {
     onSwitchUser?: () => void;
+    onReconnectServer?: () => void;
 }
 
-export const Header: React.FC<Props> = ({ onSwitchUser }) => {
-    const { user, logout, clearServer, isAuthenticated, clientIdentifier, accessToken, adminToken, isSharedServer } = useAuth();
+export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => {
+    const { user, logout, clearServer, isAuthenticated, clientIdentifier, accessToken, adminToken, isSharedServer, serverUrl } = useAuth();
     const [showHelpModal, setShowHelpModal] = useState(false);
+    useLockBodyScroll(showHelpModal);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [hasManagedUsers, setHasManagedUsers] = useState(false);
     const isMobile = useIsMobile();
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close the user dropdown when clicking anywhere outside it
+    useEffect(() => {
+        if (!showDropdown) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showDropdown]);
 
     const { data: homeUsers } = useHomeUsers(clientIdentifier, adminToken || accessToken);
 
@@ -28,19 +44,28 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
         <>
             <nav className="navbar navbar-expand-lg navbar-dark static-top" style={{ backgroundColor: '#0d0d0d' }}>
                 <div className={`container-fluid ${isMobile ? 'flex-column' : 'd-flex justify-content-between'} px-5`}>
-                    <div className={isMobile ? 'w-100 text-center mb-2' : ''}>
+                    <div className={isMobile ? 'w-100 text-center mb-2' : 'd-flex align-items-end'}>
                         <a className="navbar-brand" href="/" style={isMobile ? { marginRight: 0 } : undefined}>
                             <img src="/images/Logo_Title_Large.png" alt="PASTA" height="50" />
+                        </a>
+                        <a
+                            href="https://github.com/cglatot/pasta/releases"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-muted small text-decoration-none"
+                            title="View release notes"
+                            style={{ marginLeft: isMobile ? '0.25rem' : '-0.5rem' }}
+                        >
+                            v{__APP_VERSION__}
                         </a>
                     </div>
 
                     <div className={`d-flex align-items-center ${isMobile ? 'w-100 justify-content-center' : ''}`}>
                         {isAuthenticated && user && (
-                            <div className="dropdown me-3">
+                            <div className="dropdown me-3" ref={dropdownRef}>
                                 <button
                                     className="btn btn-link text-light text-decoration-none d-flex align-items-center p-0"
                                     onClick={() => setShowDropdown(!showDropdown)}
-                                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                                 >
                                     <img
                                         src={user.thumb}
@@ -53,6 +78,14 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
                                 </button>
                                 {showDropdown && (
                                     <ul className="dropdown-menu dropdown-menu-end show" style={{ position: 'absolute', right: 0 }}>
+                                        {serverUrl && onReconnectServer && (
+                                            <li>
+                                                <button className="dropdown-item" onClick={() => { onReconnectServer(); setShowDropdown(false); }}>
+                                                    <i className="fas fa-sync-alt me-2"></i>
+                                                    Reconnect Server
+                                                </button>
+                                            </li>
+                                        )}
                                         <li>
                                             <button className="dropdown-item" onClick={() => { clearServer(); setShowDropdown(false); }}>
                                                 <i className="fas fa-server me-2"></i>
@@ -119,6 +152,7 @@ export const Header: React.FC<Props> = ({ onSwitchUser }) => {
                                 <button type="button" className="btn-close" onClick={() => setShowHelpModal(false)}></button>
                             </div>
                             <div className="modal-body">
+                                <p>Version: <a href="https://github.com/cglatot/pasta/releases" target="_blank" rel="noreferrer">v{__APP_VERSION__}</a></p>
                                 <p>Encountered a bug, or have a feature request? Log it here:
                                     <a href="https://github.com/cglatot/pasta/issues" target="_blank" rel="noreferrer"> https://github.com/cglatot/pasta/issues</a>
                                 </p>

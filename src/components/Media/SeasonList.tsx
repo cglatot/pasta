@@ -1,7 +1,6 @@
 import React from 'react';
 import type { PlexMetadata } from '../../types/plex';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { VirtualList, type VirtualListRowProps } from '../Layout/VirtualList';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSettings } from '../../context/SettingsContext';
 
@@ -26,10 +25,8 @@ export const SeasonList = React.forwardRef<HTMLDivElement, Props>(({ seasons, se
         }
     };
 
-    const Row = ({ index, style, data }: ListChildComponentProps<PlexMetadata[]>) => {
-        const season = data[index];
-
-        // Safety check
+    const Row = ({ index, style, data }: VirtualListRowProps<PlexMetadata>) => {
+        const season = data;
         if (!season) return null;
 
         return (
@@ -78,19 +75,13 @@ export const SeasonList = React.forwardRef<HTMLDivElement, Props>(({ seasons, se
             {!isCollapsed && (
                 <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
                     {seasons.length > 0 ? (
-                        <AutoSizer disableHeight>
-                            {({ width }) => (
-                                <List
-                                    height={listHeight}
-                                    itemCount={seasons.length}
-                                    itemSize={ITEM_SIZE}
-                                    width={width}
-                                    itemData={seasons}
-                                >
-                                    {Row}
-                                </List>
-                            )}
-                        </AutoSizer>
+                        <VirtualList
+                            items={seasons}
+                            itemHeight={ITEM_SIZE}
+                            height={listHeight}
+                        >
+                            {Row}
+                        </VirtualList>
                     ) : (
                         <div className="list-group-item text-muted">No seasons found</div>
                     )}

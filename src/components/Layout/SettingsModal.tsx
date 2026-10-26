@@ -1,3 +1,4 @@
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 import React from 'react';
 import { useSettings } from '../../context/SettingsContext';
 
@@ -7,7 +8,18 @@ interface Props {
 }
 
 export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
-    const { autoCollapse, setAutoCollapse, maxListItems, setMaxListItems, navWidth, setNavWidth, resetSettings } = useSettings();
+    useLockBodyScroll(show);
+    const {
+        autoCollapse,
+        setAutoCollapse,
+        maxListItems,
+        setMaxListItems,
+        navWidth,
+        setNavWidth,
+        connectionTimeout,
+        setConnectionTimeout,
+        resetSettings
+    } = useSettings();
 
     if (!show) return null;
 
@@ -41,7 +53,7 @@ export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
 
                         {/* Max List Items Setting */}
                         <div className="mb-3">
-                            <label htmlFor="maxListItemsInput" className="form-label fw-bold">
+                            <label htmlFor="maxListItemsRange" className="form-label fw-bold">
                                 Max List Items
                             </label>
                             <div className="d-flex align-items-center">
@@ -66,7 +78,9 @@ export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
 
                         {/* Navigation Width Setting */}
                         <div className="mb-3">
-                            <label htmlFor="navWidthRange" className="form-label fw-bold">Navigation Width</label>
+                            <label htmlFor="navWidthRange" className="form-label fw-bold">
+                                Navigation Width
+                            </label>
                             <div className="d-flex align-items-center">
                                 <input
                                     type="range"
@@ -84,6 +98,31 @@ export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
                             </div>
                             <div className="form-text">
                                 Adjust the width of the navigation sidebar (15% - 50%).
+                            </div>
+                        </div>
+
+                        {/* Connection Timeout Setting */}
+                        <div className="mb-3">
+                            <label htmlFor="connectionTimeoutRange" className="form-label fw-bold">
+                                Server Connection Timeout
+                            </label>
+                            <div className="d-flex align-items-center">
+                                <input
+                                    type="range"
+                                    className="form-range flex-grow-1 me-3"
+                                    min="2"
+                                    max="15"
+                                    step="1"
+                                    id="connectionTimeoutRange"
+                                    value={connectionTimeout}
+                                    onChange={(e) => setConnectionTimeout(parseInt(e.target.value))}
+                                />
+                                <span className="badge bg-pasta-orange" style={{ minWidth: '40px' }}>
+                                    {connectionTimeout}s
+                                </span>
+                            </div>
+                            <div className="form-text">
+                                Controls how long PASTA waits when attempting to connect or reconnect to your Plex server (2 - 15 seconds).
                             </div>
                         </div>
                     </div>
