@@ -1,3 +1,4 @@
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 import React from 'react';
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
+    useLockBodyScroll(show);
     const [dontShowAgain, setDontShowAgain] = React.useState(false);
 
     // Reset checkbox when modal opens

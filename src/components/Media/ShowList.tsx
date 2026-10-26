@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { PlexMetadata } from '../../types/plex';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { VirtualList, type VirtualListRowProps } from '../Layout/VirtualList';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSettings } from '../../context/SettingsContext';
 
@@ -19,18 +18,20 @@ export const ShowList = React.forwardRef<HTMLDivElement, Props>(({ shows, select
     const isMobile = useIsMobile();
     const { maxListItems } = useSettings();
 
-    const handleSelect = (show: PlexMetadata) => {
+    const handleSelect = useCallback((show: PlexMetadata) => {
         onSelect(show);
 
         // Auto-collapse on mobile after selection
         if (isMobile && !isCollapsed && onToggleCollapse) {
             onToggleCollapse();
         }
-    };
+    }, [onSelect, isMobile, isCollapsed, onToggleCollapse]);
 
-    const filteredShows = shows.filter(show =>
-        show.title.toLowerCase().includes(filter.toLowerCase())
-    );
+    const filteredShows = useMemo(() => {
+        if (!filter.trim()) return shows;
+        const lower = filter.toLowerCase();
+        return shows.filter(show => show.title.toLowerCase().includes(lower));
+    }, [shows, filter]);
 
     const getHeaderTitle = () => {
         if (libraryType === 'movie') return 'Movies';
@@ -38,12 +39,9 @@ export const ShowList = React.forwardRef<HTMLDivElement, Props>(({ shows, select
         return 'Content';
     };
 
-    const Row = ({ index, style, data }: ListChildComponentProps<PlexMetadata[]>) => {
-        const show = data[index];
-
-        if (!show) {
-            return null;
-        }
+    const renderRow = useCallback(({ index, style, data }: VirtualListRowProps<PlexMetadata>) => {
+        const show = data;
+        if (!show) return null;
 
         return (
             <div style={style}>
@@ -59,7 +57,7 @@ export const ShowList = React.forwardRef<HTMLDivElement, Props>(({ shows, select
                 </button>
             </div>
         );
-    };
+    }, [selectedShow, handleSelect]);
 
     const ITEM_SIZE = 45;
     const listHeight = Math.min(Math.max(filteredShows.length, 1), maxListItems) * ITEM_SIZE;
@@ -102,19 +100,13 @@ export const ShowList = React.forwardRef<HTMLDivElement, Props>(({ shows, select
             {!isCollapsed && (
                 <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
                     {filteredShows.length > 0 ? (
-                        <AutoSizer disableHeight>
-                            {({ width }) => (
-                                <List
-                                    height={listHeight}
-                                    itemCount={filteredShows.length}
-                                    itemSize={ITEM_SIZE}
-                                    width={width}
-                                    itemData={filteredShows}
-                                >
-                                    {Row}
-                                </List>
-                            )}
-                        </AutoSizer>
+                        <VirtualList
+                            items={filteredShows}
+                            itemHeight={ITEM_SIZE}
+                            height={listHeight}
+                        >
+                            {renderRow}
+                        </VirtualList>
                     ) : (
                         <div className="list-group-item text-muted">No matches found</div>
                     )}

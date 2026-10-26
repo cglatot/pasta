@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const ServerSelection: React.FC<Props> = ({ onConnect }) => {
-    const { servers, loading, connecting, error, connectToServer } = usePlexServer();
+    const { servers, loading, connecting, error, connectToServer, cancelConnect } = usePlexServer();
     const [useLocalAddress, setUseLocalAddress] = useState(false);
 
     useEffect(() => {
@@ -41,7 +41,12 @@ export const ServerSelection: React.FC<Props> = ({ onConnect }) => {
 
     return (
         <>
-            {connecting && <LoadingOverlay message="Connecting to server..." />}
+            {connecting && (
+                <LoadingOverlay
+                    message="Connecting to server..."
+                    onCancel={cancelConnect}
+                />
+            )}
             <div className="card shadow-sm">
                 <div className="card-header bg-white">
                     <h5 className="mb-0">Select Plex Server</h5>

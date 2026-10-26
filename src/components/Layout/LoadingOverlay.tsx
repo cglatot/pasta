@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface Props {
     message?: string;
+    onChangeServer?: () => void;
+    onCancel?: () => void;
 }
 
-export const LoadingOverlay: React.FC<Props> = ({ message }) => {
+export const LoadingOverlay: React.FC<Props> = ({ message, onChangeServer, onCancel }) => {
+    useLockBodyScroll(true);
+    const [showCancel, setShowCancel] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowCancel(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleAction = onChangeServer || onCancel;
+
     return (
         <div
             style={{
@@ -26,6 +41,18 @@ export const LoadingOverlay: React.FC<Props> = ({ message }) => {
             </div>
             {message && (
                 <p className="text-white mt-3 fs-5">{message}</p>
+            )}
+            {showCancel && handleAction && (
+                <div className="mt-3">
+                    <button
+                        type="button"
+                        className="btn btn-outline-light btn-sm"
+                        onClick={handleAction}
+                    >
+                        <i className="fas fa-server me-2"></i>
+                        {onChangeServer ? 'Change Server' : 'Cancel'}
+                    </button>
+                </div>
             )}
         </div>
     );

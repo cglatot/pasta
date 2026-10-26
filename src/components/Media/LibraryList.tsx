@@ -1,8 +1,8 @@
 import React from 'react';
 import type { PlexLibrary } from '../../types/plex';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { VirtualList, type VirtualListRowProps } from '../Layout/VirtualList';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useSettings } from '../../context/SettingsContext';
 
 interface Props {
     libraries: PlexLibrary[];
@@ -14,6 +14,7 @@ interface Props {
 
 export const LibraryList: React.FC<Props> = ({ libraries, selectedLibrary, onSelect, isCollapsed = false, onToggleCollapse }) => {
     const isMobile = useIsMobile();
+    const { maxListItems } = useSettings();
 
     const handleSelect = (lib: PlexLibrary) => {
         onSelect(lib);
@@ -24,8 +25,8 @@ export const LibraryList: React.FC<Props> = ({ libraries, selectedLibrary, onSel
         }
     };
 
-    const Row = ({ index, style, data }: ListChildComponentProps<PlexLibrary[]>) => {
-        const lib = data[index];
+    const Row = ({ index, style, data }: VirtualListRowProps<PlexLibrary>) => {
+        const lib = data;
         if (!lib) return null;
 
         return (
@@ -42,8 +43,7 @@ export const LibraryList: React.FC<Props> = ({ libraries, selectedLibrary, onSel
     };
 
     const ITEM_SIZE = 45;
-    const MAX_ITEMS = 6;
-    const listHeight = Math.min(Math.max(libraries.length, 1), MAX_ITEMS) * ITEM_SIZE;
+    const listHeight = Math.min(Math.max(libraries.length, 1), maxListItems) * ITEM_SIZE;
 
     return (
         <div className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -73,19 +73,13 @@ export const LibraryList: React.FC<Props> = ({ libraries, selectedLibrary, onSel
             {!isCollapsed && (
                 <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
                     {libraries.length > 0 ? (
-                        <AutoSizer disableHeight>
-                            {({ width }) => (
-                                <List
-                                    height={listHeight}
-                                    itemCount={libraries.length}
-                                    itemSize={ITEM_SIZE}
-                                    width={width}
-                                    itemData={libraries}
-                                >
-                                    {Row}
-                                </List>
-                            )}
-                        </AutoSizer>
+                        <VirtualList
+                            items={libraries}
+                            itemHeight={ITEM_SIZE}
+                            height={listHeight}
+                        >
+                            {Row}
+                        </VirtualList>
                     ) : (
                         <div className="list-group-item text-muted">No libraries found</div>
                     )}

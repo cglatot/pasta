@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import type { PlexLibrary, PlexMetadata } from '../types/plex';
-import { useLibraries, useLibraryItems, useMetadataChildren, useMetadata } from './usePlexQueries';
+import { useLibraries, useLibraryItems, useMetadataChildren, useMetadata, plexKeys } from './usePlexQueries';
 
 export const useMediaBrowser = () => {
+    const queryClient = useQueryClient();
     const { clientIdentifier, accessToken, serverUrl, serverName, machineIdentifier } = useAuth();
+    const { connectionTimeout } = useSettings();
 
     // Selection State
     const [selectedLibrary, setSelectedLibrary] = useState<PlexLibrary | null>(null);
@@ -12,8 +16,16 @@ export const useMediaBrowser = () => {
     const [selectedSeason, setSelectedSeason] = useState<PlexMetadata | null>(null);
     const [selectedEpisode, setSelectedEpisode] = useState<PlexMetadata | null>(null);
 
+    // Reset selection state when serverUrl changes (e.g. reconnect or change server)
+    useEffect(() => {
+        setSelectedLibrary(null);
+        setSelectedShow(null);
+        setSelectedSeason(null);
+        setSelectedEpisode(null);
+    }, [serverUrl]);
+
     // Queries
-    const librariesQuery = useLibraries(serverUrl, machineIdentifier, clientIdentifier, accessToken);
+    const librariesQuery = useLibraries(serverUrl, machineIdentifier, clientIdentifier, accessToken, connectionTimeout);
 
     const showsQuery = useLibraryItems(
         serverUrl,
@@ -43,8 +55,6 @@ export const useMediaBrowser = () => {
     );
 
     // Full Episode/Movie Details
-    // If it's a movie, we fetch metadata for the show (which is the movie).
-    // If it's an episode, we fetch metadata for the selected episode.
     const detailRatingKey = isMovie ? selectedShow?.ratingKey : selectedEpisode?.ratingKey;
 
     const detailsQuery = useMetadata(
@@ -61,8 +71,18 @@ export const useMediaBrowser = () => {
     const seasons = seasonsQuery.data || [];
     const episodes = episodesQuery.data || [];
 
+    const handleRetryConnection = async () => {
+        setSelectedLibrary(null);
+        setSelectedShow(null);
+        setSelectedSeason(null);
+        setSelectedEpisode(null);
+        await queryClient.resetQueries({ queryKey: plexKeys.all });
+    };
+
     // Loading & Error Aggregation
+    const isConnectionError = librariesQuery.isError;
     const loading = librariesQuery.isLoading || showsQuery.isLoading || seasonsQuery.isLoading || episodesQuery.isLoading || detailsQuery.isLoading;
+    const isReconnecting = librariesQuery.isFetching && isConnectionError;
     const error = librariesQuery.error || showsQuery.error || seasonsQuery.error || episodesQuery.error || detailsQuery.error;
     const errorMessage = error ? (error instanceof Error ? error.message : 'An error occurred') : null;
 
@@ -114,8 +134,6 @@ export const useMediaBrowser = () => {
         setSelectedEpisode(null);
     };
 
-    // The UI expects 'selectedEpisode' to be the full object with Media/Part info.
-    // detailsQuery.data will have that.
     const activeEpisode = detailsQuery.data || selectedEpisode;
 
     return {
@@ -130,6 +148,9 @@ export const useMediaBrowser = () => {
         selectedEpisode: activeEpisode,
         loading,
         error: errorMessage,
+        isConnectionError,
+        isReconnecting,
+        handleRetryConnection,
         selectLibrary,
         selectShow,
         selectSeason,

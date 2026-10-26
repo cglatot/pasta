@@ -1,7 +1,6 @@
 import React from 'react';
 import type { PlexMetadata } from '../../types/plex';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { VirtualList, type VirtualListRowProps } from '../Layout/VirtualList';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSettings } from '../../context/SettingsContext';
 
@@ -26,10 +25,8 @@ export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, 
         }
     };
 
-    const Row = ({ index, style, data }: ListChildComponentProps<PlexMetadata[]>) => {
-        const episode = data[index];
-
-        // Safety check
+    const Row = ({ index, style, data }: VirtualListRowProps<PlexMetadata>) => {
+        const episode = data;
         if (!episode) return null;
 
         return (
@@ -81,19 +78,13 @@ export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, 
             {!isCollapsed && (
                 <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
                     {episodes.length > 0 ? (
-                        <AutoSizer disableHeight>
-                            {({ width }) => (
-                                <List
-                                    height={listHeight}
-                                    itemCount={episodes.length}
-                                    itemSize={ITEM_SIZE}
-                                    width={width}
-                                    itemData={episodes}
-                                >
-                                    {Row}
-                                </List>
-                            )}
-                        </AutoSizer>
+                        <VirtualList
+                            items={episodes}
+                            itemHeight={ITEM_SIZE}
+                            height={listHeight}
+                        >
+                            {Row}
+                        </VirtualList>
                     ) : (
                         <div className="list-group-item text-muted">No episodes found</div>
                     )}

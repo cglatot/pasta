@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { checkPin, getPin } from '../../services/plex';
 import { useAuth } from '../../context/AuthContext';
 
@@ -7,7 +7,26 @@ export const PinLogin: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const intervalRef = useRef<number | null>(null);
+    const timeoutRef = useRef<number | null>(null);
+
+    const cleanup = () => {
+        if (intervalRef.current !== null) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+        if (timeoutRef.current !== null) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        return cleanup;
+    }, []);
+
     const handleLogin = async () => {
+        cleanup();
         setLoading(true);
         setError(null);
         try {
@@ -24,11 +43,17 @@ export const PinLogin: React.FC = () => {
                 return;
             }
 
-            const pollInterval = setInterval(async () => {
+            intervalRef.current = window.setInterval(async () => {
+                if (popup.closed) {
+                    cleanup();
+                    setLoading(false);
+                    return;
+                }
+
                 try {
                     const result = await checkPin(pinData.id, clientIdentifier, pinData.code);
                     if (result.authToken) {
-                        clearInterval(pollInterval);
+                        cleanup();
                         popup.close();
                         await login(result.authToken);
                     }
@@ -38,10 +63,10 @@ export const PinLogin: React.FC = () => {
             }, 2000);
 
             // Stop polling after 2 minutes
-            setTimeout(() => {
-                clearInterval(pollInterval);
+            timeoutRef.current = window.setTimeout(() => {
+                cleanup();
                 setLoading(false);
-                if (!error) setError('Login timed out.');
+                setError('Login timed out.');
             }, 120000);
 
         } catch (e) {

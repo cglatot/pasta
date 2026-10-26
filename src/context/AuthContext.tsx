@@ -1,10 +1,33 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { getSharedServers } from '../services/plex';
+import { getSharedServers, switchUser as plexSwitchUser } from '../services/plex';
 import { useUser, plexKeys } from '../hooks/usePlexQueries';
 import type { PlexUser, PlexHomeUser } from '../types/plex';
 import { useQueryClient } from '@tanstack/react-query';
+
+// crypto.randomUUID is only exposed in secure contexts (HTTPS / localhost).
+// Self-hosted PASTA is often opened over plain HTTP on a LAN IP, so fall back to getRandomValues.
+const generateUUID = (): string => {
+    if (typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+
+const readStoredUser = (): PlexUser | null => {
+    const storedUser = localStorage.getItem('plexUser');
+    if (!storedUser) return null;
+    try {
+        return JSON.parse(storedUser);
+    } catch {
+        localStorage.removeItem('plexUser');
+        return null;
+    }
+};
 
 interface AuthContextType {
     clientIdentifier: string;
@@ -20,6 +43,7 @@ interface AuthContextType {
     setServerUrl: (url: string, machineId?: string, name?: string) => void;
     clearServer: () => void;
     switchUser: (user: PlexHomeUser, pin?: string) => Promise<void>;
+    reconnectServer: () => Promise<void>;
     adminToken: string | null;
     isSharedServer: boolean;
     isManagedUser: boolean;
@@ -33,10 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [serverUrl, setServerUrlState] = useState<string | null>(localStorage.getItem('plexServerUrl'));
     const [serverName, setServerName] = useState<string | null>(localStorage.getItem('plexServerName'));
     const [machineIdentifier, setMachineIdentifier] = useState<string | null>(localStorage.getItem('plexMachineId'));
-    const [user, setUser] = useState<PlexUser | null>(() => {
-        const storedUser = localStorage.getItem('plexUser');
-        return storedUser ? JSON.parse(storedUser) : null;
-    });
+    const [user, setUser] = useState<PlexUser | null>(readStoredUser);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [adminToken, setAdminToken] = useState<string | null>(localStorage.getItem('plexAdminToken'));
     const [isSharedServer, setIsSharedServer] = useState<boolean>(localStorage.getItem('isSharedServer') === 'true');
@@ -62,6 +83,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsManagedUser(false);
     }, []);
 
+    const reconnectServer = useCallback(async () => {
+        const storedUrl = localStorage.getItem('plexServerUrl');
+        const storedMachineId = localStorage.getItem('plexMachineId');
+        const storedServerName = localStorage.getItem('plexServerName');
+        const storedToken = localStorage.getItem('plexToken');
+
+        setServerUrlState(storedUrl);
+        setMachineIdentifier(storedMachineId);
+        setServerName(storedServerName);
+        if (storedToken) setAccessToken(storedToken);
+
+        await queryClient.cancelQueries({ queryKey: plexKeys.all });
+        await queryClient.resetQueries({ queryKey: plexKeys.all });
+    }, [queryClient]);
+
     const { data: userData, error: userError } = useUser(clientIdentifier, accessToken, !isSharedServer && !isManagedUser);
 
     useEffect(() => {
@@ -82,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Initialize Client Identifier
         let cid = localStorage.getItem('clientIdentifier');
         if (!cid) {
-            cid = `PASTA-${uuidv4()}`;
+            cid = `PASTA-${generateUUID()}`;
             localStorage.setItem('clientIdentifier', cid);
         }
         setClientIdentifier(cid);
@@ -153,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const switchUser = async (targetUser: PlexHomeUser, _pin?: string) => {
+    const switchUser = async (targetUser: PlexHomeUser, pin?: string) => {
         if (!machineIdentifier) {
             console.error('Cannot switch user: Missing machineIdentifier');
             alert('Error: Server machine identifier missing. Please reconnect to the server.');
@@ -172,6 +208,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             let newToken = '';
             let isManaged = false;
+
+            // PIN-protected users: have Plex verify the PIN before switching.
+            // Throws (401/403) on a wrong PIN, which the caller surfaces to the user.
+            if (targetUser.protected) {
+                await plexSwitchUser(targetUser.uuid, clientIdentifier, tokenToUse, pin ?? '');
+            }
 
             // Check if target is the Admin user
             if (targetUser.username) {
@@ -270,6 +312,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setServerUrl,
                 clearServer,
                 switchUser,
+                reconnectServer,
                 adminToken,
                 isSharedServer,
                 isManagedUser

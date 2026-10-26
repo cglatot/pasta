@@ -5,6 +5,7 @@ import { MediaNavigation } from './Media/MediaNavigation';
 import { AudioTable } from './Tracks/AudioTable';
 import { SubtitleTable } from './Tracks/SubtitleTable';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useAuth } from '../context/AuthContext';
 
 // Lazy load ProgressModal
 const ProgressModal = React.lazy(() => import('./Layout/ProgressModal').then(module => ({ default: module.ProgressModal })));
@@ -16,6 +17,7 @@ import { useSettings } from '../context/SettingsContext';
 export const MediaBrowser: React.FC = () => {
     const isMobile = useIsMobile();
     const { navWidth } = useSettings();
+    const { clearServer, logout, serverUrl } = useAuth();
     const {
         libraries,
         serverName,
@@ -28,6 +30,9 @@ export const MediaBrowser: React.FC = () => {
         selectedEpisode,
         loading,
         error,
+        isConnectionError,
+        isReconnecting,
+        handleRetryConnection,
         selectLibrary,
         selectShow,
         selectSeason,
@@ -35,7 +40,7 @@ export const MediaBrowser: React.FC = () => {
         refreshEpisode
     } = useMediaBrowser();
 
-    const { progress, updateSeason, updateShow, updateLibrary, updateSingleEpisode, resetProgress } = useBatchUpdater();
+    const { progress, updateSeason, updateShow, updateLibrary, updateSingleEpisode, resetProgress, cancelBatch } = useBatchUpdater();
     const [audioKeyword, setAudioKeyword] = useState<string>('');
     const [subtitleKeyword, setSubtitleKeyword] = useState<string>('');
     const [isLibraryMode, setIsLibraryMode] = useState(false);
@@ -61,12 +66,12 @@ export const MediaBrowser: React.FC = () => {
 
         const targetStream = streamId === 0
             ? null
-            : part.Stream.find(s => s.id === streamId) || null;
+            : part.Stream?.find(s => s.id === streamId) || null;
 
         const keyword = type === 'audio' ? audioKeyword : subtitleKeyword;
 
         if (scope === 'episode') {
-            await updateSingleEpisode(selectedEpisode, targetStream, type, keyword, true);
+            await updateSingleEpisode(selectedEpisode, targetStream, type, keyword, false, true);
             await refreshEpisode();
         } else if (scope === 'season') {
             if (selectedSeason) {
@@ -107,6 +112,7 @@ export const MediaBrowser: React.FC = () => {
 
     // Determine loading message based on what's being loaded
     const getLoadingMessage = () => {
+        if (isReconnecting) return 'Reconnecting to server...';
         if (!selectedLibrary) return 'Loading libraries...';
         if (!selectedShow && selectedLibrary.type !== 'movie') return 'Loading shows...';
         if (selectedLibrary.type === 'movie') return 'Loading movies...';
@@ -149,9 +155,75 @@ export const MediaBrowser: React.FC = () => {
         );
     };
 
+    // Server connection failure state
+    if (isConnectionError && !loading) {
+        return (
+            <div className="container py-4">
+                <div className="card border-warning my-4 p-4 text-center">
+                    <div className="card-body">
+                        <i className="fas fa-server fa-3x text-warning mb-3"></i>
+                        <h4 className="card-title text-warning">Unable to Connect to Server</h4>
+                        <p className="card-text text-light">
+                            Could not reach <strong>{serverName || 'Plex Server'}</strong>{serverUrl ? <> at <code>{serverUrl}</code></> : null}.
+                            <br />
+                            The server may be offline, its IP address may have changed, or your connection may be blocked.
+                        </p>
+
+                        <div className="d-flex justify-content-center gap-3 my-4 flex-wrap">
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={handleRetryConnection}
+                                disabled={isReconnecting}
+                            >
+                                <i className={`fas fa-sync-alt me-2 ${isReconnecting ? 'fa-spin' : ''}`}></i>
+                                {isReconnecting ? 'Reconnecting...' : 'Retry Connection'}
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                onClick={clearServer}
+                            >
+                                <i className="fas fa-exchange-alt me-2"></i>
+                                Change Server
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-outline-danger"
+                                onClick={logout}
+                            >
+                                <i className="fas fa-sign-out-alt me-2"></i>
+                                Logout
+                            </button>
+                        </div>
+
+                        {/* Troubleshooting Hints */}
+                        <div className="alert alert-secondary text-start mx-auto mt-3" style={{ maxWidth: '650px' }}>
+                            <h6 className="fw-bold mb-2">
+                                <i className="fas fa-info-circle me-2 text-warning"></i>
+                                Troubleshooting Tips
+                            </h6>
+                            <ul className="mb-0 small text-muted">
+                                <li>
+                                    <strong>Ad & Privacy Blockers:</strong> Extensions like <em>uBlock Origin</em>, <em>Privacy Badger</em>, or <em>Brave Shields</em> can block direct browser calls to <code>*.plex.direct</code>. Try whitelisting this site.
+                                </li>
+                                <li>
+                                    <strong>DNS Rebinding:</strong> Add <code>plex.direct</code> to your router&apos;s DNS rebinding exception list.
+                                </li>
+                                <li>
+                                    <strong>LAN Access:</strong> If connecting locally, check that your Plex Server has <em>Secure connections</em> set to Preferred rather than Required, or access PASTA over plain HTTP.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="container-fluid">
-            {loading && <LoadingOverlay message={getLoadingMessage()} />}
+            {loading && <LoadingOverlay message={getLoadingMessage()} onChangeServer={clearServer} />}
             <Suspense fallback={null}>
                 <ProgressModal
                     show={progress.isProcessing || (progress.results.length > 0 && progress.current === progress.total)}
@@ -160,10 +232,11 @@ export const MediaBrowser: React.FC = () => {
                     onClose={() => {
                         resetProgress();
                     }}
+                    onCancel={cancelBatch}
                 />
             </Suspense>
 
-            {error && <ErrorMessage message={error} />}
+            {error && !isConnectionError && <ErrorMessage message={error} />}
 
             <WarningModal
                 show={showWarning}
@@ -206,8 +279,6 @@ export const MediaBrowser: React.FC = () => {
 
                 {/* Content Column */}
                 <div className={`${isMobile ? 'col-12 px-3' : 'col'} position-relative`}>
-
-
                     {selectedEpisode ? (
                         <div>
                             <div className="d-flex justify-content-between align-items-center mb-1">

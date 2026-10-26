@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { updateStream, getMetadataChildren, getMetadata, getLibraryItems } from '../services/plex';
 import { findMatchingStream } from '../utils/smartMatch';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +21,7 @@ const formatStreamName = (stream: PlexStream): string => {
 export const useBatchUpdater = () => {
     const { serverUrl, clientIdentifier, accessToken, machineIdentifier } = useAuth();
     const queryClient = useQueryClient();
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const [progress, setProgress] = useState<DetailedProgressState>({
         total: 0,
@@ -32,12 +33,19 @@ export const useBatchUpdater = () => {
         results: []
     });
 
+    const cancelBatch = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+    };
+
     const updateSingleEpisode = async (
         episode: PlexMetadata,
         targetStream: PlexStream | null,
         type: 'audio' | 'subtitle',
         keyword?: string,
-        exactMatch: boolean = false
+        exactMatch: boolean = false,
+        invalidate: boolean = true
     ): Promise<EpisodeResult> => {
         const episodeTitle = episode.title || 'Unknown Episode';
         const seasonNumber = episode.parentIndex;
@@ -175,8 +183,10 @@ export const useBatchUpdater = () => {
 
             await updateStream(serverUrl, part.id, streamIdToSet, type, clientIdentifier, accessToken);
 
-            // Invalidate the specific episode metadata
-            queryClient.invalidateQueries({ queryKey: plexKeys.metadata(machineIdentifier, accessToken, episode.ratingKey) });
+            // Invalidate the specific episode metadata if requested
+            if (invalidate) {
+                queryClient.invalidateQueries({ queryKey: plexKeys.metadata(machineIdentifier, accessToken, episode.ratingKey) });
+            }
 
             return {
                 episodeTitle,
@@ -207,26 +217,11 @@ export const useBatchUpdater = () => {
         keyword?: string
     ) => {
         const total = episodes.length;
-        // Determine item type based on the first episode's metadata (if available) or default to 'episode'
-        // Ideally this should be passed in, but we can infer or default.
-        // Actually, let's pass it in or infer it.
-        // For now, we'll default to 'episode' here, but updateLibrary will set it correctly if we pass it.
-        // Let's add itemType to processBatch arguments.
-
-        // Wait, I can't easily change the signature of processBatch without updating all callers.
-        // Let's infer it. If it has seasonNumber/episodeNumber it's an episode.
-        // But movies don't have those.
-        // Let's just default to 'episode' in the state init, but allow callers to override?
-        // No, let's just add the argument to processBatch. It's internal to this hook mostly.
-        // Actually updateSeason and updateShow call it too.
-
-        // Let's stick to 'episode' as default for updateSeason/updateShow.
-        // For updateLibrary, we know the type.
-
-        // Let's just update the state initialization in processBatch.
-        // We can check if the first item has `type='movie'`.
         const firstItem = episodes[0];
         const inferredType = firstItem?.type === 'movie' ? 'movie' : 'episode';
+
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
 
         setProgress({
             total,
@@ -251,13 +246,11 @@ export const useBatchUpdater = () => {
             }
         });
 
-        // Fetch all needed metadata in parallel, but with controlled concurrency
-        // to avoid hitting rate limits (batch size of 10)
-        const BATCH_SIZE = 10;
+        // Fetch all needed metadata in parallel, with controlled concurrency of 10
+        const FETCH_BATCH_SIZE = 10;
         const fetchedEpisodes: PlexMetadata[] = [];
 
         if (episodesNeedingMetadata.length > 0 && serverUrl && accessToken) {
-            // Update status for metadata fetching
             setProgress(prev => ({
                 ...prev,
                 total: episodesNeedingMetadata.length,
@@ -265,8 +258,10 @@ export const useBatchUpdater = () => {
                 statusMessage: `Fetching metadata for ${episodesNeedingMetadata.length} items...`
             }));
 
-            for (let i = 0; i < episodesNeedingMetadata.length; i += BATCH_SIZE) {
-                const batch = episodesNeedingMetadata.slice(i, i + BATCH_SIZE);
+            for (let i = 0; i < episodesNeedingMetadata.length; i += FETCH_BATCH_SIZE) {
+                if (signal.aborted) break;
+
+                const batch = episodesNeedingMetadata.slice(i, i + FETCH_BATCH_SIZE);
                 const batchPromises = batch.map(ep =>
                     queryClient.fetchQuery({
                         queryKey: plexKeys.metadata(machineIdentifier, accessToken, ep.ratingKey),
@@ -281,71 +276,93 @@ export const useBatchUpdater = () => {
                 const batchResults = await Promise.all(batchPromises);
                 fetchedEpisodes.push(...batchResults.filter((ep): ep is PlexMetadata => ep !== null));
 
-                // Throttle metadata fetch progress updates
                 if (i % 50 === 0) {
                     setProgress(prev => ({
                         ...prev,
                         current: fetchedEpisodes.length,
                         statusMessage: `Fetched metadata: ${fetchedEpisodes.length} / ${episodesNeedingMetadata.length}`
                     }));
-                    await new Promise(resolve => setTimeout(resolve, 10)); // Small yield
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
             }
+        }
+
+        if (signal.aborted) {
+            setProgress(prev => ({
+                ...prev,
+                isProcessing: false,
+                statusMessage: 'Cancelled by user.'
+            }));
+            return;
         }
 
         // Combine episodes that already had metadata with newly fetched ones
         const allEpisodes = [...episodesWithMetadata, ...fetchedEpisodes];
 
-        // Now process all episodes with their full metadata
+        // Now process all episodes with concurrency of 5
+        const UPDATE_BATCH_SIZE = 5;
         const results: EpisodeResult[] = [];
+        const successfulEpisodes: PlexMetadata[] = [];
         let success = 0;
         let failed = 0;
         let lastUpdate = Date.now();
 
-        for (let i = 0; i < allEpisodes.length; i++) {
-            const episode = allEpisodes[i];
-            const result = await updateSingleEpisode(episode, targetStream, type, keyword);
+        for (let i = 0; i < allEpisodes.length; i += UPDATE_BATCH_SIZE) {
+            if (signal.aborted) break;
 
-            if (result.success) {
-                success++;
-                results.push(result);
-            } else {
-                failed++;
-                // Memory Safety: For large batches (>5000), only store Errors.
-                // Skips (AlreadyMatched, NoMatch) are counted but not stored to save memory.
-                // Increased limit from 1000 to 5000 based on user feedback.
-                if (total <= 5000 || result.skipReason === 'Error') {
+            const batch = allEpisodes.slice(i, i + UPDATE_BATCH_SIZE);
+            const batchResults = await Promise.all(
+                batch.map(ep => updateSingleEpisode(ep, targetStream, type, keyword, false, false))
+            );
+
+            batchResults.forEach((result, idx) => {
+                if (result.success) {
+                    success++;
                     results.push(result);
+                    successfulEpisodes.push(batch[idx]);
+                } else {
+                    failed++;
+                    if (total <= 5000 || result.skipReason === 'Error') {
+                        results.push(result);
+                    }
                 }
-            }
+            });
 
-            // UI Throttling: Update state only every 500ms or on the last item
+            const processedCount = Math.min(i + batch.length, total);
             const now = Date.now();
-            if (now - lastUpdate > 500 || i === allEpisodes.length - 1) {
+            if (now - lastUpdate > 500 || processedCount === total) {
                 setProgress({
                     total,
-                    current: i + 1,
+                    current: processedCount,
                     success,
                     failed,
                     isProcessing: true,
-                    statusMessage: `Processing ${i + 1} of ${total}...`,
+                    statusMessage: `Processing ${processedCount} of ${total}...`,
                     results: [...results],
                     itemType: inferredType
                 });
                 lastUpdate = now;
-
-                // Yield to event loop to prevent freezing
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
 
+        // Defer query invalidation for changed items until the end of the batch
+        successfulEpisodes.forEach(ep => {
+            queryClient.invalidateQueries({
+                queryKey: plexKeys.metadata(machineIdentifier, accessToken, ep.ratingKey)
+            });
+        });
+
+        const isCancelled = signal.aborted;
         setProgress({
             total,
-            current: total,
+            current: results.length,
             success,
             failed,
             isProcessing: false,
-            statusMessage: `Completed! ${success} successful, ${failed} failed/skipped.`,
+            statusMessage: isCancelled
+                ? `Cancelled! ${success} updated before cancel.`
+                : `Completed! ${success} successful, ${failed} failed/skipped.`,
             results,
             itemType: inferredType
         });
@@ -381,10 +398,8 @@ export const useBatchUpdater = () => {
 
             if (library.type === 'show') {
                 // Fetch all episodes directly using type=4
-                // This is much more efficient than fetching shows -> seasons -> episodes
                 episodes = await getLibraryItems(serverUrl, library.key, clientIdentifier, accessToken, { type: 4 });
             } else if (library.type === 'movie') {
-                // Fetch all movies
                 episodes = await getLibraryItems(serverUrl, library.key, clientIdentifier, accessToken);
             }
 
@@ -396,7 +411,6 @@ export const useBatchUpdater = () => {
             await processBatch(episodes, targetStream, type, keyword);
 
             // Invalidate the library query to reflect changes
-            // Note: We don't invalidate every single item as that would be too heavy
             queryClient.invalidateQueries({ queryKey: plexKeys.libraryItems(machineIdentifier, library.key) });
 
         } catch (e) {
@@ -429,8 +443,6 @@ export const useBatchUpdater = () => {
             });
             await processBatch(episodes, targetStream, type, keyword);
 
-            // Invalidate the season's children (episodes list)
-            // This ensures that if we view the list again, we get fresh data
             queryClient.invalidateQueries({ queryKey: plexKeys.children(machineIdentifier, accessToken, season.ratingKey) });
 
         } catch (e) {
@@ -460,19 +472,17 @@ export const useBatchUpdater = () => {
                 queryFn: () => getMetadataChildren(serverUrl, show.ratingKey, clientIdentifier, accessToken),
                 staleTime: 1000 * 60 * 5
             });
-            let allEpisodes: PlexMetadata[] = [];
 
-            for (const season of seasons) {
-                const episodes = await queryClient.fetchQuery({
+            // Parallelize season fetching
+            const seasonPromises = seasons.map(season =>
+                queryClient.fetchQuery({
                     queryKey: plexKeys.children(machineIdentifier, accessToken, season.ratingKey),
                     queryFn: () => getMetadataChildren(serverUrl, season.ratingKey, clientIdentifier, accessToken),
                     staleTime: 1000 * 60 * 5
-                });
-                allEpisodes = [...allEpisodes, ...episodes];
-
-                // Invalidate each season's children as we process
-                // Or we can do it at the end. Doing it here might be safer if we stop early.
-            }
+                })
+            );
+            const seasonsEpisodes = await Promise.all(seasonPromises);
+            const allEpisodes = seasonsEpisodes.flat();
 
             await processBatch(allEpisodes, targetStream, type, keyword);
 
@@ -506,6 +516,7 @@ export const useBatchUpdater = () => {
         updateShow,
         updateLibrary,
         updateSingleEpisode,
-        resetProgress
+        resetProgress,
+        cancelBatch
     };
 };
