@@ -44,9 +44,6 @@ jobs:
         env:
           VITE_APP_VERSION: ${{ github.event_name == 'release' && github.ref_name || '' }}
 
-      - name: Copy legacy app to dist
-        run: cp -r legacy dist/legacy
-
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
