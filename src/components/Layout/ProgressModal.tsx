@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { DetailedProgressState, EpisodeResult } from '../../types/batchTypes';
 import { VirtualList, type VirtualListRowProps } from './VirtualList';
-import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
+import { ModalDialog } from './ModalDialog';
 
 interface Props {
     show: boolean;
@@ -9,10 +9,19 @@ interface Props {
     progress: DetailedProgressState;
     onClose?: () => void;
     onCancel?: () => void;
+    onMinimize?: () => void;
+    onCancelQueuedJob?: (jobId: string) => void;
 }
 
-export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose, onCancel }) => {
-    useLockBodyScroll(show);
+export const ProgressModal: React.FC<Props> = ({
+    show,
+    title,
+    progress,
+    onClose,
+    onCancel,
+    onMinimize,
+    onCancelQueuedJob,
+}) => {
     const [expandedSection, setExpandedSection] = useState<'changed' | 'skipped' | null>(null);
 
     // Reset expanded sections whenever modal is closed or a new process starts,
@@ -55,6 +64,11 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose,
                         <div className="fw-bold small">{formatEpisodeTitle(result)}</div>
                         <div className="text-muted small">
                             {result.previousStreamName ? `${result.previousStreamName} → ` : '→ '}{result.streamName}
+                            {result.totalUsersCount && result.totalUsersCount > 1 && (
+                                <span className="ms-2 text-warning">
+                                    (Updated for {result.updatedUsersCount ?? result.totalUsersCount}/{result.totalUsersCount} users)
+                                </span>
+                            )}
                         </div>
                     </div>
                     <span className="badge bg-success text-white small ms-2">
@@ -99,6 +113,11 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose,
                         {streamDisplay && (
                             <div className="text-muted small">
                                 → {streamDisplay}
+                                {result.totalUsersCount && result.totalUsersCount > 1 && (
+                                    <span className="ms-2">
+                                        (All {result.totalUsersCount} users)
+                                    </span>
+                                )}
                             </div>
                         )}
                         {result.skipReason === 'Error' && result.errorMessage && (
@@ -115,14 +134,32 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose,
         );
     };
 
+    const handleHeaderClose = () => {
+        if (isComplete && onClose) {
+            onClose();
+        } else if (progress.isProcessing && onMinimize) {
+            onMinimize();
+        }
+    };
+
+    const canDismiss = Boolean((isComplete && onClose) || (progress.isProcessing && onMinimize));
+
     return (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered modal-lg">
-                <div className="modal-content" style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+        <ModalDialog
+            show={show}
+            dialogClassName="modal-lg"
+            onClose={canDismiss ? handleHeaderClose : undefined}
+        >
+            <div className="modal-content" style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
                     <div className="modal-header">
                         <h5 className="modal-title">{isComplete ? 'Update Complete' : title}</h5>
-                        {isComplete && onClose && (
-                            <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
+                        {((isComplete && onClose) || (progress.isProcessing && onMinimize)) && (
+                            <button
+                                type="button"
+                                className="btn-close"
+                                onClick={handleHeaderClose}
+                                aria-label="Close"
+                            ></button>
                         )}
                     </div>
                     <div className="modal-body d-flex flex-column" style={{ overflow: 'hidden', minHeight: 0 }}>
@@ -143,7 +180,60 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose,
                                 <p className="text-center mb-0">{progress.statusMessage}</p>
                                 <div className="text-center mt-2 text-muted small">
                                     Processed: {progress.current} / {progress.total}
+                                    {progress.targetUsersSummary && (
+                                        <span className="ms-2">• Target: {progress.targetUsersSummary}</span>
+                                    )}
                                 </div>
+
+                                {progress.queuedJobs && progress.queuedJobs.length > 0 && (
+                                    <div className="mt-4 pt-3 border-top border-secondary">
+                                        <h6 className="mb-2 text-warning small fw-bold">
+                                            Queued Jobs ({progress.queuedJobs.length})
+                                        </h6>
+                                        <div
+                                            className="d-flex flex-column gap-2"
+                                            style={{ maxHeight: '180px', overflowY: 'auto' }}
+                                        >
+                                            {progress.queuedJobs.map((qJob, idx) => (
+                                                <div
+                                                    key={qJob.jobId}
+                                                    className="d-flex justify-content-between align-items-center px-2 py-2 rounded border border-secondary"
+                                                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                                                >
+                                                    <div className="flex-grow-1 me-2">
+                                                        <div className="fw-bold small">
+                                                            #{idx + 1} • {qJob.targetTitle}{' '}
+                                                            <span className="badge bg-secondary ms-1 text-capitalize">
+                                                                {qJob.scope}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-muted small">
+                                                            {qJob.streamType === 'audio'
+                                                                ? 'Audio'
+                                                                : 'Subtitle'}
+                                                            : {qJob.streamName}
+                                                            {qJob.targetUsersSummary
+                                                                ? ` • Target: ${qJob.targetUsersSummary}`
+                                                                : ''}
+                                                        </div>
+                                                    </div>
+                                                    {onCancelQueuedJob && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-danger btn-sm py-0 px-2"
+                                                            onClick={() =>
+                                                                onCancelQueuedJob(qJob.jobId)
+                                                            }
+                                                            title="Remove from queue"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         )}
 
@@ -151,6 +241,9 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose,
                             <div className="d-flex flex-column flex-grow-1" style={{ minHeight: 0 }}>
                                 <div className="alert alert-success mb-3 flex-shrink-0">
                                     <strong>Completed!</strong> {progress.success} {progress.success !== 1 ? itemLabel.toLowerCase() : itemLabelSingular.toLowerCase()} updated, {progress.failed} skipped
+                                    {progress.targetUsersSummary && (
+                                        <span className="ms-2 small">({progress.targetUsersSummary})</span>
+                                    )}
                                 </div>
 
                                 {/* Changed Items */}
@@ -207,10 +300,23 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose,
                     </div>
                     {progress.isProcessing && onCancel && (
                         <div className="modal-footer d-flex justify-content-between align-items-center">
-                            <span className="text-muted small">Batch update in progress...</span>
-                            <button type="button" className="btn btn-outline-danger" onClick={onCancel}>
-                                Cancel
-                            </button>
+                            <span className="text-muted small">
+                                {onMinimize ? 'Batch update in progress on server...' : 'Batch update in progress...'}
+                            </span>
+                            <div className="d-flex gap-2">
+                                {onMinimize && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary"
+                                        onClick={onMinimize}
+                                    >
+                                        Minimize
+                                    </button>
+                                )}
+                                <button type="button" className="btn btn-outline-danger" onClick={onCancel}>
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     )}
                     {isComplete && onClose && (
@@ -221,7 +327,6 @@ export const ProgressModal: React.FC<Props> = ({ show, title, progress, onClose,
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </ModalDialog>
     );
 };

@@ -1,20 +1,38 @@
 import { useState, useRef, useCallback } from 'react';
-import { checkServerIdentity, isAbortError } from '../services/plex';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { usePlexResources } from './usePlexQueries';
+import { usePastaProvider } from '../providers/PastaProvider';
 import type { PlexResource } from '../types/plex';
 
 export const usePlexServer = () => {
-    const { clientIdentifier, accessToken, setServerUrl, login } = useAuth();
+    const provider = usePastaProvider();
+    const {
+        clientIdentifier,
+        accessToken,
+        adminToken,
+        isManagedUser,
+        user,
+        setServerUrl,
+        login,
+        setActiveServerToken,
+    } = useAuth();
     const { connectionTimeout } = useSettings();
-    const { data: resources, isLoading: loading, error: queryError, refetch } = usePlexResources(clientIdentifier, accessToken);
+    const { data: resources, isLoading: loading, error: queryError, refetch } = usePlexResources(
+        clientIdentifier,
+        adminToken || accessToken,
+        user?.id
+    );
 
     const [connecting, setConnecting] = useState(false);
     const [connectionError, setConnectionError] = useState<string | null>(null);
     const activeControllersRef = useRef<AbortController[]>([]);
 
-    const servers = resources?.filter(r => r.product === 'Plex Media Server') || [];
+    const rawServers = resources?.filter(r => r.product === 'Plex Media Server') || [];
+    // Managed accounts cannot access shared servers - filter strictly to owned servers
+    const servers = isManagedUser
+        ? rawServers.filter(r => r.owned)
+        : rawServers;
     const error = queryError ? 'Failed to load servers.' : connectionError;
 
     const fetchServers = async () => {
@@ -32,91 +50,59 @@ export const usePlexServer = () => {
         setConnecting(true);
         setConnectionError(null);
 
-        // Filter connections based on protocol
-        const connections = server.connections.filter(c => {
-            // When on HTTPS, browsers block mixed content (plain HTTP requests)
-            if (window.location.protocol === 'https:' && c.protocol !== 'https') return false;
-            return true;
-        });
+        let serverToConnect = server;
+        let effectiveToken = server.accessToken;
 
-        // Sort connections based on preference (local first or remote first)
-        connections.sort((a, b) => {
-            if (useLocalAddress) {
-                // Prefer local: true before false
-                return (a.local === b.local) ? 0 : (a.local ? -1 : 1);
-            } else {
-                // Prefer remote: false before true
-                return (a.local === b.local) ? 0 : (!a.local ? -1 : 1);
+        // In Client Mode, resolve the Managed User's token for this server from shared_servers
+        if (provider.mode === 'client' && isManagedUser && user?.id) {
+            try {
+                const tokenToUse = adminToken || accessToken || server.accessToken;
+                effectiveToken = await provider.auth.resolveManagedUserToken(
+                    server.clientIdentifier,
+                    user.id,
+                    clientIdentifier,
+                    tokenToUse || ''
+                );
+                serverToConnect = { ...server, accessToken: effectiveToken };
+            } catch (err) {
+                setConnecting(false);
+                setConnectionError(
+                    err instanceof Error
+                        ? err.message
+                        : `Could not resolve access token for managed user ${user.title || user.username}`
+                );
+                return false;
             }
-        });
-
-        if (connections.length === 0) {
-            setConnectionError(`No secure connections found for this server. Please enable 'Secure connections' in your Plex Media Server settings.`);
-            setConnecting(false);
-            return false;
         }
 
-        // Create abort controllers for each connection attempt
-        const abortControllers = connections.map(() => new AbortController());
-        activeControllersRef.current = abortControllers;
-
-        // Try connections in parallel; the first successful connection cancels all others for instant resolution
-        const connectionPromises = connections.map(async (conn, index) => {
-            try {
-                const identity = await checkServerIdentity(
-                    conn.uri,
-                    clientIdentifier,
-                    server.accessToken,
-                    abortControllers[index].signal,
-                    connectionTimeout * 1000
-                );
-
-                // As soon as this connection succeeds, cancel all other in-flight requests immediately
-                abortControllers.forEach((controller, i) => {
-                    if (i !== index) {
-                        controller.abort();
-                    }
-                });
-
-                const machineId = identity?.MediaContainer?.machineIdentifier || server.clientIdentifier;
-
-                return {
-                    success: true,
-                    uri: conn.uri,
-                    machineId
-                };
-            } catch (e: unknown) {
-                if (!isAbortError(e)) {
-                    console.warn(`Failed to connect to ${conn.uri}`, e);
-                }
-                return {
-                    success: false,
-                    uri: conn.uri
-                };
-            }
+        const result = await provider.servers.connectToServer(serverToConnect, {
+            useLocalAddress,
+            clientIdentifier,
+            timeoutMs: connectionTimeout * 1000,
+            onRegisterAbortControllers: (controllers) => {
+                activeControllersRef.current = controllers;
+            },
         });
 
-        const results = await Promise.all(connectionPromises);
         activeControllersRef.current = [];
 
-        const successfulConnection = results.find(r => r.success);
+        if (result.success && result.uri) {
+            setServerUrl(result.uri, result.machineId || server.clientIdentifier, server.name);
 
-        if (successfulConnection) {
-            setServerUrl(successfulConnection.uri, successfulConnection.machineId, server.name);
-
-            if (server.accessToken !== accessToken) {
-                await login(server.accessToken, !server.owned);
+            if (provider.mode === 'client') {
+                if (isManagedUser) {
+                    setActiveServerToken(effectiveToken);
+                } else if (server.accessToken !== accessToken) {
+                    await login(server.accessToken, !server.owned);
+                }
             }
             setConnecting(false);
             return true;
         }
 
-        let errMsg = 'Could not connect to this server. Please check your network connection.';
-        if (server.dnsRebindingProtection) {
-            errMsg += ' Your router or ISP may have DNS Rebinding Protection blocking *.plex.direct.';
-        }
-
-        setConnectionError(errMsg);
+        setConnectionError(
+            result.errorMessage || 'Could not connect to this server. Please check your network connection.'
+        );
         setConnecting(false);
         return false;
     };

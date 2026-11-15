@@ -1,12 +1,15 @@
 {
   "name": "pasta",
   "private": true,
-  "version": "2.3.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "node --disable-warning=ExperimentalWarning --watch-path=server/src --watch-path=src/shared server/src/index.ts",
+    "start:server": "node --disable-warning=ExperimentalWarning server/src/index.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "node --disable-warning=ExperimentalWarning --test server/src/__tests__/scanner.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

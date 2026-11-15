@@ -1,31 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { usePlexServer } from '../hooks/usePlexServer';
 import { LoadingOverlay } from './Layout/LoadingOverlay';
 import type { PlexResource } from '../types/plex';
 
 interface Props {
     onConnect: () => void;
+    onOpenAdminSettings?: (machineIdentifier: string) => void;
 }
 
-export const ServerSelection: React.FC<Props> = ({ onConnect }) => {
+export const ServerSelection: React.FC<Props> = ({ onConnect, onOpenAdminSettings }) => {
     const { servers, loading, connecting, error, connectToServer, cancelConnect } = usePlexServer();
-    const [useLocalAddress, setUseLocalAddress] = useState(false);
-
-    useEffect(() => {
+    const [useLocalAddress, setUseLocalAddress] = useState(() => {
         const stored = localStorage.getItem('useLocalAddress');
-        if (stored === 'true') {
-            setUseLocalAddress(true);
-        }
-    }, []);
+        return stored === null ? true : stored === 'true';
+    });
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
         setUseLocalAddress(checked);
-        if (checked) {
-            localStorage.setItem('useLocalAddress', 'true');
-        } else {
-            localStorage.removeItem('useLocalAddress');
-        }
+        localStorage.setItem('useLocalAddress', checked ? 'true' : 'false');
     };
 
     const handleConnect = async (server: PlexResource) => {
@@ -52,17 +45,54 @@ export const ServerSelection: React.FC<Props> = ({ onConnect }) => {
                     <h5 className="mb-0">Select Plex Server</h5>
                 </div>
                 <div className="list-group list-group-flush">
-                    {servers.map(server => (
-                        <button
-                            key={server.clientIdentifier}
-                            className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                            onClick={() => handleConnect(server)}
-                            disabled={connecting}
-                        >
-                            {server.name}
-                            <span className="badge bg-secondary rounded-pill">{server.productVersion}</span>
-                        </button>
-                    ))}
+                    {servers.map(server => {
+                        const canAdminServer =
+                            Boolean(server.isMonitored) &&
+                            (server.pastaRole === 'owner' || server.pastaRole === 'admin');
+
+                        return (
+                            <div
+                                key={server.clientIdentifier}
+                                role="button"
+                                tabIndex={0}
+                                className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onClick={() => {
+                                    if (!connecting) {
+                                        void handleConnect(server);
+                                    }
+                                }}
+                                onKeyDown={e => {
+                                    if ((e.key === 'Enter' || e.key === ' ') && !connecting) {
+                                        e.preventDefault();
+                                        void handleConnect(server);
+                                    }
+                                }}
+                                style={{ cursor: connecting ? 'not-allowed' : 'pointer' }}
+                            >
+                                <div className="d-flex align-items-center gap-2">
+                                    <span>{server.name}</span>
+                                    {server.productVersion && (
+                                        <span className="badge bg-secondary rounded-pill">
+                                            {server.productVersion}
+                                        </span>
+                                    )}
+                                </div>
+                                {canAdminServer && onOpenAdminSettings && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-primary btn-sm"
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            onOpenAdminSettings(server.clientIdentifier);
+                                        }}
+                                        disabled={connecting}
+                                    >
+                                        Admin Settings
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
                     {servers.length === 0 && (
                         <div className="list-group-item text-muted">No servers found.</div>
                     )}

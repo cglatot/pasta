@@ -1,0 +1,22 @@
+services:
+  pasta:
+    image: cglatot/pasta:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pasta
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./appdata:/config
+    environment:
+      - PORT=80
+      - PASTA_MODE=server
+      - PASTA_CONFIG_DIR=/config
+      # Optional: Set PASTA_MODE=client to run as a stateless browser-only web app
+      # - PASTA_MODE=client
+      # Optional: Enable verbose debug logging to container stdout (docker logs)
+      # - PASTA_DEBUG=true
+      # Optional: Override auto-generated /config/.pasta_secret with a fixed secret
+      # - PASTA_SECRET=your-custom-secret-here

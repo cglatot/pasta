@@ -4,17 +4,88 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     streams: PlexStream[];
-    onSelect: (streamId: number, scope: 'episode' | 'season' | 'show' | 'library') => void;
+    onSelect: (
+        streamId: number,
+        scope: 'episode' | 'season' | 'show' | 'collection' | 'library'
+    ) => void;
     keyword: string;
     onKeywordChange: (keyword: string) => void;
     isMovie?: boolean;
     isLibraryMode?: boolean;
+    isCollectionsMode?: boolean;
 }
 
-export const SubtitleTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeywordChange, isMovie = false, isLibraryMode = false }) => {
+export const SubtitleTable: React.FC<Props> = ({
+    streams,
+    onSelect,
+    keyword,
+    onKeywordChange,
+    isMovie = false,
+    isLibraryMode = false,
+    isCollectionsMode = false,
+}) => {
     const subtitleStreams = streams.filter(s => s.streamType === 3);
     const noneSelected = !subtitleStreams.some(s => s.selected);
     const isMobile = useIsMobile();
+    const showActionsColumn = isLibraryMode || isCollectionsMode || !isMovie;
+
+    const renderActionButtons = (streamId: number) => (
+        <div
+            className={isMobile ? 'btn-group-vertical btn-group-sm' : 'btn-group btn-group-sm'}
+            role="group"
+        >
+            {isLibraryMode ? (
+                <button
+                    className="btn btn-primary btn-sm"
+                    onClick={e => {
+                        e.stopPropagation();
+                        onSelect(streamId, 'library');
+                    }}
+                    title="Apply to Entire Library"
+                    style={isMobile ? { textAlign: 'center' } : undefined}
+                >
+                    Library
+                </button>
+            ) : isCollectionsMode ? (
+                <button
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={e => {
+                        e.stopPropagation();
+                        onSelect(streamId, 'collection');
+                    }}
+                    title="Apply to Collection"
+                    style={isMobile ? { textAlign: 'center' } : undefined}
+                >
+                    Collection
+                </button>
+            ) : (
+                <>
+                    <button
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={e => {
+                            e.stopPropagation();
+                            onSelect(streamId, 'season');
+                        }}
+                        title="Apply to Season"
+                        style={isMobile ? { textAlign: 'center' } : undefined}
+                    >
+                        Season
+                    </button>
+                    <button
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={e => {
+                            e.stopPropagation();
+                            onSelect(streamId, 'show');
+                        }}
+                        title="Apply to Show"
+                        style={isMobile ? { textAlign: 'center' } : undefined}
+                    >
+                        Show
+                    </button>
+                </>
+            )}
+        </div>
+    );
 
     return (
         <div className="card shadow-sm mb-4">
@@ -23,24 +94,37 @@ export const SubtitleTable: React.FC<Props> = ({ streams, onSelect, keyword, onK
             </div>
             <div className="card-body bg-light border-bottom pt-2 pb-3">
                 <div className="form-group mb-0">
-                    <label htmlFor="subtitleKeyword" className="form-label fw-bold small">Subtitle Keyword</label>
+                    <label htmlFor="subtitleKeyword" className="form-label fw-bold small">
+                        Subtitle Keyword
+                    </label>
                     <input
                         type="text"
                         className="form-control form-control-sm"
                         id="subtitleKeyword"
                         placeholder="Enter keyword to match subtitles (e.g. 'Forced')"
                         value={keyword}
-                        onChange={(e) => onKeywordChange(e.target.value)}
+                        onChange={e => onKeywordChange(e.target.value)}
                     />
-                    <div className="form-text small">Only match subtitle tracks containing this keyword.</div>
+                    <div className="form-text small">
+                        Only match subtitle tracks containing this keyword.
+                    </div>
                 </div>
             </div>
-            <div className="table-responsive" style={isMobile ? {
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#888 #f1f1f1'
-            } : undefined}>
+            <div
+                className="table-responsive"
+                style={
+                    isMobile
+                        ? {
+                              scrollbarWidth: 'thin',
+                              scrollbarColor: '#888 #f1f1f1',
+                          }
+                        : undefined
+                }
+            >
                 <style>{`
-                    ${isMobile ? `
+                    ${
+                        isMobile
+                            ? `
                         .table-responsive::-webkit-scrollbar {
                             height: 4px;
                         }
@@ -51,7 +135,9 @@ export const SubtitleTable: React.FC<Props> = ({ streams, onSelect, keyword, onK
                             background: #888;
                             border-radius: 2px;
                         }
-                    ` : ''}
+                    `
+                            : ''
+                    }
                 `}</style>
                 <table className="table table-hover mb-0">
                     <thead>
@@ -60,109 +146,75 @@ export const SubtitleTable: React.FC<Props> = ({ streams, onSelect, keyword, onK
                             <th>Title</th>
                             {!isMobile && <th>Language</th>}
                             {!isMobile && <th>Codec</th>}
-                            {(isLibraryMode || !isMovie) && <th>Actions</th>}
+                            {showActionsColumn && <th>Actions</th>}
                         </tr>
                     </thead>
                     <tbody>
-                        <tr
-                            className={noneSelected ? 'table-active' : ''}
-                        >
-                            <td onClick={() => onSelect(0, 'episode')} style={{ cursor: 'pointer' }}>No Subtitles</td>
-                            <td onClick={() => onSelect(0, 'episode')} style={{ cursor: 'pointer' }}>--</td>
-                            {!isMobile && <td onClick={() => onSelect(0, 'episode')} style={{ cursor: 'pointer' }}>--</td>}
-                            {!isMobile && <td onClick={() => onSelect(0, 'episode')} style={{ cursor: 'pointer' }}>--</td>}
-                            {(isLibraryMode || !isMovie) && (
-                                <td>
-                                    <div className={isMobile ? 'btn-group-vertical btn-group-sm' : 'btn-group btn-group-sm'} role="group">
-                                        {isLibraryMode ? (
-                                            <button
-                                                className="btn btn-primary btn-sm"
-                                                onClick={(e) => { e.stopPropagation(); onSelect(0, 'library'); }}
-                                                title="Apply to Entire Library"
-                                                style={isMobile ? { textAlign: 'center' } : undefined}
-                                            >
-                                                Library
-                                            </button>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    className="btn btn-outline-primary btn-sm"
-                                                    onClick={(e) => { e.stopPropagation(); onSelect(0, 'season'); }}
-                                                    title="Apply to Season"
-                                                    style={isMobile ? { textAlign: 'center' } : undefined}
-                                                >
-                                                    Season
-                                                </button>
-                                                <button
-                                                    className="btn btn-outline-primary btn-sm"
-                                                    onClick={(e) => { e.stopPropagation(); onSelect(0, 'show'); }}
-                                                    title="Apply to Show"
-                                                    style={isMobile ? { textAlign: 'center' } : undefined}
-                                                >
-                                                    Show
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
+                        <tr className={noneSelected ? 'table-active' : ''}>
+                            <td
+                                onClick={() => onSelect(0, 'episode')}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                No Subtitles
+                            </td>
+                            <td
+                                onClick={() => onSelect(0, 'episode')}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                --
+                            </td>
+                            {!isMobile && (
+                                <td
+                                    onClick={() => onSelect(0, 'episode')}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    --
                                 </td>
                             )}
+                            {!isMobile && (
+                                <td
+                                    onClick={() => onSelect(0, 'episode')}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    --
+                                </td>
+                            )}
+                            {showActionsColumn && <td>{renderActionButtons(0)}</td>}
                         </tr>
                         {subtitleStreams.map(stream => (
                             <tr
                                 key={stream.id}
                                 className={stream.selected ? 'table-active' : ''}
                             >
-                                <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                <td
+                                    onClick={() => onSelect(stream.id, 'episode')}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     {stream.displayTitle || stream.title}
                                 </td>
-                                <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                <td
+                                    onClick={() => onSelect(stream.id, 'episode')}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     {stream.title}
                                 </td>
                                 {!isMobile && (
-                                    <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                    <td
+                                        onClick={() => onSelect(stream.id, 'episode')}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         {stream.language}
                                     </td>
                                 )}
                                 {!isMobile && (
-                                    <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                    <td
+                                        onClick={() => onSelect(stream.id, 'episode')}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         {stream.codec}
                                     </td>
                                 )}
-                                {(isLibraryMode || !isMovie) && (
-                                    <td>
-                                        <div className={isMobile ? 'btn-group-vertical btn-group-sm' : 'btn-group btn-group-sm'} role="group">
-                                            {isLibraryMode ? (
-                                                <button
-                                                    className="btn btn-primary btn-sm"
-                                                    onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'library'); }}
-                                                    title="Apply to Entire Library"
-                                                    style={isMobile ? { textAlign: 'center' } : undefined}
-                                                >
-                                                    Library
-                                                </button>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        className="btn btn-outline-primary btn-sm"
-                                                        onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'season'); }}
-                                                        title="Apply to Season"
-                                                        style={isMobile ? { textAlign: 'center' } : undefined}
-                                                    >
-                                                        Season
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-outline-primary btn-sm"
-                                                        onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'show'); }}
-                                                        title="Apply to Show"
-                                                        style={isMobile ? { textAlign: 'center' } : undefined}
-                                                    >
-                                                        Show
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                )}
+                                {showActionsColumn && <td>{renderActionButtons(stream.id)}</td>}
                             </tr>
                         ))}
                     </tbody>

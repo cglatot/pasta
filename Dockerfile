@@ -1,4 +1,4 @@
-# Stage 1: Build the Vite application
+# Stage 1: Build the Vite application and typecheck client + server
 FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 
 WORKDIR /app
@@ -16,14 +16,29 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Typecheck and build the frontend static bundle
 RUN npm run build
 
-# Stage 2: Serve the built application
-FROM httpd:2.4-alpine
+# Stage 2: Node.js 24 LTS runtime
+FROM node:24-alpine
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist/ /usr/local/apache2/htdocs/
+WORKDIR /app
 
-# Expose port 80
+ENV NODE_ENV=production
+ENV PORT=80
+ENV PASTA_MODE=server
+ENV PASTA_CONFIG_DIR=/config
+ENV PASTA_DIST_DIR=/app/dist
+
+# Ensure persistent /config volume directory exists
+RUN mkdir -p /config
+
+# Copy built frontend static assets and server sources
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/shared ./src/shared
+COPY --from=builder /app/server/src ./server/src
+COPY --from=builder /app/package.json ./package.json
+
 EXPOSE 80
+
+CMD ["node", "--disable-warning=ExperimentalWarning", "server/src/index.ts"]

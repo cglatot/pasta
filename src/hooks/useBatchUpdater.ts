@@ -1,27 +1,86 @@
-import { useState, useRef } from 'react';
-import { updateStream, getMetadataChildren, getMetadata, getLibraryItems } from '../services/plex';
-import { findMatchingStream } from '../utils/smartMatch';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { usePastaProvider } from '../providers/PastaProvider';
+import {
+    cancelServerBatchJob,
+    dismissServerBatchJob,
+    fetchActiveServerBatch,
+    subscribeToServerBatchEvents,
+} from '../providers/server/sseClient';
 import type { PlexStream, PlexMetadata, PlexLibrary } from '../types/plex';
-import type { DetailedProgressState, EpisodeResult, SkipReason, MatchReason } from '../types/batchTypes';
+import type { DetailedProgressState, EpisodeResult, TargetUsersSelection } from '../types/batchTypes';
 import { useQueryClient } from '@tanstack/react-query';
 import { plexKeys } from './usePlexQueries';
 
-// Format as "DisplayTitle - Title" or just show what's available
-const formatStreamName = (stream: PlexStream): string => {
-    const displayTitle = stream.displayTitle || '';
-    const title = stream.title || '';
+// Shared modal visibility state across Header (Status Pill) and MediaBrowser (ProgressModal).
+// Starts minimized (true) on initial page load / new session so existing server jobs appear in the
+// Header Status Pill without popping the modal automatically; starting a batch in THIS window sets it to false.
+let sharedModalMinimized = true;
+let currentDisplayedJobId: string | null = null;
+let pendingLocalBatchStart = false;
+const setPendingLocalBatchStart = (val: boolean) => {
+    pendingLocalBatchStart = val;
+};
+const locallyStartedJobIds = new Set<string>();
+const modalVisibilityListeners = new Set<(minimized: boolean) => void>();
 
-    if (displayTitle && title) {
-        return `${displayTitle} - ${title}`;
+export const setBatchModalMinimized = (minimized: boolean) => {
+    sharedModalMinimized = minimized;
+    for (const listener of modalVisibilityListeners) {
+        listener(minimized);
     }
-    return displayTitle || title || 'Unknown';
+};
+
+export const syncModalVisibilityWithServerEvent = (
+    evt: { jobId: string } | null
+) => {
+    if (!evt) {
+        currentDisplayedJobId = null;
+        setBatchModalMinimized(true);
+        return;
+    }
+
+    if (pendingLocalBatchStart) {
+        locallyStartedJobIds.add(evt.jobId);
+        pendingLocalBatchStart = false;
+        currentDisplayedJobId = evt.jobId;
+        setBatchModalMinimized(false);
+        return;
+    }
+
+    if (evt.jobId !== currentDisplayedJobId) {
+        currentDisplayedJobId = evt.jobId;
+        if (!locallyStartedJobIds.has(evt.jobId)) {
+            setBatchModalMinimized(true);
+        }
+    }
+};
+
+export const useBatchModalVisibility = () => {
+    const [isMinimized, setIsMinimized] = useState(sharedModalMinimized);
+    useEffect(() => {
+        const listener = (val: boolean) => setIsMinimized(val);
+        modalVisibilityListeners.add(listener);
+        return () => {
+            modalVisibilityListeners.delete(listener);
+        };
+    }, []);
+    return {
+        isMinimized,
+        minimizeModal: () => setBatchModalMinimized(true),
+        reopenModal: () => setBatchModalMinimized(false),
+    };
 };
 
 export const useBatchUpdater = () => {
-    const { serverUrl, clientIdentifier, accessToken, machineIdentifier } = useAuth();
+    const provider = usePastaProvider();
+    const isServerMode = provider.mode === 'server';
+    const { serverUrl, clientIdentifier, accessToken, machineIdentifier, isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
     const abortControllerRef = useRef<AbortController | null>(null);
+    const [activeTargetTitle, setActiveTargetTitle] = useState<string>('');
+    const [batchNotice, setBatchNotice] = useState<string | null>(null);
+    const clearBatchNotice = useCallback(() => setBatchNotice(null), []);
 
     const [progress, setProgress] = useState<DetailedProgressState>({
         total: 0,
@@ -33,10 +92,85 @@ export const useBatchUpdater = () => {
         results: []
     });
 
-    const cancelBatch = () => {
+    // In Server Mode, subscribe to live SSE batch progress and restore any active batch on mount/refresh
+    useEffect(() => {
+        if (!isServerMode || !isAuthenticated) return;
+
+        void fetchActiveServerBatch(machineIdentifier);
+
+        const unsubscribe = subscribeToServerBatchEvents(evt => {
+            syncModalVisibilityWithServerEvent(evt);
+            if (!evt) {
+                setProgress({
+                    total: 0,
+                    current: 0,
+                    success: 0,
+                    failed: 0,
+                    isProcessing: false,
+                    statusMessage: '',
+                    results: [],
+                });
+                setActiveTargetTitle('');
+                return;
+            }
+            setActiveTargetTitle(evt.targetTitle || '');
+            setProgress(evt.progress);
+
+            // When a server batch finishes, invalidate React Query cache for the server
+            if (!evt.progress.isProcessing && evt.progress.total > 0) {
+                queryClient.invalidateQueries({
+                    queryKey: plexKeys.server(evt.machineIdentifier),
+                });
+            }
+        });
+
+        return unsubscribe;
+    }, [isServerMode, isAuthenticated, machineIdentifier, queryClient]);
+
+    const cancelBatch = useCallback(() => {
+        if (isServerMode && progress.jobId) {
+            void cancelServerBatchJob(progress.jobId);
+            return;
+        }
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
+    }, [isServerMode, progress.jobId]);
+
+    const cancelQueuedBatch = useCallback(
+        (jobId: string) => {
+            if (isServerMode && jobId) {
+                void cancelServerBatchJob(jobId);
+            }
+        },
+        [isServerMode]
+    );
+
+    const getCtx = () => ({
+        serverUrl,
+        machineIdentifier,
+        clientIdentifier,
+        token: accessToken,
+    });
+
+    const fetchMetadataCached = (ratingKey: string) =>
+        queryClient.fetchQuery({
+            queryKey: plexKeys.metadata(machineIdentifier, accessToken, ratingKey),
+            queryFn: () => provider.media.getMetadata(getCtx(), ratingKey),
+            staleTime: 1000 * 60 * 30,
+        });
+
+    const fetchChildrenCached = (ratingKey: string) =>
+        queryClient.fetchQuery({
+            queryKey: plexKeys.children(machineIdentifier, accessToken, ratingKey),
+            queryFn: () => provider.media.getMetadataChildren(getCtx(), ratingKey),
+            staleTime: 1000 * 60 * 5,
+        });
+
+    const invalidateMetadata = (ratingKey: string) => {
+        queryClient.invalidateQueries({
+            queryKey: plexKeys.metadata(machineIdentifier, accessToken, ratingKey),
+        });
     };
 
     const updateSingleEpisode = async (
@@ -45,460 +179,240 @@ export const useBatchUpdater = () => {
         type: 'audio' | 'subtitle',
         keyword?: string,
         exactMatch: boolean = false,
-        invalidate: boolean = true
+        invalidate: boolean = true,
+        targetUsers?: TargetUsersSelection
     ): Promise<EpisodeResult> => {
-        const episodeTitle = episode.title || 'Unknown Episode';
-        const seasonNumber = episode.parentIndex;
-        const episodeNumber = episode.index;
-
-        if (!serverUrl || !accessToken) {
-            return {
-                episodeTitle,
-                seasonNumber,
-                episodeNumber,
-                success: false,
-                skipReason: 'Error',
-                errorMessage: 'No server URL or access token'
-            };
-        }
-
-        try {
-            // Assume episode already has full metadata from batch fetch
-            const part = episode.Media?.[0]?.Part?.[0];
-            if (!part || !part.Stream) {
-                return {
-                    episodeTitle,
-                    seasonNumber,
-                    episodeNumber,
-                    success: false,
-                    skipReason: 'Error',
-                    errorMessage: 'No streams available'
-                };
-            }
-
-            // Record what was selected before processing, so results can show "from -> to"
-            const currentStream = part.Stream.find(s => s.streamType === (type === 'audio' ? 2 : 3) && s.selected);
-            const previousStreamName = currentStream
-                ? formatStreamName(currentStream)
-                : (type === 'subtitle' ? 'None' : undefined);
-
-            let streamIdToSet = 0; // Default to 0 (None) for subtitles
-            let matchReason: MatchReason | undefined;
-            let streamName: string | undefined;
-
-            if (targetStream) {
-                // If exactMatch is true, we try to find the exact stream ID in the current episode
-                if (exactMatch) {
-                    const exactStream = part.Stream.find(s => s.id === targetStream.id);
-                    if (exactStream) {
-                        streamIdToSet = exactStream.id;
-                        matchReason = 'Exact Selection';
-                        streamName = formatStreamName(exactStream);
-
-                        // Check if already selected
-                        if (exactStream.selected) {
-                            return {
-                                episodeTitle,
-                                seasonNumber,
-                                episodeNumber,
-                                success: false,
-                                skipReason: 'AlreadyMatched',
-                                streamName,
-                                previousStreamName
-                            };
-                        }
-                    } else {
-                        // Should not happen if invoked correctly for single episode
-                        return {
-                            episodeTitle,
-                            seasonNumber,
-                            episodeNumber,
-                            success: false,
-                            skipReason: 'Error',
-                            errorMessage: 'Target stream not found in episode'
-                        };
-                    }
-                } else {
-                    // Find matching stream using smart match
-                    const matchResult = findMatchingStream(targetStream, part.Stream, keyword);
-                    if (matchResult) {
-                        streamIdToSet = matchResult.stream.id;
-                        matchReason = matchResult.matchReason;
-                        streamName = formatStreamName(matchResult.stream);
-
-                        // Check if the matched stream is already selected
-                        if (matchResult.stream.selected) {
-                            return {
-                                episodeTitle,
-                                seasonNumber,
-                                episodeNumber,
-                                success: false,
-                                skipReason: 'AlreadyMatched',
-                                streamName,
-                                previousStreamName
-                            };
-                        }
-                    } else {
-                        // No match found, skip update
-                        const skipReason: SkipReason = keyword ? 'KeywordFiltered' : 'NoMatch';
-                        return {
-                            episodeTitle,
-                            seasonNumber,
-                            episodeNumber,
-                            success: false,
-                            skipReason,
-                            previousStreamName
-                        };
-                    }
-                }
-            } else {
-                // If targetStream is null, we are setting to "None" (only valid for subtitles)
-                if (type === 'audio') {
-                    return {
-                        episodeTitle,
-                        seasonNumber,
-                        episodeNumber,
-                        success: false,
-                        skipReason: 'Error',
-                        errorMessage: 'Cannot set audio to None'
-                    };
-                }
-                // Check if "None" is already selected (i.e., no subtitle stream is selected)
-                const anySubtitleSelected = part.Stream.some(s => s.streamType === 3 && s.selected);
-                if (!anySubtitleSelected) {
-                    return {
-                        episodeTitle,
-                        seasonNumber,
-                        episodeNumber,
-                        success: false,
-                        skipReason: 'AlreadyMatched',
-                        streamName: 'None',
-                        previousStreamName
-                    };
-                }
-
-                streamName = 'None';
-                matchReason = 'Exact Match (All Properties)'; // Setting to None is exact
-            }
-
-            await updateStream(serverUrl, part.id, streamIdToSet, type, clientIdentifier, accessToken);
-
-            // Invalidate the specific episode metadata if requested
-            if (invalidate) {
-                queryClient.invalidateQueries({ queryKey: plexKeys.metadata(machineIdentifier, accessToken, episode.ratingKey) });
-            }
-
-            return {
-                episodeTitle,
-                seasonNumber,
-                episodeNumber,
-                success: true,
-                matchReason,
-                streamName,
-                previousStreamName
-            };
-        } catch (e) {
-            console.error(`Failed to update episode ${episodeTitle}`, e);
-            return {
-                episodeTitle,
-                seasonNumber,
-                episodeNumber,
-                success: false,
-                skipReason: 'Error',
-                errorMessage: e instanceof Error ? e.message : 'Unknown error'
-            };
-        }
-    };
-
-    const processBatch = async (
-        episodes: PlexMetadata[],
-        targetStream: PlexStream | null,
-        type: 'audio' | 'subtitle',
-        keyword?: string
-    ) => {
-        const total = episodes.length;
-        const firstItem = episodes[0];
-        const inferredType = firstItem?.type === 'movie' ? 'movie' : 'episode';
-
-        abortControllerRef.current = new AbortController();
-        const signal = abortControllerRef.current.signal;
-
-        setProgress({
-            total,
-            current: 0,
-            success: 0,
-            failed: 0,
-            isProcessing: true,
-            statusMessage: `Processing ${total} items...`,
-            results: [],
-            itemType: inferredType
+        const result = await provider.batch.updateSingleEpisode({
+            ctx: getCtx(),
+            episode,
+            targetStream,
+            type,
+            keyword,
+            exactMatch,
+            targetUsers,
         });
 
-        // First, identify which episodes need metadata fetched
-        const episodesNeedingMetadata: PlexMetadata[] = [];
-        const episodesWithMetadata: PlexMetadata[] = [];
-
-        episodes.forEach(ep => {
-            if (!ep.Media || !ep.Media[0]?.Part?.[0]?.Stream) {
-                episodesNeedingMetadata.push(ep);
-            } else {
-                episodesWithMetadata.push(ep);
-            }
-        });
-
-        // Fetch all needed metadata in parallel, with controlled concurrency of 10
-        const FETCH_BATCH_SIZE = 10;
-        const fetchedEpisodes: PlexMetadata[] = [];
-
-        if (episodesNeedingMetadata.length > 0 && serverUrl && accessToken) {
-            setProgress(prev => ({
-                ...prev,
-                total: episodesNeedingMetadata.length,
-                current: 0,
-                statusMessage: `Fetching metadata for ${episodesNeedingMetadata.length} items...`
-            }));
-
-            for (let i = 0; i < episodesNeedingMetadata.length; i += FETCH_BATCH_SIZE) {
-                if (signal.aborted) break;
-
-                const batch = episodesNeedingMetadata.slice(i, i + FETCH_BATCH_SIZE);
-                const batchPromises = batch.map(ep =>
-                    queryClient.fetchQuery({
-                        queryKey: plexKeys.metadata(machineIdentifier, accessToken, ep.ratingKey),
-                        queryFn: () => getMetadata(serverUrl, ep.ratingKey, clientIdentifier, accessToken),
-                        staleTime: 1000 * 60 * 30 // 30 minutes
-                    }).catch(err => {
-                        console.warn(`Failed to fetch metadata for episode ${ep.title}:`, err);
-                        return null;
-                    })
-                );
-
-                const batchResults = await Promise.all(batchPromises);
-                fetchedEpisodes.push(...batchResults.filter((ep): ep is PlexMetadata => ep !== null));
-
-                if (i % 50 === 0) {
-                    setProgress(prev => ({
-                        ...prev,
-                        current: fetchedEpisodes.length,
-                        statusMessage: `Fetched metadata: ${fetchedEpisodes.length} / ${episodesNeedingMetadata.length}`
-                    }));
-                    await new Promise(resolve => setTimeout(resolve, 10));
-                }
-            }
+        if (result.success && invalidate) {
+            invalidateMetadata(episode.ratingKey);
         }
 
-        if (signal.aborted) {
-            setProgress(prev => ({
-                ...prev,
-                isProcessing: false,
-                statusMessage: 'Cancelled by user.'
-            }));
-            return;
-        }
-
-        // Combine episodes that already had metadata with newly fetched ones
-        const allEpisodes = [...episodesWithMetadata, ...fetchedEpisodes];
-
-        // Now process all episodes with concurrency of 5
-        const UPDATE_BATCH_SIZE = 5;
-        const results: EpisodeResult[] = [];
-        const successfulEpisodes: PlexMetadata[] = [];
-        let success = 0;
-        let failed = 0;
-        let lastUpdate = Date.now();
-
-        for (let i = 0; i < allEpisodes.length; i += UPDATE_BATCH_SIZE) {
-            if (signal.aborted) break;
-
-            const batch = allEpisodes.slice(i, i + UPDATE_BATCH_SIZE);
-            const batchResults = await Promise.all(
-                batch.map(ep => updateSingleEpisode(ep, targetStream, type, keyword, false, false))
-            );
-
-            batchResults.forEach((result, idx) => {
-                if (result.success) {
-                    success++;
-                    results.push(result);
-                    successfulEpisodes.push(batch[idx]);
-                } else {
-                    failed++;
-                    if (total <= 5000 || result.skipReason === 'Error') {
-                        results.push(result);
-                    }
-                }
-            });
-
-            const processedCount = Math.min(i + batch.length, total);
-            const now = Date.now();
-            if (now - lastUpdate > 500 || processedCount === total) {
-                setProgress({
-                    total,
-                    current: processedCount,
-                    success,
-                    failed,
-                    isProcessing: true,
-                    statusMessage: `Processing ${processedCount} of ${total}...`,
-                    results: [...results],
-                    itemType: inferredType
-                });
-                lastUpdate = now;
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
-        }
-
-        // Defer query invalidation for changed items until the end of the batch
-        successfulEpisodes.forEach(ep => {
-            queryClient.invalidateQueries({
-                queryKey: plexKeys.metadata(machineIdentifier, accessToken, ep.ratingKey)
-            });
-        });
-
-        const isCancelled = signal.aborted;
-        setProgress({
-            total,
-            current: results.length,
-            success,
-            failed,
-            isProcessing: false,
-            statusMessage: isCancelled
-                ? `Cancelled! ${success} updated before cancel.`
-                : `Completed! ${success} successful, ${failed} failed/skipped.`,
-            results,
-            itemType: inferredType
-        });
+        return result;
     };
 
     const updateLibrary = async (
         library: PlexLibrary,
         targetStream: PlexStream | null,
         type: 'audio' | 'subtitle',
-        keyword?: string
+        keyword?: string,
+        targetUsers?: TargetUsersSelection
     ) => {
-        if (!serverUrl || !accessToken) return;
+        if (!serverUrl && provider.mode === 'client') return;
 
-        // Prevent navigation
+        setBatchModalMinimized(false);
+        if (isServerMode) {
+            setPendingLocalBatchStart(true);
+        }
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             e.preventDefault();
             e.returnValue = '';
         };
-        window.addEventListener('beforeunload', handleBeforeUnload);
+        if (provider.mode === 'client') {
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+
+        abortControllerRef.current = new AbortController();
 
         try {
-            setProgress({
-                total: 0,
-                current: 0,
-                success: 0,
-                failed: 0,
-                isProcessing: true,
-                statusMessage: 'Fetching library items...',
-                results: []
+            await provider.batch.executeBatch({
+                ctx: getCtx(),
+                scope: 'library',
+                targetItem: library,
+                targetStream,
+                type,
+                keyword,
+                targetUsers,
+                onProgress: state => {
+                    if (state.jobId) locallyStartedJobIds.add(state.jobId);
+                    setProgress(state);
+                },
+                fetchMetadataCached,
+                fetchChildrenCached,
+                onInvalidateItem: invalidateMetadata,
+                signal: abortControllerRef.current.signal,
             });
+            setPendingLocalBatchStart(false);
+            setBatchModalMinimized(false);
 
-            let episodes: PlexMetadata[] = [];
-
-            if (library.type === 'show') {
-                // Fetch all episodes directly using type=4
-                episodes = await getLibraryItems(serverUrl, library.key, clientIdentifier, accessToken, { type: 4 });
-            } else if (library.type === 'movie') {
-                episodes = await getLibraryItems(serverUrl, library.key, clientIdentifier, accessToken);
-            }
-
-            if (episodes.length === 0) {
-                alert('No items found in this library.');
-                return;
-            }
-
-            await processBatch(episodes, targetStream, type, keyword);
-
-            // Invalidate the library query to reflect changes
-            queryClient.invalidateQueries({ queryKey: plexKeys.libraryItems(machineIdentifier, library.key) });
-
+            queryClient.invalidateQueries({
+                queryKey: plexKeys.libraryItems(machineIdentifier, library.key),
+            });
         } catch (e) {
+            setPendingLocalBatchStart(false);
             console.error(e);
-            alert('Failed to fetch library items');
-            resetProgress();
+            setBatchNotice(e instanceof Error ? e.message : 'Failed to fetch library items');
+            if (!isServerMode) {
+                resetProgress();
+            }
         } finally {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
+            if (provider.mode === 'client') {
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+            }
         }
     };
 
-    const updateSeason = async (season: PlexMetadata, targetStream: PlexStream | null, type: 'audio' | 'subtitle', keyword?: string) => {
-        if (!serverUrl || !accessToken) return;
+    const updateSeason = async (
+        season: PlexMetadata,
+        targetStream: PlexStream | null,
+        type: 'audio' | 'subtitle',
+        keyword?: string,
+        targetUsers?: TargetUsersSelection
+    ) => {
+        if (!serverUrl && provider.mode === 'client') return;
 
-        setProgress({
-            total: 0,
-            current: 0,
-            success: 0,
-            failed: 0,
-            isProcessing: true,
-            statusMessage: 'Fetching season episodes...',
-            results: []
-        });
+        setBatchModalMinimized(false);
+        if (isServerMode) {
+            setPendingLocalBatchStart(true);
+        }
+        abortControllerRef.current = new AbortController();
 
         try {
-            const episodes = await queryClient.fetchQuery({
+            await provider.batch.executeBatch({
+                ctx: getCtx(),
+                scope: 'season',
+                targetItem: season,
+                targetStream,
+                type,
+                keyword,
+                targetUsers,
+                onProgress: state => {
+                    if (state.jobId) locallyStartedJobIds.add(state.jobId);
+                    setProgress(state);
+                },
+                fetchMetadataCached,
+                fetchChildrenCached,
+                onInvalidateItem: invalidateMetadata,
+                signal: abortControllerRef.current.signal,
+            });
+            setPendingLocalBatchStart(false);
+            setBatchModalMinimized(false);
+
+            queryClient.invalidateQueries({
                 queryKey: plexKeys.children(machineIdentifier, accessToken, season.ratingKey),
-                queryFn: () => getMetadataChildren(serverUrl, season.ratingKey, clientIdentifier, accessToken),
-                staleTime: 1000 * 60 * 5
             });
-            await processBatch(episodes, targetStream, type, keyword);
-
-            queryClient.invalidateQueries({ queryKey: plexKeys.children(machineIdentifier, accessToken, season.ratingKey) });
-
         } catch (e) {
+            setPendingLocalBatchStart(false);
             console.error(e);
-            alert('Failed to fetch season episodes');
-            resetProgress();
+            setBatchNotice(e instanceof Error ? e.message : 'Failed to fetch season episodes');
+            if (!isServerMode) {
+                resetProgress();
+            }
         }
     };
 
-    const updateShow = async (show: PlexMetadata, targetStream: PlexStream | null, type: 'audio' | 'subtitle', keyword?: string) => {
-        if (!serverUrl || !accessToken) return;
+    const updateShow = async (
+        show: PlexMetadata,
+        targetStream: PlexStream | null,
+        type: 'audio' | 'subtitle',
+        keyword?: string,
+        targetUsers?: TargetUsersSelection
+    ) => {
+        if (!serverUrl && provider.mode === 'client') return;
 
-        setProgress({
-            total: 0,
-            current: 0,
-            success: 0,
-            failed: 0,
-            isProcessing: true,
-            statusMessage: 'Fetching show information...',
-            results: []
-        });
+        setBatchModalMinimized(false);
+        if (isServerMode) {
+            setPendingLocalBatchStart(true);
+        }
+        abortControllerRef.current = new AbortController();
 
         try {
-            // Fetch all seasons
-            const seasons = await queryClient.fetchQuery({
-                queryKey: plexKeys.children(machineIdentifier, accessToken, show.ratingKey),
-                queryFn: () => getMetadataChildren(serverUrl, show.ratingKey, clientIdentifier, accessToken),
-                staleTime: 1000 * 60 * 5
+            await provider.batch.executeBatch({
+                ctx: getCtx(),
+                scope: 'show',
+                targetItem: show,
+                targetStream,
+                type,
+                keyword,
+                targetUsers,
+                onProgress: state => {
+                    if (state.jobId) locallyStartedJobIds.add(state.jobId);
+                    setProgress(state);
+                },
+                fetchMetadataCached,
+                fetchChildrenCached,
+                onInvalidateItem: invalidateMetadata,
+                signal: abortControllerRef.current.signal,
             });
+            setPendingLocalBatchStart(false);
+            setBatchModalMinimized(false);
 
-            // Parallelize season fetching
-            const seasonPromises = seasons.map(season =>
-                queryClient.fetchQuery({
-                    queryKey: plexKeys.children(machineIdentifier, accessToken, season.ratingKey),
-                    queryFn: () => getMetadataChildren(serverUrl, season.ratingKey, clientIdentifier, accessToken),
-                    staleTime: 1000 * 60 * 5
-                })
-            );
-            const seasonsEpisodes = await Promise.all(seasonPromises);
-            const allEpisodes = seasonsEpisodes.flat();
-
-            await processBatch(allEpisodes, targetStream, type, keyword);
-
-            // Invalidate all seasons involved
-            seasons.forEach(season => {
-                queryClient.invalidateQueries({ queryKey: plexKeys.children(machineIdentifier, accessToken, season.ratingKey) });
+            queryClient.invalidateQueries({
+                queryKey: plexKeys.server(machineIdentifier),
             });
-
         } catch (e) {
+            setPendingLocalBatchStart(false);
             console.error(e);
-            alert('Failed to fetch show episodes');
-            resetProgress();
+            setBatchNotice(e instanceof Error ? e.message : 'Failed to fetch show episodes');
+            if (!isServerMode) {
+                resetProgress();
+            }
         }
     };
 
-    const resetProgress = () => {
+    const updateCollection = async (
+        collection: PlexMetadata,
+        targetStream: PlexStream | null,
+        type: 'audio' | 'subtitle',
+        keyword?: string,
+        targetUsers?: TargetUsersSelection
+    ) => {
+        if (!serverUrl && provider.mode === 'client') return;
+
+        setBatchModalMinimized(false);
+        if (isServerMode) {
+            setPendingLocalBatchStart(true);
+        }
+        abortControllerRef.current = new AbortController();
+
+        try {
+            await provider.batch.executeBatch({
+                ctx: getCtx(),
+                scope: 'collection',
+                targetItem: collection,
+                targetStream,
+                type,
+                keyword,
+                targetUsers,
+                onProgress: state => {
+                    if (state.jobId) locallyStartedJobIds.add(state.jobId);
+                    setProgress(state);
+                },
+                fetchMetadataCached,
+                fetchChildrenCached,
+                onInvalidateItem: invalidateMetadata,
+                signal: abortControllerRef.current.signal,
+            });
+            setPendingLocalBatchStart(false);
+            setBatchModalMinimized(false);
+
+            queryClient.invalidateQueries({
+                queryKey: plexKeys.server(machineIdentifier),
+            });
+        } catch (e) {
+            setPendingLocalBatchStart(false);
+            console.error(e);
+            setBatchNotice(e instanceof Error ? e.message : 'Failed to process collection items');
+            if (!isServerMode) {
+                resetProgress();
+            }
+        }
+    };
+
+    const resetProgress = useCallback(() => {
+        if (isServerMode && progress.jobId) {
+            void dismissServerBatchJob(progress.jobId);
+        }
+        currentDisplayedJobId = null;
+        setBatchModalMinimized(true);
         setProgress({
             total: 0,
             current: 0,
@@ -508,15 +422,20 @@ export const useBatchUpdater = () => {
             statusMessage: '',
             results: []
         });
-    };
+    }, [isServerMode, progress.jobId]);
 
     return {
         progress,
+        activeTargetTitle,
+        batchNotice,
+        clearBatchNotice,
         updateSeason,
         updateShow,
+        updateCollection,
         updateLibrary,
         updateSingleEpisode,
         resetProgress,
-        cancelBatch
+        cancelBatch,
+        cancelQueuedBatch,
     };
 };

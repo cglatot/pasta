@@ -5,7 +5,7 @@
 
   color-scheme: dark;
   color: rgb(240, 240, 240);
-  background-color: rgb(51, 51, 51);
+  background-color: #000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,6 +25,13 @@
   /* Bootstrap Warning System Harmonization */
   --bs-warning: #F39C12;
   --bs-warning-rgb: 243, 156, 18;
+
+  /* Brand-consistent native form controls & standard scrollbars */
+  accent-color: var(--accent-color);
+  --scrollbar-thumb: var(--accent-color);
+  --scrollbar-track: #1a1a1a;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
 }
 
 a {
@@ -45,15 +52,21 @@ code {
   font-size: 0.9em;
 }
 
+html {
+  background-color: #000;
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: rgb(51, 51, 51);
+  background-color: #000;
   background-image: radial-gradient(rgba(100, 50, 0, 0.75), black 120%), repeating-linear-gradient(rgba(0, 0, 0, 0.75),
       rgba(0, 0, 0, 0.75) 2px,
       transparent 2px,
       transparent 4px);
+  background-attachment: fixed;
 }
 
 h1,
@@ -96,7 +109,7 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: rgb(240, 240, 240);
-    background-color: rgb(51, 51, 51);
+    background-color: #000;
   }
 
   a:hover {
@@ -322,25 +335,28 @@ code {
   color: white;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar {
-  width: 10px;
-  background: #1a1a1a;
-}
+/* Scrollbars (legacy WebKit/Blink fallback when standard scrollbar-color is unsupported) */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: var(--scrollbar-track);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
-  border-radius: 5px;
-}
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 5px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-hover);
-}
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hover);
+  }
 
-::-webkit-scrollbar-button {
-  display: none;
-  width: 0;
-  height: 0;
+  ::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 /* Dropdowns */

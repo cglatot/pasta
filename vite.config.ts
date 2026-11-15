@@ -31,4 +31,9 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(resolveAppVersion()),
   },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001',
+    },
+  },
 })

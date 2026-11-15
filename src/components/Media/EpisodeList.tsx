@@ -8,11 +8,12 @@ interface Props {
     episodes: PlexMetadata[];
     selectedEpisode: PlexMetadata | null;
     onSelect: (episode: PlexMetadata) => void;
+    headerTitle?: string;
     isCollapsed?: boolean;
     onToggleCollapse?: () => void;
 }
 
-export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, selectedEpisode, onSelect, isCollapsed = false, onToggleCollapse }, ref) => {
+export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, selectedEpisode, onSelect, headerTitle = 'Episodes', isCollapsed = false, onToggleCollapse }, ref) => {
     const isMobile = useIsMobile();
     const { maxListItems } = useSettings();
 
@@ -38,9 +39,14 @@ export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, 
                 >
                     <div className="d-flex justify-content-between align-items-center">
                         <span className="text-truncate" style={{ maxWidth: '85%' }}>
-                            {episode.index !== undefined && <span className="me-2 text-muted">E{episode.index}</span>}
+                            {episode.type === 'episode' && episode.index !== undefined && (
+                                <span className="me-2 text-muted">E{episode.index}</span>
+                            )}
                             {episode.title}
                         </span>
+                        {episode.type === 'movie' && episode.year && (
+                            <small className="flex-shrink-0">{episode.year}</small>
+                        )}
                     </div>
                 </button>
             </div>
@@ -65,7 +71,7 @@ export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, 
             >
                 <h5 className="mb-0 d-flex justify-content-between align-items-center">
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        Episodes
+                        {headerTitle}
                         {isCollapsed && selectedEpisode && (
                             <span className="text-muted ms-3" style={{ fontSize: '0.85rem', fontWeight: 'normal' }}>
                                 {selectedEpisode.title}
@@ -86,7 +92,7 @@ export const EpisodeList = React.forwardRef<HTMLDivElement, Props>(({ episodes, 
                             {Row}
                         </VirtualList>
                     ) : (
-                        <div className="list-group-item text-muted">No episodes found</div>
+                        <div className="list-group-item text-muted">No items found</div>
                     )}
                 </div>
             )}

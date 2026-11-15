@@ -4,16 +4,29 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface Props {
     streams: PlexStream[];
-    onSelect: (streamId: number, scope: 'episode' | 'season' | 'show' | 'library') => void;
+    onSelect: (
+        streamId: number,
+        scope: 'episode' | 'season' | 'show' | 'collection' | 'library'
+    ) => void;
     keyword: string;
     onKeywordChange: (keyword: string) => void;
     isMovie?: boolean;
     isLibraryMode?: boolean;
+    isCollectionsMode?: boolean;
 }
 
-export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeywordChange, isMovie = false, isLibraryMode = false }) => {
+export const AudioTable: React.FC<Props> = ({
+    streams,
+    onSelect,
+    keyword,
+    onKeywordChange,
+    isMovie = false,
+    isLibraryMode = false,
+    isCollectionsMode = false,
+}) => {
     const audioStreams = streams.filter(s => s.streamType === 2);
     const isMobile = useIsMobile();
+    const showActionsColumn = isLibraryMode || isCollectionsMode || !isMovie;
 
     return (
         <div className="card shadow-sm mb-4">
@@ -22,24 +35,37 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
             </div>
             <div className="card-body bg-light border-bottom pt-2 pb-3">
                 <div className="form-group mb-0">
-                    <label htmlFor="audioKeyword" className="form-label fw-bold small">Audio Keyword</label>
+                    <label htmlFor="audioKeyword" className="form-label fw-bold small">
+                        Audio Keyword
+                    </label>
                     <input
                         type="text"
                         className="form-control form-control-sm"
                         id="audioKeyword"
                         placeholder="Enter keyword to match audio (e.g. 'Commentary')"
                         value={keyword}
-                        onChange={(e) => onKeywordChange(e.target.value)}
+                        onChange={e => onKeywordChange(e.target.value)}
                     />
-                    <div className="form-text small">Only match audio tracks containing this keyword.</div>
+                    <div className="form-text small">
+                        Only match audio tracks containing this keyword.
+                    </div>
                 </div>
             </div>
-            <div className="table-responsive" style={isMobile ? {
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#888 #f1f1f1'
-            } : undefined}>
+            <div
+                className="table-responsive"
+                style={
+                    isMobile
+                        ? {
+                              scrollbarWidth: 'thin',
+                              scrollbarColor: '#888 #f1f1f1',
+                          }
+                        : undefined
+                }
+            >
                 <style>{`
-                    ${isMobile ? `
+                    ${
+                        isMobile
+                            ? `
                         .table-responsive::-webkit-scrollbar {
                             height: 4px;
                         }
@@ -50,7 +76,9 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                             background: #888;
                             border-radius: 2px;
                         }
-                    ` : ''}
+                    `
+                            : ''
+                    }
                 `}</style>
                 <table className="table table-hover mb-0">
                     <thead>
@@ -59,7 +87,7 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                             <th>Title</th>
                             {!isMobile && <th>Language</th>}
                             {!isMobile && <th>Codec</th>}
-                            {(isLibraryMode || !isMovie) && <th>Actions</th>}
+                            {showActionsColumn && <th>Actions</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -68,49 +96,105 @@ export const AudioTable: React.FC<Props> = ({ streams, onSelect, keyword, onKeyw
                                 key={stream.id}
                                 className={stream.selected ? 'table-active' : ''}
                             >
-                                <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                <td
+                                    onClick={() => onSelect(stream.id, 'episode')}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     {stream.displayTitle || stream.title}
                                 </td>
-                                <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                <td
+                                    onClick={() => onSelect(stream.id, 'episode')}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     {stream.title}
                                 </td>
                                 {!isMobile && (
-                                    <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                    <td
+                                        onClick={() => onSelect(stream.id, 'episode')}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         {stream.language}
                                     </td>
                                 )}
                                 {!isMobile && (
-                                    <td onClick={() => onSelect(stream.id, 'episode')} style={{ cursor: 'pointer' }}>
+                                    <td
+                                        onClick={() => onSelect(stream.id, 'episode')}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         {stream.codec}
                                     </td>
                                 )}
-                                {(isLibraryMode || !isMovie) && (
+                                {showActionsColumn && (
                                     <td>
-                                        <div className={isMobile ? 'btn-group-vertical btn-group-sm' : 'btn-group btn-group-sm'} role="group">
+                                        <div
+                                            className={
+                                                isMobile
+                                                    ? 'btn-group-vertical btn-group-sm'
+                                                    : 'btn-group btn-group-sm'
+                                            }
+                                            role="group"
+                                        >
                                             {isLibraryMode ? (
                                                 <button
                                                     className="btn btn-primary btn-sm"
-                                                    onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'library'); }}
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        onSelect(stream.id, 'library');
+                                                    }}
                                                     title="Apply to Entire Library"
-                                                    style={isMobile ? { textAlign: 'center' } : undefined}
+                                                    style={
+                                                        isMobile
+                                                            ? { textAlign: 'center' }
+                                                            : undefined
+                                                    }
                                                 >
                                                     Library
+                                                </button>
+                                            ) : isCollectionsMode ? (
+                                                <button
+                                                    className="btn btn-outline-primary btn-sm"
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        onSelect(stream.id, 'collection');
+                                                    }}
+                                                    title="Apply to Collection"
+                                                    style={
+                                                        isMobile
+                                                            ? { textAlign: 'center' }
+                                                            : undefined
+                                                    }
+                                                >
+                                                    Collection
                                                 </button>
                                             ) : (
                                                 <>
                                                     <button
                                                         className="btn btn-outline-primary btn-sm"
-                                                        onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'season'); }}
+                                                        onClick={e => {
+                                                            e.stopPropagation();
+                                                            onSelect(stream.id, 'season');
+                                                        }}
                                                         title="Apply to Season"
-                                                        style={isMobile ? { textAlign: 'center' } : undefined}
+                                                        style={
+                                                            isMobile
+                                                                ? { textAlign: 'center' }
+                                                                : undefined
+                                                        }
                                                     >
                                                         Season
                                                     </button>
                                                     <button
                                                         className="btn btn-outline-primary btn-sm"
-                                                        onClick={(e) => { e.stopPropagation(); onSelect(stream.id, 'show'); }}
+                                                        onClick={e => {
+                                                            e.stopPropagation();
+                                                            onSelect(stream.id, 'show');
+                                                        }}
                                                         title="Apply to Show"
-                                                        style={isMobile ? { textAlign: 'center' } : undefined}
+                                                        style={
+                                                            isMobile
+                                                                ? { textAlign: 'center' }
+                                                                : undefined
+                                                        }
                                                     >
                                                         Show
                                                     </button>

@@ -7,6 +7,7 @@ import './form-custom.css'
 import App from './App.tsx'
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { PastaProvider } from './providers/PastaProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -24,11 +25,13 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <SettingsProvider>
+        <PastaProvider>
           <AuthProvider>
-            <App />
+            <SettingsProvider>
+              <App />
+            </SettingsProvider>
           </AuthProvider>
-        </SettingsProvider>
+        </PastaProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,

@@ -9,109 +9,200 @@ interface Props {
     selectedShow: PlexMetadata | null;
     onSelect: (show: PlexMetadata) => void;
     libraryType?: string;
+    browseMode?: 'all' | 'collections';
+    onBrowseModeChange?: (mode: 'all' | 'collections') => void;
     isCollapsed?: boolean;
     onToggleCollapse?: () => void;
 }
 
-export const ShowList = React.forwardRef<HTMLDivElement, Props>(({ shows, selectedShow, onSelect, libraryType, isCollapsed = false, onToggleCollapse }, ref) => {
-    const [filter, setFilter] = useState('');
-    const isMobile = useIsMobile();
-    const { maxListItems } = useSettings();
+export const ShowList = React.forwardRef<HTMLDivElement, Props>(
+    (
+        {
+            shows,
+            selectedShow,
+            onSelect,
+            libraryType,
+            browseMode = 'all',
+            onBrowseModeChange,
+            isCollapsed = false,
+            onToggleCollapse,
+        },
+        ref
+    ) => {
+        const [filter, setFilter] = useState('');
+        const isMobile = useIsMobile();
+        const { maxListItems } = useSettings();
 
-    const handleSelect = useCallback((show: PlexMetadata) => {
-        onSelect(show);
+        const handleSelect = useCallback(
+            (show: PlexMetadata) => {
+                onSelect(show);
 
-        // Auto-collapse on mobile after selection
-        if (isMobile && !isCollapsed && onToggleCollapse) {
-            onToggleCollapse();
-        }
-    }, [onSelect, isMobile, isCollapsed, onToggleCollapse]);
+                // Auto-collapse on mobile after selection
+                if (isMobile && !isCollapsed && onToggleCollapse) {
+                    onToggleCollapse();
+                }
+            },
+            [onSelect, isMobile, isCollapsed, onToggleCollapse]
+        );
 
-    const filteredShows = useMemo(() => {
-        if (!filter.trim()) return shows;
-        const lower = filter.toLowerCase();
-        return shows.filter(show => show.title.toLowerCase().includes(lower));
-    }, [shows, filter]);
+        const filteredShows = useMemo(() => {
+            if (!filter.trim()) return shows;
+            const lower = filter.toLowerCase();
+            return shows.filter(show => show.title.toLowerCase().includes(lower));
+        }, [shows, filter]);
 
-    const getHeaderTitle = () => {
-        if (libraryType === 'movie') return 'Movies';
-        if (libraryType === 'show') return 'TV Shows';
-        return 'Content';
-    };
+        const getHeaderTitle = () => {
+            if (browseMode === 'collections') return 'Collections';
+            if (libraryType === 'movie') return 'Movies';
+            if (libraryType === 'show') return 'TV Shows';
+            return 'Content';
+        };
 
-    const renderRow = useCallback(({ index, style, data }: VirtualListRowProps<PlexMetadata>) => {
-        const show = data;
-        if (!show) return null;
+        const renderRow = useCallback(
+            ({ index, style, data }: VirtualListRowProps<PlexMetadata>) => {
+                const show = data;
+                if (!show) return null;
+
+                return (
+                    <div style={style}>
+                        <button
+                            className={`list-group-item list-group-item-action rounded-0 ${
+                                index === 0
+                                    ? 'border-0'
+                                    : 'border-start-0 border-end-0 border-bottom-0'
+                            } ${selectedShow?.ratingKey === show.ratingKey ? 'active' : ''}`}
+                            onClick={() => handleSelect(show)}
+                            style={{ height: '100%', width: '100%', textAlign: 'left' }}
+                        >
+                            <div className="d-flex justify-content-between align-items-center">
+                                <span className="text-truncate" style={{ maxWidth: '80%' }}>
+                                    {show.title}
+                                </span>
+                                <small className="flex-shrink-0">
+                                    {show.childCount !== undefined && browseMode === 'collections'
+                                        ? `${show.childCount} items`
+                                        : show.year}
+                                </small>
+                            </div>
+                        </button>
+                    </div>
+                );
+            },
+            [selectedShow, handleSelect, browseMode]
+        );
+
+        const ITEM_SIZE = 45;
+        const listHeight = Math.min(Math.max(filteredShows.length, 1), maxListItems) * ITEM_SIZE;
 
         return (
-            <div style={style}>
-                <button
-                    className={`list-group-item list-group-item-action rounded-0 ${index === 0 ? 'border-0' : 'border-start-0 border-end-0 border-bottom-0'} ${selectedShow?.ratingKey === show.ratingKey ? 'active' : ''}`}
-                    onClick={() => handleSelect(show)}
-                    style={{ height: '100%', width: '100%', textAlign: 'left' }}
-                >
-                    <div className="d-flex justify-content-between align-items-center">
-                        <span className="text-truncate" style={{ maxWidth: '80%' }}>{show.title}</span>
-                        <small className="flex-shrink-0">{show.year}</small>
-                    </div>
-                </button>
-            </div>
-        );
-    }, [selectedShow, handleSelect]);
-
-    const ITEM_SIZE = 45;
-    const listHeight = Math.min(Math.max(filteredShows.length, 1), maxListItems) * ITEM_SIZE;
-
-    return (
-        <div ref={ref} className="card shadow-sm mb-3" style={{ display: 'flex', flexDirection: 'column' }}>
             <div
-                className="card-header bg-white"
-                style={{
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    borderBottomLeftRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
-                    borderBottomRightRadius: isCollapsed ? 'var(--bs-card-border-radius)' : '0',
-                    borderBottom: isCollapsed ? 'none' : undefined
-                }}
-                onClick={onToggleCollapse}
+                ref={ref}
+                className="card shadow-sm mb-3"
+                style={{ display: 'flex', flexDirection: 'column' }}
             >
-                <h5 className="mb-0 d-flex justify-content-between align-items-center">
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {getHeaderTitle()}
-                        {isCollapsed && selectedShow && (
-                            <span className="text-muted ms-3" style={{ fontSize: '0.85rem', fontWeight: 'normal' }}>
-                                {selectedShow.title}
-                            </span>
-                        )}
-                    </span>
-                    {onToggleCollapse && <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>}
-                </h5>
-                {!isCollapsed && (
-                    <input
-                        type="text"
-                        className="form-control mt-2"
-                        placeholder="Search..."
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                )}
-            </div>
-            {!isCollapsed && (
-                <div className="list-group list-group-flush flex-grow-1" style={{ overflow: 'hidden' }}>
-                    {filteredShows.length > 0 ? (
-                        <VirtualList
-                            items={filteredShows}
-                            itemHeight={ITEM_SIZE}
-                            height={listHeight}
+                <div
+                    className="card-header bg-white"
+                    style={{
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        borderBottomLeftRadius: isCollapsed
+                            ? 'var(--bs-card-border-radius)'
+                            : '0',
+                        borderBottomRightRadius: isCollapsed
+                            ? 'var(--bs-card-border-radius)'
+                            : '0',
+                        borderBottom: isCollapsed ? 'none' : undefined,
+                    }}
+                    onClick={onToggleCollapse}
+                >
+                    <h5 className="mb-0 d-flex justify-content-between align-items-center">
+                        <span
+                            style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                            }}
                         >
-                            {renderRow}
-                        </VirtualList>
-                    ) : (
-                        <div className="list-group-item text-muted">No matches found</div>
+                            {getHeaderTitle()}
+                            {isCollapsed && selectedShow && (
+                                <span
+                                    className="text-muted ms-3"
+                                    style={{ fontSize: '0.85rem', fontWeight: 'normal' }}
+                                >
+                                    {selectedShow.title}
+                                </span>
+                            )}
+                        </span>
+                        <div className="d-flex align-items-center gap-2">
+                            {onBrowseModeChange && !isCollapsed && (
+                                <div
+                                    className="btn-group btn-group-sm"
+                                    role="group"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    <button
+                                        type="button"
+                                        className={`btn ${
+                                            browseMode === 'all'
+                                                ? 'btn-primary'
+                                                : 'btn-outline-secondary'
+                                        }`}
+                                        onClick={() => onBrowseModeChange('all')}
+                                    >
+                                        All
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`btn ${
+                                            browseMode === 'collections'
+                                                ? 'btn-primary'
+                                                : 'btn-outline-secondary'
+                                        }`}
+                                        onClick={() => onBrowseModeChange('collections')}
+                                    >
+                                        Collections
+                                    </button>
+                                </div>
+                            )}
+                            {onToggleCollapse && (
+                                <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'}`}></i>
+                            )}
+                        </div>
+                    </h5>
+                    {!isCollapsed && (
+                        <input
+                            type="text"
+                            className="form-control mt-2"
+                            placeholder="Search..."
+                            value={filter}
+                            onChange={e => setFilter(e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                        />
                     )}
                 </div>
-            )}
-        </div>
-    );
-});
+                {!isCollapsed && (
+                    <div
+                        className="list-group list-group-flush flex-grow-1"
+                        style={{ overflow: 'hidden' }}
+                    >
+                        {filteredShows.length > 0 ? (
+                            <VirtualList
+                                items={filteredShows}
+                                itemHeight={ITEM_SIZE}
+                                height={listHeight}
+                            >
+                                {renderRow}
+                            </VirtualList>
+                        ) : (
+                            <div className="list-group-item text-muted">
+                                {browseMode === 'collections'
+                                    ? 'No collections found'
+                                    : 'No matches found'}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    }
+);

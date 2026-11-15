@@ -1,26 +1,107 @@
-import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { isUnmountedConfigFallback } from '../../providers/PastaProvider';
 import { useHomeUsers } from '../../hooks/usePlexQueries';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import {
+    syncModalVisibilityWithServerEvent,
+    useBatchModalVisibility,
+} from '../../hooks/useBatchUpdater';
+import {
+    cancelServerBatchJob,
+    dismissServerBatchJob,
+    fetchActiveServerBatch,
+    resetServerBatchEventStream,
+    subscribeToServerBatchEvents,
+    type ServerBatchProgressEvent,
+} from '../../providers/server/sseClient';
+import { ModalDialog } from './ModalDialog';
 import { SettingsModal } from './SettingsModal';
 
+const ProgressModal = React.lazy(() =>
+    import('./ProgressModal').then(module => ({ default: module.ProgressModal }))
+);
+
+export type AppScreenPhase =
+    | 'server-selection'
+    | 'user-selection'
+    | 'pin-verification'
+    | 'browser'
+    | 'logs'
+    | 'admin';
+
 interface Props {
+    currentScreen?: AppScreenPhase;
     onSwitchUser?: () => void;
     onReconnectServer?: () => void;
+    onChangeServer?: () => void;
+    onOpenBrowser?: () => void;
+    onOpenLogs?: () => void;
+    onOpenAdminSettings?: () => void;
 }
 
-export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => {
-    const { user, logout, clearServer, isAuthenticated, clientIdentifier, accessToken, adminToken, isSharedServer, serverUrl } = useAuth();
+export const Header: React.FC<Props> = ({
+    currentScreen = 'browser',
+    onSwitchUser,
+    onReconnectServer,
+    onChangeServer,
+    onOpenBrowser,
+    onOpenLogs,
+    onOpenAdminSettings,
+}) => {
+    const {
+        user,
+        logout,
+        clearServer,
+        isAuthenticated,
+        isServerConnected,
+        isServerMode,
+        pastaRole,
+        managedServers,
+        clientIdentifier,
+        accessToken,
+        adminToken,
+        isSharedServer,
+        isManagedUser,
+        machineIdentifier,
+    } = useAuth();
     const [showHelpModal, setShowHelpModal] = useState(false);
-    useLockBodyScroll(showHelpModal);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [hasManagedUsers, setHasManagedUsers] = useState(false);
+    const [activeBatch, setActiveBatch] = useState<ServerBatchProgressEvent | null>(null);
+    const { isMinimized, minimizeModal, reopenModal } = useBatchModalVisibility();
     const isMobile = useIsMobile();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Close the user dropdown when clicking anywhere outside it
+    const isUnmountedFallback = !isServerMode && isUnmountedConfigFallback();
+    const bannerStorageKey = isUnmountedFallback
+        ? 'pasta_v3_unmounted_banner_dismissed'
+        : 'pasta_v3_client_banner_dismissed';
+    const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
+        try {
+            return localStorage.getItem(bannerStorageKey) === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    const handleDismissBanner = () => {
+        try {
+            localStorage.setItem(bannerStorageKey, 'true');
+        } catch {
+            // Ignore localStorage quota/privacy errors
+        }
+        setIsBannerDismissed(true);
+    };
+
+    const canAccessAdminSettings =
+        isServerMode &&
+        (pastaRole === 'owner' ||
+            pastaRole === 'admin' ||
+            (managedServers && managedServers.length > 0));
+
+    // Close the user dropdown when clicking anywhere outside it or pressing Escape
     useEffect(() => {
         if (!showDropdown) return;
         const handleClickOutside = (e: MouseEvent) => {
@@ -28,17 +109,86 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                 setShowDropdown(false);
             }
         };
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowDropdown(false);
+            }
+        };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, [showDropdown]);
 
-    const { data: homeUsers } = useHomeUsers(clientIdentifier, adminToken || accessToken);
+    // Subscribe to live server batch events for the Header Status Pill
+    useEffect(() => {
+        if (!isServerMode || !isAuthenticated) return;
+        resetServerBatchEventStream();
+        void fetchActiveServerBatch(machineIdentifier);
+        return subscribeToServerBatchEvents(evt => {
+            syncModalVisibilityWithServerEvent(evt);
+            setActiveBatch(evt);
+        });
+    }, [isServerMode, isAuthenticated, machineIdentifier, user?.id]);
+
+    const { data: homeUsers } = useHomeUsers(
+        clientIdentifier,
+        adminToken || accessToken,
+        machineIdentifier
+    );
 
     useEffect(() => {
         if (homeUsers) {
             setHasManagedUsers(homeUsers.length > 1);
         }
     }, [homeUsers]);
+
+    const showStatusPill =
+        isServerMode &&
+        isMinimized &&
+        activeBatch &&
+        (activeBatch.progress.isProcessing ||
+            (activeBatch.progress.results.length > 0 &&
+                activeBatch.progress.total > 0));
+
+    // Determine which profile menu items belong to the current screen phase
+    const isProfileActivePhase =
+        currentScreen === 'browser' ||
+        currentScreen === 'logs' ||
+        currentScreen === 'admin';
+
+    const showReconnectServer =
+        currentScreen === 'browser' && isServerConnected && Boolean(onReconnectServer);
+    const showChangeServer =
+        isProfileActivePhase &&
+        !isManagedUser &&
+        (isServerConnected || currentScreen === 'admin' || currentScreen === 'logs');
+    const showSwitchUser =
+        (isProfileActivePhase || currentScreen === 'server-selection') &&
+        hasManagedUsers &&
+        Boolean(onSwitchUser) &&
+        (!isSharedServer || isServerMode);
+
+    const showMediaBrowserItem =
+        (currentScreen === 'logs' || currentScreen === 'admin') &&
+        Boolean(onOpenBrowser);
+    const showUserSettings = currentScreen === 'browser' && isServerConnected;
+    const showLogs =
+        isProfileActivePhase &&
+        currentScreen !== 'logs' &&
+        isServerMode &&
+        Boolean(onOpenLogs);
+    const showAdminSettings =
+        (isProfileActivePhase || currentScreen === 'server-selection') &&
+        currentScreen !== 'admin' &&
+        canAccessAdminSettings &&
+        Boolean(onOpenAdminSettings);
+
+    const hasServerGroup = showReconnectServer || showChangeServer || showSwitchUser;
+    const hasViewGroup =
+        showMediaBrowserItem || showUserSettings || showLogs || showAdminSettings;
 
     return (
         <>
@@ -48,22 +198,45 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                         <a className="navbar-brand" href="/" style={isMobile ? { marginRight: 0 } : undefined}>
                             <img src="/images/Logo_Title_Large.png" alt="PASTA" height="50" />
                         </a>
-                        <a
-                            href="https://github.com/cglatot/pasta/releases"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-muted small text-decoration-none"
-                            title="View release notes"
-                            style={{ marginLeft: isMobile ? '0.25rem' : '-0.5rem' }}
-                        >
-                            v{__APP_VERSION__}
-                        </a>
                     </div>
 
-                    <div className={`d-flex align-items-center ${isMobile ? 'w-100 justify-content-center' : ''}`}>
+                    <div className={`d-flex align-items-center ${isMobile ? 'w-100 justify-content-center flex-wrap gap-2' : ''}`}>
+                        {showStatusPill && activeBatch && (
+                            <button
+                                type="button"
+                                className="btn btn-outline-primary btn-sm me-3 d-flex align-items-center"
+                                onClick={() => (isMinimized ? reopenModal() : minimizeModal())}
+                                title={
+                                    isMinimized
+                                        ? 'Click to open batch progress'
+                                        : 'Click to minimize batch progress'
+                                }
+                            >
+                                <i
+                                    className={`fas ${
+                                        activeBatch.progress.isProcessing
+                                            ? 'fa-sync-alt fa-spin'
+                                            : 'fa-check-circle'
+                                    } me-2`}
+                                ></i>
+                                <span>
+                                    {activeBatch.progress.total > 0
+                                        ? `Updating ${activeBatch.targetTitle}: ${activeBatch.progress.current} / ${activeBatch.progress.total}`
+                                        : `Queued: ${activeBatch.targetTitle}`}
+                                    {activeBatch.progress.queuedJobs &&
+                                    activeBatch.progress.queuedJobs.length > 0
+                                        ? ` (+${activeBatch.progress.queuedJobs.length} queued)`
+                                        : ''}
+                                </span>
+                            </button>
+                        )}
+
                         {isAuthenticated && user && (
                             <div className="dropdown me-3" ref={dropdownRef}>
                                 <button
+                                    type="button"
+                                    aria-haspopup="menu"
+                                    aria-expanded={showDropdown}
                                     className="btn btn-link text-light text-decoration-none d-flex align-items-center p-0"
                                     onClick={() => setShowDropdown(!showDropdown)}
                                 >
@@ -74,11 +247,11 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                                         style={{ width: 32, height: 32 }}
                                     />
                                     <span>{user.username || user.title}</span>
-                                    <i className={`fas fa-chevron-${showDropdown ? 'up' : 'down'} ms-2 small`}></i>
+                                    <i className={`fas fa-chevron-${showDropdown ? 'up' : 'down'} ms-2 small`} aria-hidden="true"></i>
                                 </button>
                                 {showDropdown && (
-                                    <ul className="dropdown-menu dropdown-menu-end show" style={{ position: 'absolute', right: 0 }}>
-                                        {serverUrl && onReconnectServer && (
+                                    <ul role="menu" className="dropdown-menu dropdown-menu-end show" style={{ position: 'absolute', right: 0 }}>
+                                        {showReconnectServer && onReconnectServer && (
                                             <li>
                                                 <button className="dropdown-item" onClick={() => { onReconnectServer(); setShowDropdown(false); }}>
                                                     <i className="fas fa-sync-alt me-2"></i>
@@ -86,13 +259,22 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                                                 </button>
                                             </li>
                                         )}
-                                        <li>
-                                            <button className="dropdown-item" onClick={() => { clearServer(); setShowDropdown(false); }}>
-                                                <i className="fas fa-server me-2"></i>
-                                                Change Server
-                                            </button>
-                                        </li>
-                                        {hasManagedUsers && onSwitchUser && !isSharedServer && (
+                                        {showChangeServer && (
+                                            <li>
+                                                <button
+                                                    className="dropdown-item"
+                                                    onClick={() => {
+                                                        clearServer();
+                                                        onChangeServer?.();
+                                                        setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-server me-2"></i>
+                                                    Change Server
+                                                </button>
+                                            </li>
+                                        )}
+                                        {showSwitchUser && onSwitchUser && (
                                             <li>
                                                 <button className="dropdown-item" onClick={() => { onSwitchUser(); setShowDropdown(false); }}>
                                                     <i className="fas fa-user-friends me-2"></i>
@@ -100,7 +282,69 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                                                 </button>
                                             </li>
                                         )}
-                                        <li><hr className="dropdown-divider" /></li>
+                                        {hasServerGroup && hasViewGroup && (
+                                            <li><hr className="dropdown-divider" /></li>
+                                        )}
+                                        {showMediaBrowserItem && onOpenBrowser && (
+                                            <li>
+                                                <button
+                                                    className="dropdown-item"
+                                                    onClick={() => {
+                                                        onOpenBrowser();
+                                                        setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-film me-2"></i>
+                                                    Media Browser
+                                                </button>
+                                            </li>
+                                        )}
+                                        {showUserSettings && (
+                                            <li>
+                                                <button
+                                                    className="dropdown-item"
+                                                    onClick={() => {
+                                                        setShowSettingsModal(true);
+                                                        setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-sliders-h me-2"></i>
+                                                    User Settings
+                                                </button>
+                                            </li>
+                                        )}
+                                        {showLogs && onOpenLogs && (
+                                            <li>
+                                                <button
+                                                    className="dropdown-item"
+                                                    onClick={() => {
+                                                        onOpenLogs();
+                                                        setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-list-ul me-2"></i>
+                                                    Logs
+                                                </button>
+                                            </li>
+                                        )}
+                                        {showAdminSettings && onOpenAdminSettings && (
+                                            <li>
+                                                <button
+                                                    className="dropdown-item"
+                                                    style={{ color: '#F39C12' }}
+                                                    onClick={() => {
+                                                        onOpenAdminSettings();
+                                                        setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-shield-alt me-2"></i>
+                                                    Admin Settings
+                                                </button>
+                                            </li>
+                                        )}
+                                        {(hasServerGroup || hasViewGroup) && (
+                                            <li><hr className="dropdown-divider" /></li>
+                                        )}
                                         <li>
                                             <button className="dropdown-item text-danger" onClick={() => { logout(); setShowDropdown(false); }}>
                                                 <i className="fas fa-sign-out-alt me-2"></i>
@@ -111,15 +355,6 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                                 )}
                             </div>
                         )}
-
-                        <button
-                            onClick={() => setShowSettingsModal(true)}
-                            className="btn btn-link text-warning ms-3 p-0"
-                            style={{ border: 'none', background: 'none' }}
-                            title="Settings"
-                        >
-                            <i className="fas fa-cog fa-lg"></i>
-                        </button>
 
                         <a href="https://ko-fi.com/cglatot" target="_blank" rel="noreferrer" className="text-warning ms-3">
                             <i className="fas fa-mug-hot fa-lg"></i>
@@ -141,18 +376,110 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                 </div>
             </nav>
 
+            {!isServerMode && !isBannerDismissed && (
+                <div
+                    className="container-fluid py-2 px-3 mb-3 border-bottom"
+                    style={{
+                        backgroundColor: isUnmountedFallback
+                            ? 'rgba(243, 156, 18, 0.14)'
+                            : 'rgba(243, 156, 18, 0.09)',
+                        borderColor: 'rgba(243, 156, 18, 0.35)',
+                    }}
+                    role="region"
+                    aria-label="PASTA Server Mode Notice"
+                >
+                    <div className="container d-flex align-items-center justify-content-between gap-3">
+                        <div className="small text-light">
+                            {isUnmountedFallback ? (
+                                <>
+                                    <i
+                                        className="fas fa-exclamation-triangle me-2"
+                                        style={{ color: '#F39C12' }}
+                                        aria-hidden="true"
+                                    ></i>
+                                    <strong>Server Mode Available (Setup Required):</strong> PASTA
+                                    3.0 now includes Server Mode for automatic background audio
+                                    &amp; subtitle updates, but your container is currently running
+                                    in <strong>Client Mode</strong> because <code>/config</code> is
+                                    not mapped to persistent storage. To enable Server Mode, add a{' '}
+                                    <code>/config</code> path mapping (e.g.{' '}
+                                    <code>/mnt/user/appdata/pasta</code> on Unraid) and ensure{' '}
+                                    <code>PASTA_MODE=server</code> is set in your container settings
+                                    (or re-pull the updated PASTA template in Unraid Community
+                                    Applications).{' '}
+                                    <a
+                                        href="https://github.com/cglatot/pasta#installation"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="fw-bold text-decoration-underline"
+                                        style={{ color: '#F39C12' }}
+                                    >
+                                        Setup Guide ↗
+                                    </a>
+                                </>
+                            ) : (
+                                <>
+                                    <i
+                                        className="fas fa-bolt me-2"
+                                        style={{ color: '#F39C12' }}
+                                        aria-hidden="true"
+                                    ></i>
+                                    <strong>New in PASTA 3.0 - Server Mode:</strong> You can now
+                                    self-host PASTA in <strong>Server Mode</strong> (via Docker or
+                                    Unraid) for automatic background audio &amp; subtitle updates
+                                    across all of your devices and users!{' '}
+                                    <a
+                                        href="https://github.com/cglatot/pasta#readme"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="fw-bold text-decoration-underline"
+                                        style={{ color: '#F39C12' }}
+                                    >
+                                        Learn more on GitHub ↗
+                                    </a>
+                                </>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            className="btn-close flex-shrink-0"
+                            onClick={handleDismissBanner}
+                            aria-label="Dismiss notice"
+                            title="Dismiss"
+                        ></button>
+                    </div>
+                </div>
+            )}
+
             <SettingsModal show={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
 
-            {showHelpModal && (
-                <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-xl modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Help & About</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowHelpModal(false)}></button>
-                            </div>
+            <ModalDialog
+                show={showHelpModal}
+                dialogClassName="modal-xl"
+                onClose={() => setShowHelpModal(false)}
+                closeOnBackdrop
+            >
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">Help & About</h5>
+                        <button
+                            type="button"
+                            className="btn-close"
+                            onClick={() => setShowHelpModal(false)}
+                            aria-label="Close"
+                        ></button>
+                    </div>
                             <div className="modal-body">
-                                <p>Version: <a href="https://github.com/cglatot/pasta/releases" target="_blank" rel="noreferrer">v{__APP_VERSION__}</a></p>
+                                <p>
+                                    Version:{' '}
+                                    <a href="https://github.com/cglatot/pasta/releases" target="_blank" rel="noreferrer">
+                                        v{__APP_VERSION__}
+                                    </a>{' '}
+                                    ({isServerMode ? 'Server Mode' : 'Client Mode'}) &bull;{' '}
+                                    <a href="https://github.com/cglatot/pasta#readme" target="_blank" rel="noreferrer">
+                                        Documentation &amp; Setup Guide
+                                    </a>
+                                </p>
                                 <p>Encountered a bug, or have a feature request? Log it here:
                                     <a href="https://github.com/cglatot/pasta/issues" target="_blank" rel="noreferrer"> https://github.com/cglatot/pasta/issues</a>
                                 </p>
@@ -162,18 +489,37 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                                     Or maybe you aren't sure what the difference is between those 2 <strong>English (SRT)</strong> and
                                     <strong> English (SRT)</strong> subtitle files. Then PASTA is for you!
                                     <br />PASTA allows you to connect to your Plex server and view more details about the audio tracks and
-                                    subtitles, as well as set the tracks and subtitles for entire shows, or single episodes very quickly.
+                                    subtitles, as well as set the tracks and subtitles for entire libraries, collections, shows, seasons, or single episodes very quickly.
                                 </p>
                                 <h3>How do I use PASTA?</h3>
-                                <p>I built PASTA to be as step-by-step as possible and to take you through it, so you should be able to
-                                    just close this pop-up and follow along.
-                                    <br />There are some things I would like to point out, however:
-                                </p>
-                                <ul>
-                                    <li>This works <strong>MUCH</strong> faster if you are on the same network as the Plex Server.</li>
-                                    <li>If you use Unraid, this is now available in the Community Applications.</li>
-                                    <li>You can also run this locally yourself. Just download the source code from github (see link above).</li>
-                                </ul>
+                                <ol>
+                                    <li><strong>Select a Library &amp; Media:</strong> Choose a TV Show, Movie, or Collection, then pick an episode or movie to inspect its audio and subtitle streams.</li>
+                                    <li><strong>Choose Your Tracks:</strong> Click the audio track or subtitle you want to set (or use the keyword filter to narrow down tracks across episodes).</li>
+                                    <li><strong>Choose the Scope:</strong> Apply your selection to just that <strong>Episode</strong>, the entire <strong>Season</strong>, the <strong>Entire Show</strong>, the <strong>Entire Collection</strong>, or the <strong>Entire Library</strong>.</li>
+                                    {isServerMode && (
+                                        <li>
+                                            <strong>Target Users:</strong> Use the <em>Target Users</em> selector in the confirmation dialog to apply track changes to the <strong>Current User</strong>, <strong>All Users</strong>, or <strong>Specific Users</strong> who have access to that library.
+                                        </li>
+                                    )}
+                                </ol>
+                                {isServerMode ? (
+                                    <>
+                                        <h3>Server Mode &amp; Admin Settings</h3>
+                                        <ul>
+                                            <li><strong>Admin Settings:</strong> Server Owners and designated PASTA Admins can open <strong>Admin Settings</strong> from the user menu (or server selection screen) to configure TV track automation, per-library and per-show language/keyword rules, forced subtitle handling, and user permissions.</li>
+                                            <li><strong>Logs:</strong> View your manual batch update history via <strong>Logs</strong> in the user menu, or inspect automated background scan activity inside <strong>Admin Settings &rarr; Logs</strong>.</li>
+                                        </ul>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h3>Want Background Automation? (Server Mode)</h3>
+                                        <ul>
+                                            <li>You are currently using PASTA in browser-only <strong>Client Mode</strong>.</li>
+                                            <li>PASTA can also be run locally in <strong>Server Mode</strong> (via Docker or Unraid Community Applications) to automatically apply audio and subtitle preferences whenever new or upgraded TV episodes are added to Plex, batch-update tracks across all of your Plex Home &amp; Shared users at once, and manage per-library/per-show automation rules.</li>
+                                            <li>See the <a href="https://github.com/cglatot/pasta#readme" target="_blank" rel="noreferrer">GitHub README</a> for full documentation and self-hosting instructions.</li>
+                                        </ul>
+                                    </>
+                                )}
                                 <h3>About PASTA</h3>
                                 <p>When I first began developing this for myself, I was calling it <em>Audio Track Automation for Plex</em>,
                                     so adding "subtitles" to it, and rearranging the letters gave birth to PASTA.
@@ -184,18 +530,22 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                                     Initially I was only building this for myself but I thought that others might find use for
                                     it as well, so here we are!
                                 </p>
-                                <p>PASTA runs entirely client-side. This means that you are not passing anything to someones
-                                    server to do this (other than the Plex Server), and it also means I don't
-                                    have to worry about standing up a server to do that side of things either :). PASTA runs off
-                                    of Github Pages, and I've got a link to my
-                                    repository below. Feel free to have a look, download it yourself and use it locally, or make
-                                    suggestions. I'm by no means finished with
-                                    PASTA - I still have plenty of ideas for how I can add more to it, as well as fix any bugs
-                                    that crop up.
-                                </p>
+                                {isServerMode ? (
+                                    <p>
+                                        This instance is running in self-hosted <strong>Server Mode</strong>, communicating directly between your local PASTA container and your Plex server. Feel free to visit the{' '}
+                                        <a href="https://github.com/cglatot/pasta" target="_blank" rel="noreferrer">GitHub repository</a> to read the full documentation, check for updates, or make suggestions.
+                                    </p>
+                                ) : (
+                                    <p>
+                                        In Client Mode, PASTA runs entirely in your browser. This means that you are not passing anything to someone's
+                                        server to do this (other than the Plex Server), and it also means I don't
+                                        have to worry about standing up a server to do that side of things either :). Feel free to visit the{' '}
+                                        <a href="https://github.com/cglatot/pasta" target="_blank" rel="noreferrer">GitHub repository</a> to download it yourself, run it locally in Client or Server Mode, or make suggestions.
+                                    </p>
+                                )}
                                 <h3>Cookie Policy</h3>
-                                <p>The site uses some minor technical cookies to help improve your experience (for example, remembering your details if you choose that option).
-                                    Third-party cookies are not used on this site. By continuing to use this site, you agree to the use of these functional cookies.
+                                <p>The site uses some minor technical cookies and local browser storage to help improve your experience (for example, remembering your session if you choose that option).
+                                    Third-party tracking cookies are not used on this site. By continuing to use this site, you agree to the use of these functional cookies.
                                 </p>
                                 <div className="text-center my-3">
                                     <a href="https://ko-fi.com/cglatot" target="_blank" rel="noreferrer" className="btn btn-warning btn-lg text-dark fw-bold">
@@ -203,14 +553,35 @@ export const Header: React.FC<Props> = ({ onSwitchUser, onReconnectServer }) => 
                                         Buy me a coffee on Ko-fi
                                     </a>
                                 </div>
-                                <p>Enjoying the tool? Consider adding to my coffee funds :)</p>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowHelpModal(false)}>Close</button>
+                                <p className="mb-0">Enjoying the tool? Consider adding to my coffee funds :)</p>
                             </div>
                         </div>
-                    </div>
-                </div>
+            </ModalDialog>
+
+            {isServerMode && currentScreen !== 'browser' && activeBatch && (
+                <Suspense fallback={null}>
+                    <ProgressModal
+                        show={
+                            !isMinimized &&
+                            (activeBatch.progress.isProcessing ||
+                                (activeBatch.progress.results.length > 0 &&
+                                    activeBatch.progress.total > 0))
+                        }
+                        title="Updating Tracks..."
+                        progress={activeBatch.progress}
+                        onMinimize={minimizeModal}
+                        onCancel={() => void cancelServerBatchJob(activeBatch.jobId)}
+                        onCancelQueuedJob={jobId => void cancelServerBatchJob(jobId)}
+                        onClose={() => {
+                            if (activeBatch.progress.isProcessing) {
+                                minimizeModal();
+                            } else {
+                                void dismissServerBatchJob(activeBatch.jobId);
+                                minimizeModal();
+                            }
+                        }}
+                    />
+                </Suspense>
             )}
         </>
     );

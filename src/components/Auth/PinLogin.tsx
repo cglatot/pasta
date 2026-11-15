@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { checkPin, getPin } from '../../services/plex';
 import { useAuth } from '../../context/AuthContext';
 
 export const PinLogin: React.FC = () => {
-    const { clientIdentifier, login } = useAuth();
+    const { clientIdentifier, createLoginPin, pollLoginPin } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const intervalRef = useRef<number | null>(null);
     const timeoutRef = useRef<number | null>(null);
+    const isPollingRef = useRef(false);
 
     const cleanup = () => {
+        isPollingRef.current = false;
         if (intervalRef.current !== null) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -30,7 +31,7 @@ export const PinLogin: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const pinData = await getPin(clientIdentifier);
+            const pinData = await createLoginPin();
             const popup = window.open(
                 `https://app.plex.tv/auth#?clientID=${clientIdentifier}&code=${pinData.code}&context%5Bdevice%5D%5Bproduct%5D=Plex%20Web`,
                 'PlexSignIn',
@@ -50,15 +51,24 @@ export const PinLogin: React.FC = () => {
                     return;
                 }
 
+                if (isPollingRef.current) {
+                    return;
+                }
+                isPollingRef.current = true;
+
                 try {
-                    const result = await checkPin(pinData.id, clientIdentifier, pinData.code);
-                    if (result.authToken) {
+                    const loggedIn = await pollLoginPin(pinData.id, pinData.code, () => {
                         cleanup();
                         popup.close();
-                        await login(result.authToken);
+                    });
+                    if (loggedIn) {
+                        cleanup();
+                        popup.close();
                     }
                 } catch (e) {
                     console.error('Error checking PIN', e);
+                } finally {
+                    isPollingRef.current = false;
                 }
             }, 2000);
 

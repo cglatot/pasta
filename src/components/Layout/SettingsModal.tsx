@@ -1,6 +1,6 @@
-import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 import React from 'react';
 import { useSettings } from '../../context/SettingsContext';
+import { ModalDialog } from './ModalDialog';
 
 interface Props {
     show: boolean;
@@ -8,7 +8,6 @@ interface Props {
 }
 
 export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
-    useLockBodyScroll(show);
     const {
         autoCollapse,
         setAutoCollapse,
@@ -21,14 +20,11 @@ export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
         resetSettings
     } = useSettings();
 
-    if (!show) return null;
-
     return (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
+        <ModalDialog show={show} onClose={onClose} closeOnBackdrop>
+            <div className="modal-content">
                     <div className="modal-header">
-                        <h5 className="modal-title">Settings</h5>
+                        <h5 className="modal-title">User Settings</h5>
                         <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
                     </div>
                     <div className="modal-body">
@@ -135,7 +131,6 @@ export const SettingsModal: React.FC<Props> = ({ show, onClose }) => {
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+        </ModalDialog>
     );
 };

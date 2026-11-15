@@ -1,5 +1,9 @@
 node_modules
 dist
+dist-server
+data
+appdata
+*.local
 .git
 .github
-legacy
+guide_images

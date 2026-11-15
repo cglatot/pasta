@@ -1,5 +1,5 @@
-import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 import React from 'react';
+import { ModalDialog } from './ModalDialog';
 
 interface Props {
     show: boolean;
@@ -8,7 +8,6 @@ interface Props {
 }
 
 export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
-    useLockBodyScroll(show);
     const [dontShowAgain, setDontShowAgain] = React.useState(false);
 
     // Reset checkbox when modal opens
@@ -18,18 +17,15 @@ export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
         }
     }, [show]);
 
-    if (!show) return null;
-
     return (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
-                    <div className="modal-header text-white" style={{ backgroundColor: '#212529' }}>
-                        <h5 className="modal-title">
-                            <i className="fas fa-exclamation-triangle me-2 text-warning"></i>
-                            Warning: Library Mode
-                        </h5>
-                    </div>
+        <ModalDialog show={show} onClose={onCancel} closeOnBackdrop>
+            <div className="modal-content">
+                <div className="modal-header">
+                    <h5 className="modal-title">
+                        <i className="fas fa-exclamation-triangle me-2 text-warning"></i>
+                        Warning: Library Mode
+                    </h5>
+                </div>
                     <div className="modal-body">
                         <p className="fw-bold">You are about to enable Library Mode.</p>
                         <p>
@@ -55,7 +51,7 @@ export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
                             </button>
                         </div>
                         <div className="d-flex align-items-center justify-content-end">
-                            <label className="text-muted small me-2" htmlFor="dontShowAgain">
+                            <label className="form-check-label text-muted small me-2" htmlFor="dontShowAgain">
                                 Do not show this message again
                             </label>
                             <input
@@ -68,7 +64,6 @@ export const WarningModal: React.FC<Props> = ({ show, onAccept, onCancel }) => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+        </ModalDialog>
     );
 };

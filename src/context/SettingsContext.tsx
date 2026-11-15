@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 interface SettingsContextType {
     autoCollapse: boolean;
@@ -15,53 +16,98 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const loadSetting = <T,>(key: string, fallback: T): T => {
-    const saved = localStorage.getItem(key);
-    if (saved === null) return fallback;
-    try {
-        return JSON.parse(saved) as T;
-    } catch {
-        return fallback;
+const loadScopedSetting = <T,>(
+    userScope: string,
+    settingName: string,
+    fallback: T,
+    allowLegacyFallback: boolean
+): T => {
+    const scopedKey = `pasta_settings_${userScope}_${settingName}`;
+    const saved = localStorage.getItem(scopedKey);
+    if (saved !== null) {
+        try {
+            return JSON.parse(saved) as T;
+        } catch {
+            return fallback;
+        }
     }
+    if (allowLegacyFallback) {
+        const legacySaved = localStorage.getItem(`pasta_settings_${settingName}`);
+        if (legacySaved !== null) {
+            try {
+                return JSON.parse(legacySaved) as T;
+            } catch {
+                return fallback;
+            }
+        }
+    }
+    return fallback;
 };
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // Initialize from localStorage or defaults
+    const { user, isManagedUser } = useAuth();
+    const userScope = user?.id
+        ? `user_${user.id}`
+        : user?.uuid
+          ? `user_${user.uuid}`
+          : 'default';
+    const allowLegacy = !isManagedUser && userScope !== 'default';
+
+    // Initialize from per-user localStorage or defaults
     const [autoCollapse, setAutoCollapseState] = useState(() =>
-        loadSetting('pasta_settings_autoCollapse', false)
+        loadScopedSetting(userScope, 'autoCollapse', false, allowLegacy)
     );
 
     const [maxListItems, setMaxListItemsState] = useState(() =>
-        loadSetting('pasta_settings_maxListItems', 6)
+        loadScopedSetting(userScope, 'maxListItems', 6, allowLegacy)
     );
 
     const [navWidth, setNavWidthState] = useState(() =>
-        loadSetting('pasta_settings_navWidth', 25)
+        loadScopedSetting(userScope, 'navWidth', 25, allowLegacy)
     );
 
     const [connectionTimeout, setConnectionTimeoutState] = useState(() =>
-        loadSetting('pasta_settings_connectionTimeout', 5)
+        loadScopedSetting(userScope, 'connectionTimeout', 5, allowLegacy)
     );
 
-    // Persistence wrappers
+    // Reload settings whenever the active Plex profile changes (Admin <-> Managed User)
+    useEffect(() => {
+        setAutoCollapseState(loadScopedSetting(userScope, 'autoCollapse', false, allowLegacy));
+        setMaxListItemsState(loadScopedSetting(userScope, 'maxListItems', 6, allowLegacy));
+        setNavWidthState(loadScopedSetting(userScope, 'navWidth', 25, allowLegacy));
+        setConnectionTimeoutState(
+            loadScopedSetting(userScope, 'connectionTimeout', 5, allowLegacy)
+        );
+    }, [userScope, allowLegacy]);
+
+    // Persistence wrappers scoped to the active user profile
     const setAutoCollapse = (value: boolean) => {
         setAutoCollapseState(value);
-        localStorage.setItem('pasta_settings_autoCollapse', JSON.stringify(value));
+        localStorage.setItem(
+            `pasta_settings_${userScope}_autoCollapse`,
+            JSON.stringify(value)
+        );
     };
 
     const setMaxListItems = (value: number) => {
         setMaxListItemsState(value);
-        localStorage.setItem('pasta_settings_maxListItems', JSON.stringify(value));
+        localStorage.setItem(
+            `pasta_settings_${userScope}_maxListItems`,
+            JSON.stringify(value)
+        );
     };
 
     const setNavWidth = (value: number) => {
         setNavWidthState(value);
-        localStorage.setItem('pasta_settings_navWidth', JSON.stringify(value));
+        localStorage.setItem(`pasta_settings_${userScope}_navWidth`, JSON.stringify(value));
     };
 
     const setConnectionTimeout = (value: number) => {
         setConnectionTimeoutState(value);
-        localStorage.setItem('pasta_settings_connectionTimeout', JSON.stringify(value));
+        localStorage.setItem(
+            `pasta_settings_${userScope}_connectionTimeout`,
+            JSON.stringify(value)
+        );
     };
 
     const resetSettings = () => {
@@ -72,17 +118,19 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
 
     return (
-        <SettingsContext.Provider value={{
-            autoCollapse,
-            setAutoCollapse,
-            maxListItems,
-            setMaxListItems,
-            navWidth,
-            setNavWidth,
-            connectionTimeout,
-            setConnectionTimeout,
-            resetSettings
-        }}>
+        <SettingsContext.Provider
+            value={{
+                autoCollapse,
+                setAutoCollapse,
+                maxListItems,
+                setMaxListItems,
+                navWidth,
+                setNavWidth,
+                connectionTimeout,
+                setConnectionTimeout,
+                resetSettings,
+            }}
+        >
             {children}
         </SettingsContext.Provider>
     );

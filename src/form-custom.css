@@ -2,6 +2,18 @@
    FORM CUSTOMIZATIONS
    ========================== */
 
+/* Hand cursor on all enabled checkboxes, switches, range sliders, and their clickable labels */
+.form-check-input:not(:disabled),
+.form-check-label,
+.form-range:not(:disabled) {
+    cursor: pointer;
+}
+
+.form-check-input:disabled,
+.form-check-input:disabled ~ .form-check-label {
+    cursor: not-allowed;
+}
+
 /* Form Switches - PASTA Orange when checked, transparent when unchecked */
 .form-switch .form-check-input {
     width: 2em !important;

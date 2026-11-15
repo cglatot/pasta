@@ -123,6 +123,9 @@ export const getHeaders = (clientIdentifier: string, token?: string) => {
 export const getPin = async (clientIdentifier: string): Promise<any> => {
     return plexFetch(`${PLEX_TV_URL}/pins`, {
         method: 'POST',
+        params: {
+            strong: 'true',
+        },
         body: {},
         headers: {
             ...getHeaders(clientIdentifier),
@@ -134,6 +137,9 @@ export const getPin = async (clientIdentifier: string): Promise<any> => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const checkPin = async (pinId: number, clientIdentifier: string, code: string): Promise<any> => {
     return plexFetch(`${PLEX_TV_URL}/pins/${pinId}`, {
+        params: {
+            code: code,
+        },
         headers: {
             ...getHeaders(clientIdentifier),
             code: code,
@@ -200,6 +206,36 @@ export const getLibraryItems = async (
         headers: getPmsHeaders(),
     });
     return data.MediaContainer.Metadata || [];
+};
+
+export const getLibraryCollections = async (
+    serverUrl: string,
+    libraryId: string,
+    clientIdentifier: string,
+    token: string
+) => {
+    const data = await plexFetch<PlexMediaContainer<PlexMetadata>>(`${serverUrl}/library/sections/${libraryId}/collections`, {
+        params: getPmsParams(clientIdentifier, token),
+        headers: getPmsHeaders(),
+    });
+    const items = data.MediaContainer.Metadata || data.MediaContainer.Directory || [];
+    return items.map(item => ({
+        ...item,
+        type: 'collection' as const,
+    }));
+};
+
+export const getCollectionChildren = async (
+    serverUrl: string,
+    collectionRatingKey: string,
+    clientIdentifier: string,
+    token: string
+) => {
+    const data = await plexFetch<PlexMediaContainer<PlexMetadata>>(`${serverUrl}/library/collections/${collectionRatingKey}/children`, {
+        params: getPmsParams(clientIdentifier, token),
+        headers: getPmsHeaders(),
+    });
+    return data.MediaContainer.Metadata || data.MediaContainer.Directory || [];
 };
 
 export const getMetadataChildren = async (

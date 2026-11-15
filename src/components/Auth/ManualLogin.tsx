@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { checkServerIdentity } from '../../services/plex';
 
 export const ManualLogin: React.FC = () => {
-    const { login, setServerUrl, clientIdentifier } = useAuth();
+    const { loginManual } = useAuth();
     const [url, setUrl] = useState('');
     const [token, setToken] = useState('');
     const [isConnecting, setIsConnecting] = useState(false);
@@ -18,18 +17,7 @@ export const ManualLogin: React.FC = () => {
         const cleanToken = token.trim();
 
         try {
-            if (cleanUrl) {
-                try {
-                    const identity = await checkServerIdentity(cleanUrl, clientIdentifier, cleanToken);
-                    const machineId = identity?.MediaContainer?.machineIdentifier;
-                    const serverName = identity?.MediaContainer?.friendlyName || identity?.MediaContainer?.myPlexServerName || 'Plex Server';
-                    setServerUrl(cleanUrl, machineId, serverName);
-                } catch {
-                    // Carry on cleanly if /identity is unavailable or blocked by CORS
-                    setServerUrl(cleanUrl, undefined, 'Plex Server');
-                }
-            }
-            await login(cleanToken);
+            await loginManual(cleanUrl, cleanToken);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to connect');
         } finally {

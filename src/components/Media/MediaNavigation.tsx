@@ -13,6 +13,9 @@ interface Props {
     selectedLibrary: PlexLibrary | null;
     onSelectLibrary: (lib: PlexLibrary) => void;
 
+    browseMode?: 'all' | 'collections';
+    onBrowseModeChange?: (mode: 'all' | 'collections') => void;
+
     shows: PlexMetadata[];
     selectedShow: PlexMetadata | null;
     onSelectShow: (show: PlexMetadata) => void;
@@ -30,6 +33,8 @@ export const MediaNavigation: React.FC<Props> = ({
     libraries,
     selectedLibrary,
     onSelectLibrary,
+    browseMode = 'all',
+    onBrowseModeChange,
     shows,
     selectedShow,
     onSelectShow,
@@ -66,7 +71,7 @@ export const MediaNavigation: React.FC<Props> = ({
                 return newSet;
             });
         }
-    }, [selectedLibrary?.key, isMobile, autoCollapse]);
+    }, [selectedLibrary, selectedLibrary?.key, isMobile, autoCollapse]);
 
     // Expand seasons and episodes when show changes
     useEffect(() => {
@@ -76,16 +81,15 @@ export const MediaNavigation: React.FC<Props> = ({
                 newSet.delete('seasons');
                 newSet.delete('episodes');
 
-                // Only auto-collapse the "shows" list if it's NOT a movie library
-                // For movies, selecting a movie is the end of the line (no seasons/episodes), so we keep the list open.
-                if ((isMobile || autoCollapse) && selectedLibrary?.type !== 'movie') {
+                // Only auto-collapse the "shows" list if it's NOT a movie library in "all" mode
+                if ((isMobile || autoCollapse) && (selectedLibrary?.type !== 'movie' || browseMode === 'collections')) {
                     newSet.add('shows');
                 }
 
                 return newSet;
             });
         }
-    }, [selectedShow?.ratingKey, isMobile, autoCollapse, selectedLibrary?.type]);
+    }, [selectedShow, selectedShow?.ratingKey, isMobile, autoCollapse, selectedLibrary?.type, browseMode]);
 
     // Expand episodes when season changes
     useEffect(() => {
@@ -101,7 +105,7 @@ export const MediaNavigation: React.FC<Props> = ({
                 return newSet;
             });
         }
-    }, [selectedSeason?.ratingKey, isMobile, autoCollapse]);
+    }, [selectedSeason, selectedSeason?.ratingKey, isMobile, autoCollapse]);
 
     const toggleCollapse = (section: string) => {
         setCollapsedSections(prev => {
@@ -123,12 +127,11 @@ export const MediaNavigation: React.FC<Props> = ({
     // Auto-scroll logic
     useEffect(() => {
         if (selectedLibrary && showListRef.current) {
-            // Small delay to allow render
             setTimeout(() => {
                 showListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
-    }, [selectedLibrary?.key, shows]);
+    }, [selectedLibrary, selectedLibrary?.key, shows]);
 
     useEffect(() => {
         if (selectedShow && seasonListRef.current) {
@@ -136,7 +139,7 @@ export const MediaNavigation: React.FC<Props> = ({
                 seasonListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
-    }, [selectedShow?.ratingKey, seasons]);
+    }, [selectedShow, selectedShow?.ratingKey, seasons]);
 
     useEffect(() => {
         if (selectedSeason && episodeListRef.current) {
@@ -144,7 +147,13 @@ export const MediaNavigation: React.FC<Props> = ({
                 episodeListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
-    }, [selectedSeason?.ratingKey, episodes]);
+    }, [selectedSeason, selectedSeason?.ratingKey, episodes]);
+
+    const showMovieCollectionEpisodes =
+        browseMode === 'collections' &&
+        selectedLibrary?.type === 'movie' &&
+        selectedShow &&
+        episodes.length > 0;
 
     return (
         <>
@@ -163,6 +172,8 @@ export const MediaNavigation: React.FC<Props> = ({
                     selectedShow={selectedShow}
                     onSelect={onSelectShow}
                     libraryType={selectedLibrary.type}
+                    browseMode={browseMode}
+                    onBrowseModeChange={onBrowseModeChange}
                     isCollapsed={collapsedSections.has('shows')}
                     onToggleCollapse={() => toggleCollapse('shows')}
                 />
@@ -179,12 +190,13 @@ export const MediaNavigation: React.FC<Props> = ({
                 />
             )}
 
-            {selectedSeason && (
+            {(selectedSeason || showMovieCollectionEpisodes) && (
                 <EpisodeList
                     ref={episodeListRef}
                     episodes={episodes}
                     selectedEpisode={selectedEpisode}
                     onSelect={onSelectEpisode}
+                    headerTitle={showMovieCollectionEpisodes ? 'Collection Movies' : 'Episodes'}
                     isCollapsed={collapsedSections.has('episodes')}
                     onToggleCollapse={() => toggleCollapse('episodes')}
                 />
