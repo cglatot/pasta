@@ -19,10 +19,6 @@ Tired of Plex defaulting to the wrong language on dual-audio shows and forcing y
 * **Set It Once, Watch Hands-Free (Server Mode):** Change your audio or subtitle track on a single episode inside Plex (before pressing play or mid-episode) and PASTA automatically updates the rest of the show in the background.
 * **Built for Your Whole Server:** Friends and family you share your Plex server with benefit from background track automation automatically, and you can even give them access to your PASTA web UI so they can batch-update their own tracks (with zero access to admin settings or other users unless you make them a PASTA Admin).
 
-<a href="guide_images/MainScreen.png">
-  <img src="guide_images/MainScreen.png" alt="PASTA Main Batch Update Page" width="750" />
-</a>
-
 ---
 
 ## Two Ways to Run PASTA
@@ -127,6 +123,10 @@ services:
 * **Keyword Filtering & Smart Matching:** Type a keyword (e.g. `Commentary` or `Signs`) to only match tracks containing that text, or let PASTA automatically pick the closest matching track across episodes when files vary slightly.
 * **Choose Your Scope:** Update a single **Episode**, **Season**, **Entire Show**, **Collection** (using the **All / Collections** toggle), or toggle **Apply to Library** to update an entire library at once.
 * **Update Multiple Users at Once (Server Mode Admins):** Server Owners and PASTA Admins can use the **Target Users** dropdown above the track tables to apply a track selection to just the **Current User**, **All Users**, or **Specific Users** who have access to that library.
+
+<a href="guide_images/MainScreen.png">
+  <img src="guide_images/MainScreen.png" alt="PASTA Main Batch Update Page" width="750" />
+</a>
 
 ### 2. Multi-Server & Plex Home Support
 * **Switch Servers & Profiles Easily:** Connect to any owned or shared Plex server on your account and switch between Plex Home profiles (including PIN-protected accounts) from the user menu.
