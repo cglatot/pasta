@@ -4,7 +4,7 @@
 
 * **Live Web App (Client Mode):** [https://www.pastatool.com](https://www.pastatool.com)
 * **Docker Hub:** [https://hub.docker.com/r/cglatot/pasta](https://hub.docker.com/r/cglatot/pasta)
-* **Unraid Installation:** Available in Unraid **Community Applications**
+* **Unraid Installation:** Available in Unraid **[Community Applications](https://ca.unraid.net/apps/pasta-1hnrckk149sr68)**
 * **Issues & Feature Requests:** [https://github.com/cglatot/pasta/issues](https://github.com/cglatot/pasta/issues)
 
 ---
@@ -73,14 +73,11 @@ services:
 
 ### 2. Unraid Installation (Community Applications)
 
-PASTA is available directly in Unraid **Community Applications** - just search for **PASTA** in the Apps tab.
+PASTA is available directly in Unraid **Community Applications** - just search for **PASTA** in the Apps tab, or get it directly from the [CA Web Store](https://ca.unraid.net/apps/pasta-1hnrckk149sr68).
 
 > **Important Note for Unraid Users (Upgrading to PASTA 3.0):**
-> The official PASTA 3.0 Unraid template ([cglatot/unraid-templates](https://github.com/cglatot/unraid-templates)) has been submitted and is currently waiting to go live on Community Applications.
->
-> Because PASTA 3.0 introduces **Server Mode**, the updated template adds a persistent `/config` path mapping and new environment variables. If you update an existing PASTA 2.x container (or install before the updated template goes live in Community Applications), PASTA will safely run in **Client Mode** and display a dismissible banner in the app.
->
-> **Once the v3.0 template is live on Community Applications, upgrade from 2.x with a clean template refresh:**
+> 
+> Because PASTA 3.0 introduces **Server Mode**, the updated template adds a persistent `/config` path mapping and new environment variables. The recommendation is to do a clean install using the new template:
 > 1. Remove your existing **PASTA** container in the Unraid **Docker** tab.
 > 2. Go to **Apps -> Previous Apps** and delete the old saved PASTA template (otherwise Unraid will reuse your cached 2.x template).
 > 3. Search **PASTA** in **Apps** and click **Install** to pull the new v3.0 template.
