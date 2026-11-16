@@ -484,68 +484,34 @@ export const Header: React.FC<Props> = ({
                                     <a href="https://github.com/cglatot/pasta/issues" target="_blank" rel="noreferrer"> https://github.com/cglatot/pasta/issues</a>
                                 </p>
                                 <h3>What is PASTA?</h3>
-                                <p>Do you watch TV Shows with multiple languages and subtitles and wish you could change them for the
-                                    entire show, rather than needing to do it for <em>every. single. episode</em>?
-                                    Or maybe you aren't sure what the difference is between those 2 <strong>English (SRT)</strong> and
-                                    <strong> English (SRT)</strong> subtitle files. Then PASTA is for you!
-                                    <br />PASTA allows you to connect to your Plex server and view more details about the audio tracks and
-                                    subtitles, as well as set the tracks and subtitles for entire libraries, collections, shows, seasons, or single episodes very quickly.
+                                <p>
+                                    Tired of Plex defaulting to the wrong language on dual-audio shows and forcing you to change audio or subtitle tracks on <em>every. single. episode</em>? Frustrated trying to guess which of two identical <strong>English (SRT)</strong> tracks is <em>Signs &amp; Songs</em> and which is the full dialogue? Or annoyed when Sonarr upgrades an episode and wipes out your selected tracks?
                                 </p>
+                                <p>
+                                    <strong>PASTA fixes how you manage audio and subtitles in Plex - both manually and automatically:</strong>
+                                </p>
+                                <ul>
+                                    <li>
+                                        <strong>Inspect &amp; Batch-Update in Seconds:</strong> See the real details behind every track (internal track titles like <em>Signs &amp; Songs</em> or <em>Commentary</em>, codecs, channels, and <code>Forced</code> / <code>SDH</code> flags) and apply your choice across a <strong>Season</strong>, <strong>Show</strong>, <strong>Collection</strong>, or <strong>Entire Library</strong> in one click.
+                                    </li>
+                                    <li>
+                                        <strong>Set It Once, Watch Hands-Free (Server Mode):</strong> Change your audio or subtitle track on a single episode inside Plex (before pressing play or mid-episode) and PASTA automatically updates the rest of the show in the background.
+                                    </li>
+                                </ul>
                                 <h3>How do I use PASTA?</h3>
-                                <ol>
-                                    <li><strong>Select a Library &amp; Media:</strong> Choose a TV Show, Movie, or Collection, then pick an episode or movie to inspect its audio and subtitle streams.</li>
-                                    <li><strong>Choose Your Tracks:</strong> Click the audio track or subtitle you want to set (or use the keyword filter to narrow down tracks across episodes).</li>
-                                    <li><strong>Choose the Scope:</strong> Apply your selection to just that <strong>Episode</strong>, the entire <strong>Season</strong>, the <strong>Entire Show</strong>, the <strong>Entire Collection</strong>, or the <strong>Entire Library</strong>.</li>
-                                    {isServerMode && (
-                                        <li>
-                                            <strong>Target Users:</strong> Use the <em>Target Users</em> selector in the confirmation dialog to apply track changes to the <strong>Current User</strong>, <strong>All Users</strong>, or <strong>Specific Users</strong> who have access to that library.
-                                        </li>
-                                    )}
-                                </ol>
-                                {isServerMode ? (
-                                    <>
-                                        <h3>Server Mode &amp; Admin Settings</h3>
-                                        <ul>
-                                            <li><strong>Admin Settings:</strong> Server Owners and designated PASTA Admins can open <strong>Admin Settings</strong> from the user menu (or server selection screen) to configure TV track automation, per-library and per-show language/keyword rules, forced subtitle handling, and user permissions.</li>
-                                            <li><strong>Logs:</strong> View your manual batch update history via <strong>Logs</strong> in the user menu, or inspect automated background scan activity inside <strong>Admin Settings &rarr; Logs</strong>.</li>
-                                        </ul>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h3>Want Background Automation? (Server Mode)</h3>
-                                        <ul>
-                                            <li>You are currently using PASTA in browser-only <strong>Client Mode</strong>.</li>
-                                            <li>PASTA can also be run locally in <strong>Server Mode</strong> (via Docker or Unraid Community Applications) to automatically apply audio and subtitle preferences whenever new or upgraded TV episodes are added to Plex, batch-update tracks across all of your Plex Home &amp; Shared users at once, and manage per-library/per-show automation rules.</li>
-                                            <li>See the <a href="https://github.com/cglatot/pasta#readme" target="_blank" rel="noreferrer">GitHub README</a> for full documentation and self-hosting instructions.</li>
-                                        </ul>
-                                    </>
-                                )}
-                                <h3>About PASTA</h3>
-                                <p>When I first began developing this for myself, I was calling it <em>Audio Track Automation for Plex</em>,
-                                    so adding "subtitles" to it, and rearranging the letters gave birth to PASTA.
+                                <p>
+                                    PASTA is designed to be step-by-step: select a library and media item on the left, inspect its audio and subtitle streams on the right, and click the scope (<strong>Episode</strong>, <strong>Season</strong>, <strong>Show</strong>, <strong>Collection</strong>, or <strong>Library</strong>) you want to update.
                                 </p>
-                                <p>PASTA was born out of a desire, one that I had seen others have as well, but that I had only
-                                    seen one other solution for. However, it was in command line and I wanted something a bit more appealing to look at, and something I could
-                                    use from anywhere.
-                                    Initially I was only building this for myself but I thought that others might find use for
-                                    it as well, so here we are!
+                                <p>
+                                    <strong>A lot has changed in PASTA 3.0!</strong> With the introduction of <strong>Server Mode</strong>, background TV track automation, automatic <code>Forced</code> subtitle matching, multi-user batching, per-library/per-show rules, and diagnostic tools, please check out the{' '}
+                                    <a href="https://github.com/cglatot/pasta#readme" target="_blank" rel="noreferrer">
+                                        GitHub README &amp; User Guide
+                                    </a>{' '}
+                                    for the most up-to-date instructions and screenshots.
                                 </p>
-                                {isServerMode ? (
-                                    <p>
-                                        This instance is running in self-hosted <strong>Server Mode</strong>, communicating directly between your local PASTA container and your Plex server. Feel free to visit the{' '}
-                                        <a href="https://github.com/cglatot/pasta" target="_blank" rel="noreferrer">GitHub repository</a> to read the full documentation, check for updates, or make suggestions.
-                                    </p>
-                                ) : (
-                                    <p>
-                                        In Client Mode, PASTA runs entirely in your browser. This means that you are not passing anything to someone's
-                                        server to do this (other than the Plex Server), and it also means I don't
-                                        have to worry about standing up a server to do that side of things either :). Feel free to visit the{' '}
-                                        <a href="https://github.com/cglatot/pasta" target="_blank" rel="noreferrer">GitHub repository</a> to download it yourself, run it locally in Client or Server Mode, or make suggestions.
-                                    </p>
-                                )}
-                                <h3>Cookie Policy</h3>
-                                <p>The site uses some minor technical cookies and local browser storage to help improve your experience (for example, remembering your session if you choose that option).
-                                    Third-party tracking cookies are not used on this site. By continuing to use this site, you agree to the use of these functional cookies.
+                                <h3>Privacy, Cookies &amp; Local Storage</h3>
+                                <p>
+                                    PASTA does <strong>not</strong> use any third-party tracking, analytics, or advertising cookies. It only uses strictly necessary browser storage (<code>localStorage</code>, <code>sessionStorage</code>, and, in Server Mode, an encrypted <code>HttpOnly</code> session cookie) to remember your Plex login session if you choose that option, store your local UI preferences, and communicate directly with your Plex server.
                                 </p>
                                 <div className="text-center my-3">
                                     <a href="https://ko-fi.com/cglatot" target="_blank" rel="noreferrer" className="btn btn-warning btn-lg text-dark fw-bold">
